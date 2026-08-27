@@ -1,0 +1,11 @@
+D:\Projects\C#\EcoBrowser\Output\EcoBrowser.exe
+D:\Projects\C#\EcoBrowser\Output\runtimes\win-x86\native\WebView2Loader.dll
+D:\Projects\C#\EcoBrowser\Output\runtimes\win-x64\native\WebView2Loader.dll
+D:\Projects\C#\EcoBrowser\Output\runtimes\win-arm64\native\WebView2Loader.dll
+D:\Projects\C#\EcoBrowser\Output\EcoBrowser.dll
+D:\Projects\C#\EcoBrowser\Output\EcoBrowser.deps.json
+D:\Projects\C#\EcoBrowser\Output\EcoBrowser.runtimeconfig.json
+D:\Projects\C#\EcoBrowser\Output\EcoBrowser.pdb
+D:\Projects\C#\EcoBrowser\Output\Microsoft.Web.WebView2.Core.dll
+D:\Projects\C#\EcoBrowser\Output\Microsoft.Web.WebView2.WinForms.dll
+D:\Projects\C#\EcoBrowser\Output\Microsoft.Web.WebView2.Wpf.dll

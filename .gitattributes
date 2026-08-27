@@ -1,3 +1,0 @@
-FTPChat.apk filter=lfs diff=lfs merge=lfs -text
-FTPChat.exe filter=lfs diff=lfs merge=lfs -text
-mysetup.exe filter=lfs diff=lfs merge=lfs -text

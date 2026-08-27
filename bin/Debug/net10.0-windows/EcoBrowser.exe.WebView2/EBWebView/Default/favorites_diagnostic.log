@@ -1,0 +1,434 @@
+2026-08-26 09:50:43.642: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 09:50:43.642: [INFO] Profiles total count: 1
+2026-08-26 09:50:43.642: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=null
+2026-08-26 09:50:43.642: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 09:50:43.642: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 09:50:43.642: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 09:50:43.642: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 09:50:43.642: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 09:50:53.197: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 09:50:56.721: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 09:50:56.721: [INFO] Profiles total count: 1
+2026-08-26 09:50:56.721: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=null
+2026-08-26 09:50:56.721: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 09:50:56.721: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 09:50:56.721: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 09:50:56.721: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 09:50:56.721: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 09:58:01.045: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:12:43.917: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:12:43.917: [INFO] Profiles total count: 1
+2026-08-26 10:12:43.917: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=null
+2026-08-26 10:12:43.917: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:12:43.917: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 10:12:43.917: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 10:12:43.917: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 10:12:43.917: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:15:03.344: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:27:04.009: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:27:04.009: [INFO] Profiles total count: 1
+2026-08-26 10:27:04.009: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=null
+2026-08-26 10:27:04.009: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:27:04.009: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 10:27:04.009: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 10:27:04.009: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 10:27:04.009: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:27:14.685: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:35:51.172: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:35:51.172: [INFO] Profiles total count: 1
+2026-08-26 10:35:51.172: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=null
+2026-08-26 10:35:51.172: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:35:51.172: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 10:35:51.172: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 10:35:51.172: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 10:35:51.172: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:37:00.948: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:37:04.171: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:37:04.171: [INFO] Profiles total count: 1
+2026-08-26 10:37:04.171: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=null
+2026-08-26 10:37:04.171: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:37:04.171: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 10:37:04.171: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 10:37:04.171: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 10:37:04.171: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:37:24.832: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:37:27.471: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:37:27.471: [INFO] Profiles total count: 1
+2026-08-26 10:37:27.471: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T10:37:22.558Z
+2026-08-26 10:37:27.471: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:37:27.471: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T10:37:22.558Z
+2026-08-26 10:37:27.471: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 10:37:27.471: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 10:37:27.471: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 10:37:27.471: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:37:31.483: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:37:37.628: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:37:37.628: [INFO] Profiles total count: 1
+2026-08-26 10:37:37.628: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T10:37:29.713Z
+2026-08-26 10:37:37.628: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:37:37.628: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T10:37:29.713Z
+2026-08-26 10:37:37.628: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 10:37:37.628: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 10:37:37.628: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 10:37:37.628: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:37:47.043: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:42:00.586: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:42:00.586: [INFO] Profiles total count: 1
+2026-08-26 10:42:00.586: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T10:37:29.713Z
+2026-08-26 10:42:00.586: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 10:42:00.587: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T10:37:29.713Z
+2026-08-26 10:42:00.587: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 10:42:00.587: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 10:42:00.587: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 10:42:00.587: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 10:42:12.351: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 11:30:10.615: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 11:30:10.615: [INFO] Profiles total count: 1
+2026-08-26 11:30:10.615: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T10:42:06.443Z
+2026-08-26 11:30:10.615: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 11:30:10.615: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T10:42:06.443Z
+2026-08-26 11:30:10.615: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 11:30:10.615: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 11:30:10.615: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 11:30:10.615: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 11:30:36.770: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 11:31:57.664: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 11:31:57.664: [INFO] Profiles total count: 1
+2026-08-26 11:31:57.666: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T11:30:29.463Z
+2026-08-26 11:31:57.666: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 11:31:57.666: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T11:30:29.463Z
+2026-08-26 11:31:57.666: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 11:31:57.666: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 11:31:57.666: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 11:31:57.666: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 11:32:02.973: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 11:33:08.656: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 11:33:08.656: [INFO] Profiles total count: 1
+2026-08-26 11:33:08.658: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T11:30:29.463Z
+2026-08-26 11:33:08.658: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 11:33:08.658: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T11:30:29.463Z
+2026-08-26 11:33:08.658: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 11:33:08.658: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 11:33:08.658: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 11:33:08.658: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 11:33:20.443: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 11:34:35.016: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 11:34:35.016: [INFO] Profiles total count: 1
+2026-08-26 11:34:35.017: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T11:33:11.755Z
+2026-08-26 11:34:35.017: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 11:34:35.017: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T11:33:11.755Z
+2026-08-26 11:34:35.017: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 11:34:35.017: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 11:34:35.017: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 11:34:35.017: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 11:34:58.979: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 11:37:19.616: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 11:37:19.616: [INFO] Profiles total count: 1
+2026-08-26 11:37:19.618: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T11:36:12.308Z
+2026-08-26 11:37:19.618: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 11:37:19.618: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T11:36:12.308Z
+2026-08-26 11:37:19.618: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 11:37:19.618: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 11:37:19.618: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 11:37:19.618: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 11:44:37.277: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 12:10:34.129: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 12:10:34.129: [INFO] Profiles total count: 1
+2026-08-26 12:10:34.131: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T11:37:48.734Z
+2026-08-26 12:10:34.131: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 12:10:34.132: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T11:37:48.734Z
+2026-08-26 12:10:34.132: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 12:10:34.132: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 12:10:34.132: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 12:10:34.132: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 12:56:17.318: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 12:57:43.070: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 12:57:43.070: [INFO] Profiles total count: 1
+2026-08-26 12:57:43.071: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T12:56:12.039Z
+2026-08-26 12:57:43.071: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 12:57:43.071: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T12:56:12.039Z
+2026-08-26 12:57:43.071: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 12:57:43.071: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 12:57:43.071: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 12:57:43.071: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 12:57:56.972: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:02:17.135: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:02:17.135: [INFO] Profiles total count: 1
+2026-08-26 13:02:17.135: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T12:57:48.365Z
+2026-08-26 13:02:17.135: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:02:17.136: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T12:57:48.365Z
+2026-08-26 13:02:17.136: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 13:02:17.136: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 13:02:17.136: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 13:02:17.136: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:02:28.079: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:04:03.236: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:04:03.236: [INFO] Profiles total count: 1
+2026-08-26 13:04:03.236: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:02:20.267Z
+2026-08-26 13:04:03.236: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:04:03.236: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:02:20.267Z
+2026-08-26 13:04:03.236: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 13:04:03.236: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 13:04:03.236: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 13:04:03.236: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:04:28.388: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:04:30.828: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:04:30.828: [INFO] Profiles total count: 1
+2026-08-26 13:04:30.828: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:04:07.465Z
+2026-08-26 13:04:30.828: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:04:30.828: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:04:07.465Z
+2026-08-26 13:04:30.828: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 13:04:30.828: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 13:04:30.828: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 13:04:30.828: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:05:03.943: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:10:22.681: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:10:22.681: [INFO] Profiles total count: 1
+2026-08-26 13:10:22.681: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:05:03.018Z
+2026-08-26 13:10:22.681: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:10:22.681: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:05:03.018Z
+2026-08-26 13:10:22.681: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 13:10:22.681: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 13:10:22.681: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 13:10:22.681: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:11:14.936: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:11:50.094: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:11:50.094: [INFO] Profiles total count: 1
+2026-08-26 13:11:50.094: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:10:49.005Z
+2026-08-26 13:11:50.094: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:11:50.095: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:10:49.005Z
+2026-08-26 13:11:50.095: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 13:11:50.095: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 13:11:50.095: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 13:11:50.095: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:11:55.316: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:29:49.946: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:29:49.946: [INFO] Profiles total count: 1
+2026-08-26 13:29:49.947: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:10:49.005Z
+2026-08-26 13:29:49.947: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:29:49.947: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:10:49.005Z
+2026-08-26 13:29:49.947: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 13:29:49.947: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 13:29:49.947: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 13:29:49.947: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:30:41.923: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:36:24.525: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:36:24.525: [INFO] Profiles total count: 1
+2026-08-26 13:36:24.525: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:10:49.005Z
+2026-08-26 13:36:24.525: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:36:24.525: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:10:49.005Z
+2026-08-26 13:36:24.525: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 13:36:24.525: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 13:36:24.525: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 13:36:24.525: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:55:27.903: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:55:34.326: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:55:34.326: [INFO] Profiles total count: 1
+2026-08-26 13:55:34.326: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:36:35.891Z
+2026-08-26 13:55:34.326: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 13:55:34.326: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:36:35.891Z
+2026-08-26 13:55:34.326: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 13:55:34.326: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 13:55:34.326: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 13:55:34.326: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 13:55:37.585: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 14:04:06.887: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 14:04:06.887: [INFO] Profiles total count: 1
+2026-08-26 14:04:06.887: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:55:35.661Z
+2026-08-26 14:04:06.887: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 14:04:06.887: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T13:55:35.661Z
+2026-08-26 14:04:06.887: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 14:04:06.887: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 14:04:06.887: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 14:04:06.887: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 14:06:35.110: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 14:06:49.346: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 14:06:49.346: [INFO] Profiles total count: 1
+2026-08-26 14:06:49.346: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T14:04:47.041Z
+2026-08-26 14:06:49.346: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 14:06:49.346: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T14:04:47.041Z
+2026-08-26 14:06:49.346: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 14:06:49.346: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 14:06:49.346: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 14:06:49.346: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 14:07:08.600: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 14:16:05.587: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 14:16:05.587: [INFO] Profiles total count: 1
+2026-08-26 14:16:05.588: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T14:07:04.439Z
+2026-08-26 14:16:05.588: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 14:16:05.588: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T14:07:04.439Z
+2026-08-26 14:16:05.588: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 14:16:05.588: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 14:16:05.588: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 14:16:05.588: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 14:27:40.598: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 14:27:47.401: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 14:27:47.401: [INFO] Profiles total count: 1
+2026-08-26 14:27:47.401: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T14:16:05.680Z
+2026-08-26 14:27:47.401: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 14:27:47.401: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T14:16:05.680Z
+2026-08-26 14:27:47.401: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 14:27:47.401: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 14:27:47.401: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 14:27:47.401: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 17:41:20.762: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 17:57:09.355: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 17:57:09.355: [INFO] Profiles total count: 1
+2026-08-26 17:57:09.356: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T17:41:14.899Z
+2026-08-26 17:57:09.356: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 17:57:09.356: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T17:41:14.899Z
+2026-08-26 17:57:09.356: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 17:57:09.356: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 17:57:09.356: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 17:57:09.356: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 17:57:58.131: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:05:07.511: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:05:07.511: [INFO] Profiles total count: 1
+2026-08-26 18:05:07.511: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T17:57:54.058Z
+2026-08-26 18:05:07.511: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:05:07.511: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T17:57:54.058Z
+2026-08-26 18:05:07.511: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 18:05:07.511: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 18:05:07.511: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 18:05:07.511: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:05:19.508: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:07:23.525: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:07:23.525: [INFO] Profiles total count: 1
+2026-08-26 18:07:23.525: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:05:13.501Z
+2026-08-26 18:07:23.525: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:07:23.525: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:05:13.501Z
+2026-08-26 18:07:23.525: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 18:07:23.525: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 18:07:23.525: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 18:07:23.525: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:09:38.399: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:09:45.179: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:09:45.179: [INFO] Profiles total count: 1
+2026-08-26 18:09:45.179: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:05:13.501Z
+2026-08-26 18:09:45.179: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:09:45.179: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:05:13.501Z
+2026-08-26 18:09:45.179: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 18:09:45.179: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 18:09:45.179: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 18:09:45.179: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:12:11.453: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:21:35.828: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:21:35.828: [INFO] Profiles total count: 1
+2026-08-26 18:21:35.829: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:10:09.415Z
+2026-08-26 18:21:35.829: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:21:35.829: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:10:09.415Z
+2026-08-26 18:21:35.829: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 18:21:35.829: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 18:21:35.829: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 18:21:35.829: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:21:45.831: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:22:53.955: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:22:53.955: [INFO] Profiles total count: 1
+2026-08-26 18:22:53.955: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:21:39.628Z
+2026-08-26 18:22:53.955: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:22:53.956: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:21:39.628Z
+2026-08-26 18:22:53.956: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 18:22:53.956: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 18:22:53.956: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 18:22:53.956: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:22:57.061: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:23:17.370: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:23:17.370: [INFO] Profiles total count: 1
+2026-08-26 18:23:17.371: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:21:39.628Z
+2026-08-26 18:23:17.371: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:23:17.371: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:21:39.628Z
+2026-08-26 18:23:17.371: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 18:23:17.371: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 18:23:17.371: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 18:23:17.371: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:23:21.528: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:32:35.501: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:32:35.501: [INFO] Profiles total count: 1
+2026-08-26 18:32:35.501: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:21:39.628Z
+2026-08-26 18:32:35.501: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:32:35.502: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:21:39.628Z
+2026-08-26 18:32:35.502: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 18:32:35.502: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 18:32:35.502: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 18:32:35.502: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:32:41.049: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:33:48.966: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:33:48.966: [INFO] Profiles total count: 1
+2026-08-26 18:33:48.966: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:21:39.628Z
+2026-08-26 18:33:48.966: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:33:48.967: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:21:39.628Z
+2026-08-26 18:33:48.967: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 18:33:48.967: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 18:33:48.967: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 18:33:48.967: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:38:22.166: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:38:39.201: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:38:39.201: [INFO] Profiles total count: 1
+2026-08-26 18:38:39.203: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:38:21.497Z
+2026-08-26 18:38:39.203: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:38:39.203: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:38:21.497Z
+2026-08-26 18:38:39.203: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 18:38:39.203: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 18:38:39.203: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 18:38:39.203: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:38:48.910: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:54:47.095: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:54:47.095: [INFO] Profiles total count: 1
+2026-08-26 18:54:47.095: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:38:48.489Z
+2026-08-26 18:54:47.095: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 18:54:47.095: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:38:48.489Z
+2026-08-26 18:54:47.095: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 18:54:47.095: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 18:54:47.095: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 18:54:47.095: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 18:55:21.589: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 19:10:04.876: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 19:10:04.876: [INFO] Profiles total count: 1
+2026-08-26 19:10:04.882: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:55:12.062Z
+2026-08-26 19:10:04.882: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 19:10:04.882: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T18:55:12.062Z
+2026-08-26 19:10:04.882: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 19:10:04.882: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 19:10:04.883: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 19:10:04.884: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 19:15:27.098: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 19:16:14.491: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 19:16:14.491: [INFO] Profiles total count: 1
+2026-08-26 19:16:14.492: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T19:11:42.833Z
+2026-08-26 19:16:14.492: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 19:16:14.492: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T19:11:42.833Z
+2026-08-26 19:16:14.492: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 19:16:14.492: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 19:16:14.492: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 19:16:14.492: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 19:16:27.674: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 19:17:25.337: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 19:17:25.337: [INFO] Profiles total count: 1
+2026-08-26 19:17:25.337: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T19:11:42.833Z
+2026-08-26 19:17:25.337: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-26 19:17:25.337: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T19:11:42.833Z
+2026-08-26 19:17:25.337: [INFO] OnDoneLoading sync enabled: 0
+2026-08-26 19:17:25.337: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-26 19:17:25.337: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-26 19:17:25.337: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-26 19:33:31.491: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-27 08:37:13.081: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-27 08:37:13.081: [INFO] Profiles total count: 1
+2026-08-27 08:37:13.081: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T19:33:22.342Z
+2026-08-27 08:37:13.081: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-27 08:37:13.081: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T19:33:22.342Z
+2026-08-27 08:37:13.081: [INFO] OnDoneLoading sync enabled: 0
+2026-08-27 08:37:13.081: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-27 08:37:13.081: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-27 08:37:13.081: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-27 08:37:19.363: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-27 08:39:45.973: [INFO] CurrentProfilePath: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-27 08:39:45.973: [INFO] Profiles total count: 1
+2026-08-27 08:39:45.973: [INFO] Profile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T19:33:22.342Z
+2026-08-27 08:39:45.973: [INFO] LastUsedProfileDir: D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default
+2026-08-27 08:39:45.973: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default lastActive=2026-08-26T19:33:22.342Z
+2026-08-27 08:39:45.973: [INFO] OnDoneLoading sync enabled: 0
+2026-08-27 08:39:45.973: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-27 08:39:45.973: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-27 08:39:45.973: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-27 08:40:30.064: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
