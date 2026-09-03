@@ -51,7 +51,7 @@
         }
       }
     },
-    "net10.0-windows/win-x64": {
+    "net10.0-windows/win-x86": {
       "Microsoft.NET.ILLink.Tasks/10.0.11": {
         "type": "package",
         "build": {
@@ -83,7 +83,7 @@
           }
         },
         "native": {
-          "runtimes/win-x64/native/WebView2Loader.dll": {}
+          "runtimes/win-x86/native/WebView2Loader.dll": {}
         },
         "build": {
           "build/Microsoft.Web.WebView2.targets": {}
@@ -312,15 +312,15 @@
         "warn": true,
         "downloadDependencies": [
           {
-            "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
+            "name": "Microsoft.AspNetCore.App.Runtime.win-x86",
             "version": "[10.0.11, 10.0.11]"
           },
           {
-            "name": "Microsoft.NETCore.App.Runtime.win-x64",
+            "name": "Microsoft.NETCore.App.Runtime.win-x86",
             "version": "[10.0.11, 10.0.11]"
           },
           {
-            "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
+            "name": "Microsoft.WindowsDesktop.App.Runtime.win-x86",
             "version": "[10.0.11, 10.0.11]"
           }
         ],
@@ -626,7 +626,7 @@
       }
     },
     "runtimes": {
-      "win-x64": {
+      "win-x86": {
         "#import": []
       }
     }

@@ -25,6 +25,7 @@
             btnAddTab = new Button();
             btnHistory = new Button();
             btnDownloads = new Button();
+            btnDarkMode = new Button(); // Integrated directly into designer layout
             addressBarPanel = new Panel();
             lblSecure = new Label();
             txtUrl = new TextBox();
@@ -41,7 +42,7 @@
             // TabControl
             tabControl1.Controls.Add(tabPage1);
             tabControl1.Dock = DockStyle.Fill;
-            tabControl1.ItemSize = new Size(180, 32);
+            tabControl1.ItemSize = new Size(180, 34);
             tabControl1.Location = new Point(0, 0);
             tabControl1.Name = "tabControl1";
             tabControl1.Size = new Size(1008, 681);
@@ -50,9 +51,9 @@
             // TabPage
             tabPage1.Controls.Add(webView1);
             tabPage1.Controls.Add(toolPanel);
-            tabPage1.Location = new Point(4, 36);
+            tabPage1.Location = new Point(4, 38);
             tabPage1.Name = "tabPage1";
-            tabPage1.Size = new Size(1000, 641);
+            tabPage1.Size = new Size(1000, 639);
             tabPage1.Text = "EcoBrowser";
             tabPage1.UseVisualStyleBackColor = true;
 
@@ -74,17 +75,17 @@
             leftPanel.WrapContents = false;
             leftPanel.Controls.AddRange(new Control[] { btnBack, btnForward, btnRefresh, btnHome });
 
-            // Right Action Panel
+            // Right Action Panel (Including DarkMode Button Managed via Designer)
             rightPanel.Name = "rightPanel";
             rightPanel.Dock = DockStyle.Right;
             rightPanel.AutoSize = true;
             rightPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             rightPanel.WrapContents = false;
-            rightPanel.Controls.AddRange(new Control[] { btnAddTab, btnHistory, btnDownloads });
+            rightPanel.Controls.AddRange(new Control[] { btnAddTab, btnHistory, btnDownloads, btnDarkMode });
 
-            var buttons = new[] { btnBack, btnForward, btnRefresh, btnHome, btnAddTab, btnHistory, btnDownloads };
-            var names = new[] { "btnBack", "btnForward", "btnRefresh", "btnHome", "btnAddTab", "btnHistory", "btnDownloads" };
-            var symbols = new[] { "<", ">", "↻", "⌂", "+", "🕐", "⬇" };
+            var buttons = new[] { btnBack, btnForward, btnRefresh, btnHome, btnAddTab, btnHistory, btnDownloads, btnDarkMode };
+            var names = new[] { "btnBack", "btnForward", "btnRefresh", "btnHome", "btnAddTab", "btnHistory", "btnDownloads", "btnDarkMode" };
+            var symbols = new[] { "<", ">", "↻", "⌂", "+", "🕐", "⬇", "🌙" };
 
             for (int i = 0; i < buttons.Length; i++)
             {
@@ -97,6 +98,7 @@
                 buttons[i].ForeColor = Color.FromArgb(60, 64, 67);
                 buttons[i].BackColor = Color.White;
                 buttons[i].Margin = new Padding(2, 0, 2, 0);
+                buttons[i].Cursor = Cursors.Hand;
             }
 
             // AddressBar Panel
@@ -147,7 +149,7 @@
         private TabPage tabPage1;
         private Panel toolPanel, addressBarPanel;
         private FlowLayoutPanel leftPanel, rightPanel;
-        private Button btnBack, btnForward, btnRefresh, btnHome, btnAddTab, btnHistory, btnDownloads;
+        private Button btnBack, btnForward, btnRefresh, btnHome, btnAddTab, btnHistory, btnDownloads, btnDarkMode;
         private Label lblSecure;
         private TextBox txtUrl;
         private Microsoft.Web.WebView2.WinForms.WebView2 webView1;

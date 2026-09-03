@@ -3,6 +3,14 @@
   "WorkspaceRootPath": "D:\\Projects\\C#\\EcoBrowser\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{C80E5C19-2854-9567-88BB-56D74A794526}|EcoBrowser.csproj|d:\\projects\\c#\\ecobrowser\\ecobrowser.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{C80E5C19-2854-9567-88BB-56D74A794526}|EcoBrowser.csproj|solutionrelative:ecobrowser.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C80E5C19-2854-9567-88BB-56D74A794526}|EcoBrowser.csproj|d:\\projects\\c#\\ecobrowser\\form1.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C80E5C19-2854-9567-88BB-56D74A794526}|EcoBrowser.csproj|solutionrelative:form1.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{C80E5C19-2854-9567-88BB-56D74A794526}|EcoBrowser.csproj|d:\\projects\\c#\\ecobrowser\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C80E5C19-2854-9567-88BB-56D74A794526}|EcoBrowser.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
@@ -23,14 +31,40 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "EcoBrowser.csproj",
+              "DocumentMoniker": "D:\\Projects\\C#\\EcoBrowser\\EcoBrowser.csproj",
+              "RelativeDocumentMoniker": "EcoBrowser.csproj",
+              "ToolTip": "D:\\Projects\\C#\\EcoBrowser\\EcoBrowser.csproj",
+              "RelativeToolTip": "EcoBrowser.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAUwCEAAAAKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-09-03T13:19:56.928Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Form1.Designer.cs",
+              "DocumentMoniker": "D:\\Projects\\C#\\EcoBrowser\\Form1.Designer.cs",
+              "RelativeDocumentMoniker": "Form1.Designer.cs",
+              "ToolTip": "D:\\Projects\\C#\\EcoBrowser\\Form1.Designer.cs",
+              "RelativeToolTip": "Form1.Designer.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-03T13:18:57.6Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "Form1.cs",
               "DocumentMoniker": "D:\\Projects\\C#\\EcoBrowser\\Form1.cs",
               "RelativeDocumentMoniker": "Form1.cs",
               "ToolTip": "D:\\Projects\\C#\\EcoBrowser\\Form1.cs",
               "RelativeToolTip": "Form1.cs",
-              "ViewState": "AgIAAIEBAAAAAAAAAAAswJgBAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-27T09:14:44.391Z",
+              "WhenOpened": "2026-09-03T13:18:26.292Z",
               "EditorCaption": ""
             }
           ]

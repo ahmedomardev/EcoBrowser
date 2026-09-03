@@ -1,3 +1,6 @@
-2026/08/27-12:15:00.514 156ec Reusing MANIFEST D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default\Local Storage\leveldb/MANIFEST-000001
-2026/08/27-12:15:00.528 156ec Recovering log #56
-2026/08/27-12:15:00.532 156ec Reusing old log D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default\Local Storage\leveldb/000056.log 
+2026/09/03-16:11:12.888 a58 Reusing MANIFEST D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default\Local Storage\leveldb/MANIFEST-000001
+2026/09/03-16:11:12.899 a58 Recovering log #77
+2026/09/03-16:11:12.901 a58 Reusing old log D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default\Local Storage\leveldb/000077.log 
+2026/09/03-16:11:19.501 5a9c Level-0 table #80: started
+2026/09/03-16:11:19.506 5a9c Level-0 table #80: 46735 bytes OK
+2026/09/03-16:11:19.511 5a9c Delete type=0 #77

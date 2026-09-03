@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EcoBrowser")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9bc71c86b93373385e228103d3434d7ff34200ef")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e970e507cae32d90473828dc8f507dcae6909df9")]
 [assembly: System.Reflection.AssemblyProductAttribute("EcoBrowser")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EcoBrowser")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

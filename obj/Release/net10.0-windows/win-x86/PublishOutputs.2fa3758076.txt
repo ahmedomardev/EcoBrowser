@@ -1,0 +1,2 @@
+D:\Projects\C#\EcoBrowser\SingleExeOutput32\EcoBrowser.pdb
+D:\Projects\C#\EcoBrowser\SingleExeOutput32\EcoBrowser.exe

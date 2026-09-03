@@ -289,3 +289,5 @@ D:\Projects\C#\EcoBrowser\obj\Release\net10.0-windows\win-x64\EcoBrowser.pdb
 D:\Projects\C#\EcoBrowser\obj\Release\net10.0-windows\win-x64\EcoBrowser.genruntimeconfig.cache
 D:\Projects\C#\EcoBrowser\obj\Release\net10.0-windows\win-x64\ref\EcoBrowser.dll
 D:\Projects\C#\EcoBrowser\obj\Release\net10.0-windows\win-x64\EcoBrowser.sourcelink.json
+D:\Projects\C#\EcoBrowser\bin\Release\net10.0-windows\win-x64\icon.ico
+D:\Projects\C#\EcoBrowser\bin\Release\net10.0-windows\win-x64\icon.png

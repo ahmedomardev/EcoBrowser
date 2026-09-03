@@ -1,0 +1,31 @@
+2026/09/03-14:49:03.676 6f30 Creating DB D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default\IndexedDB\https_www.yallakora.com_0.indexeddb.leveldb since it was missing.
+2026/09/03-14:49:03.684 6f30 Reusing MANIFEST D:\Projects\C#\EcoBrowser\bin\Debug\net10.0-windows\EcoBrowser.exe.WebView2\EBWebView\Default\IndexedDB\https_www.yallakora.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/09/03-14:49:03.702 30c8 Level-0 table #5: started
+2026/09/03-14:49:03.706 30c8 Level-0 table #5: 769 bytes OK
+2026/09/03-14:49:03.710 30c8 Delete type=0 #3
+2026/09/03-14:49:03.710 30c8 Manual compaction at level-0 from '\x00\x01\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x02\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/09/03-14:49:04.023 1ce8 Level-0 table #7: started
+2026/09/03-14:49:04.027 1ce8 Level-0 table #7: 2590 bytes OK
+2026/09/03-14:49:04.033 1ce8 Delete type=0 #4
+2026/09/03-14:49:04.033 6f30 Manual compaction at level-0 from '\x00\x04\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x05\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/09/03-14:49:06.944 30c8 Level-0 table #9: started
+2026/09/03-14:49:06.947 30c8 Level-0 table #9: 1587 bytes OK
+2026/09/03-14:49:06.951 30c8 Delete type=0 #6
+2026/09/03-14:49:06.951 6f30 Manual compaction at level-0 from '\x00\x05\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x06\x00\x00\x00' @ 0 : 0; will stop at '\x00\x05\x00\x00\x05' @ 173 : 1
+2026/09/03-14:49:06.951 6f30 Compacting 1@0 + 1@1 files
+2026/09/03-14:49:06.953 6f30 Generated table #10@0: 81 keys, 2102 bytes
+2026/09/03-14:49:06.953 6f30 Compacted 1@0 + 1@1 files => 2102 bytes
+2026/09/03-14:49:06.957 6f30 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/09/03-14:49:06.957 6f30 Delete type=2 #9
+2026/09/03-14:49:06.957 6f30 Manual compaction at level-0 from '\x00\x05\x00\x00\x05' @ 173 : 1 .. '\x00\x06\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/09/03-14:49:07.891 30c8 Level-0 table #12: started
+2026/09/03-14:49:07.896 30c8 Level-0 table #12: 2064 bytes OK
+2026/09/03-14:49:07.900 30c8 Delete type=2 #7
+2026/09/03-14:49:07.900 30c8 Delete type=0 #8
+2026/09/03-14:49:07.901 4ae8 Manual compaction at level-0 from '\x00\x06\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x07\x00\x00\x00' @ 0 : 0; will stop at '\x00\x06\x00\x00\x05' @ 216 : 1
+2026/09/03-14:49:07.901 4ae8 Compacting 1@0 + 1@1 files
+2026/09/03-14:49:07.903 4ae8 Generated table #13@0: 93 keys, 2217 bytes
+2026/09/03-14:49:07.903 4ae8 Compacted 1@0 + 1@1 files => 2217 bytes
+2026/09/03-14:49:07.907 4ae8 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/09/03-14:49:07.907 4ae8 Delete type=2 #12
+2026/09/03-14:49:07.907 4ae8 Manual compaction at level-0 from '\x00\x06\x00\x00\x05' @ 216 : 1 .. '\x00\x07\x00\x00\x00' @ 0 : 0; will stop at (end)
