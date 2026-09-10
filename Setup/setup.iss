@@ -26,6 +26,7 @@ ChangesAssociations=yes
 DisableProgramGroupPage=yes
 PrivilegesRequiredOverridesAllowed=dialog
 OutputBaseFilename=EcoBrowser_Setup
+Compression=lzma2/ultra
 SolidCompression=yes
 WizardStyle=modern
 
@@ -36,8 +37,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-; Packs the entire PyInstaller --onedir output folder recursively into the installer
-Source: "D:\Projects\Python\EcoBrowser\EcoBrowser\dist\main*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Packs the entire PyInstaller --onedir folder structure recursively with maximum compression
+Source: "D:\Projects\Python\EcoBrowser\EcoBrowser\dist\main\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Registry]
 Root: HKA; Subkey: "Software\Classes\{#MyAppAssocExt}\OpenWithProgids"; ValueType: string; ValueName: "{#MyAppAssocKey}"; ValueData: ""; Flags: uninsdeletevalue
