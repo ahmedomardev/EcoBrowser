@@ -1,30 +1,30 @@
 # EcoBrowser
 
-**EcoBrowser** (`ahmedomardev/EcoBrowser`) is a lightweight, ultra-simple, modern web browser built using Python and `wxPython` with a clean, flat-rectangular dark theme interface. It is designed to consume minimal RAM and provides native tab management, an integrated dropdown menu for History and Downloads, and persistent state management without bloated class structures.
-
----
+**EcoBrowser** (`ahmedomardev/EcoBrowser`) is a fast, modern web browser built using Python and `PyQt6-WebEngine`. It features a clean, responsive interface, native Windows integration, and is engineered for optimal speed using a structured directory deployment model.
 
 ## Features
 
-- **Low Resource Usage:** Engineered to barely use RAM, offering a snappy and lightweight browsing experience.
-- **Tabbed Browsing:** Open, switch between, and close multiple web pages seamlessly.
-- **Modern Minimalist UI:** Flat-rectangular dark design inspired by contemporary tools and editors.
-- **Navigation Controls:** Back, Forward, Reload, and a secure address bar with URL and search parsing.
-- **Dropdown Menu:** Quick access button to view your browsing history and downloads list directly.
-- **External File Tracking:** History and downloads automatically save to local JSON files (`history.json` and `downloads.json`) and open instantly via your system's default text editor.
+- **Chromium-Powered Engine:** Utilizes `PyQt6-WebEngine` for modern web rendering and compatibility.
+- **Optimized RAM Usage:** Lightweight architecture engineered to use significantly less memory for an ultra-snappy experience.
+- **Windows Default Browser Ready:** Built-in automated registry setup enabling Windows to recognize EcoBrowser in Default Apps (`http`/`https` associations).
+- **Protocol & Command Line Handling:** Accepts URL arguments when launched from external applications (e.g., Discord, Word, Outlook).
+- **Browsing History & Downloads:** Automatically logs visited web locations to a local history log file and provides direct access to the Chromium download manager.
+- **Built-in Ad & Tracker Blocker:** Intercepts network navigation to block common ad networks and telemetry domains automatically.
+- **Dark Mode Support:** Seamless global dark mode switching with auto-injected web CSS adjustments.
 
 ---
 
-## Downloads & Releases
+## What's New
 
-You can download the ready-to-use executable (`.exe`) directly from the [GitHub Releases page](https://github.com/ahmedomardev/EcoBrowser/releases).
+- **Advanced Tab Management & Bookmarks:** Seamlessly manage tabs and easily save your favorite sites using built-in bookmarks.
+- **Massive RAM Optimization:** Consumes a fraction of the memory compared to previous builds—dropping from ~1800MB (running 5 YouTube long-form videos and 1 Short) down to just ~650MB.
+- **Built-in Adult Content Blocker:** Automatically blocks pornography sites for a safer browsing experience.
+- **Persistent Preferences:** Automatically saves your favorite settings, such as dark/light mode states and ad blocker configurations.
 
 ---
 
-## Prerequisites & Installation (For Source Code)
+## Installation & Distribution
 
-1. Make sure you have **Python 3** installed.
-2. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+You can download the latest professional installer (`EcoBrowser_Setup.exe`) directly from the [GitHub Releases page](https://github.com/ahmedomardev/EcoBrowser/releases).
+
+The installer handles setting up the directory structure cleanly in `C:\EcoBrowser`, creates optional desktop shortcuts, and registers file associations automatically.
