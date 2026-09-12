@@ -25,6 +25,6 @@
 
 ## Installation & Distribution
 
-You can download the latest professional installer (`EcoBrowser_Setup.exe`) directly from the [GitHub Releases page](https://github.com/ahmedomardev/EcoBrowser/releases).
+You can download the latest installer (`EcoBrowser_Setup.exe`) directly from the [GitHub Releases page](https://github.com/ahmedomardev/EcoBrowser/releases).
 
 The installer handles setting up the directory structure cleanly in `C:\EcoBrowser`, creates optional desktop shortcuts, and registers file associations automatically.
