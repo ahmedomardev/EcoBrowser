@@ -1,8 +1,0 @@
-# PyInstaller builds & caches
-build/
-dist/
-*.pyc
-
-# Inno Setup output
-Setup/Output/
-*.exe

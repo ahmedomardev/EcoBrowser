@@ -31,6 +31,7 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QListWidget,
     QListWidgetItem,
+    QMessageBox,
 )
 
 # =============================================================================
@@ -441,7 +442,16 @@ class EcoBrowserWindow(QMainWindow):
         self.add_new_tab(self.initial_url or HOME_URL)
 
     def _setup_web_profile(self):
-        self.profile = QWebEngineProfile.defaultProfile()
+        app_data_path = get_app_data_folder()
+        
+        self.profile = QWebEngineProfile("EcoBrowserProfile", self)
+        self.profile.setPersistentStoragePath(os.path.join(app_data_path, "storage"))
+        self.profile.setCachePath(os.path.join(app_data_path, "cache"))
+        
+        self.profile.setPersistentCookiesPolicy(
+            QWebEngineProfile.PersistentCookiesPolicy.ForcePersistentCookies
+        )
+        
         self.interceptor = ContentBlocker()
         self.profile.setUrlRequestInterceptor(self.interceptor)
         self.profile.downloadRequested.connect(self.handle_download_request)
@@ -558,6 +568,10 @@ class EcoBrowserWindow(QMainWindow):
         self.action_manage_bookmarks = self.menu.addAction("Manage Bookmarks")
         self.action_manage_bookmarks.triggered.connect(self.open_bookmarks_dialog)
 
+        # Added Clear Cookies Action
+        self.clear_cookies_action = self.menu.addAction("Clear Cookies")
+        self.clear_cookies_action.triggered.connect(self.clear_cookies)
+
         self.menu.addSeparator()
 
         self.history_action = self.menu.addAction("History")
@@ -589,6 +603,13 @@ class EcoBrowserWindow(QMainWindow):
         self.is_dark_mode = not self.is_dark_mode
         self.save_theme_setting(self.is_dark_mode)
         self.apply_theme()
+
+    def clear_cookies(self):
+        if hasattr(self, "profile") and self.profile:
+            self.profile.cookieStore().deleteAllCookies()
+            QMessageBox.information(
+                self, "Cookies Cleared", "All browser cookies have been cleared successfully."
+            )
 
     def settings_file_path(self):
         return os.path.join(get_app_data_folder(), "settings.json")
