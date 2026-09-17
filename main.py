@@ -329,6 +329,31 @@ class ContentBlocker(QWebEngineUrlRequestInterceptor):
             return
 
 
+class EcoWebEnginePage(QWebEnginePage):
+    """
+    QWebEnginePage subclass that knows how to handle requests for a *new*
+    browser window/tab (window.open(), target="_blank" links, JS-triggered
+    popups, etc).
+
+    Without overriding createWindow(), Qt WebEngine has nowhere to put pages
+    opened this way - the request is silently dropped. Many websites rely on
+    exactly this mechanism to kick off a file download (open a blank/short-
+    lived tab that immediately redirects to a downloadable file), so leaving
+    this unhandled breaks downloads on a large number of sites in addition to
+    breaking ordinary "open in new tab" links.
+    """
+
+    def __init__(self, profile, browser_window, parent=None):
+        super().__init__(profile, parent)
+        self.browser_window = browser_window
+
+    def createWindow(self, _window_type):
+        # Open a real new tab in this same browser window and hand back its
+        # page so WebEngine can load the requested URL into it.
+        new_view = self.browser_window.add_new_tab("about:blank")
+        return new_view.page()
+
+
 # =============================================================================
 # Custom Bookmark Button with Right-Click Context Menu
 # =============================================================================
@@ -1578,7 +1603,7 @@ class EcoBrowserWindow(QMainWindow):
 
     def add_new_tab(self, url):
         web_view = QWebEngineView()
-        page = QWebEnginePage(self.profile, web_view)
+        page = EcoWebEnginePage(self.profile, self, web_view)
         web_view.setPage(page)
 
         if self.is_dark_mode:
@@ -1618,6 +1643,8 @@ class EcoBrowserWindow(QMainWindow):
         self.stack.setCurrentIndex(stack_index)
 
         web_view.setUrl(QUrl(url))
+
+        return web_view
 
     def close_tab(self, index):
         if self.tab_bar.count() <= 1:
