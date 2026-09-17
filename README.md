@@ -4,8 +4,8 @@
 
 ## Features
 
-- **Lightweight web-engine: ** Utilizes `PyQt6-WebEngine` for web rendering and compatibility with modern websites.
-- **Optimized RAM Usage: ** Lightweight architecture engineered to use significantly less memory for an ultra-snappy experience.
+- **Lightweight web-engine:** Utilizes `PyQt6-WebEngine` for web rendering and compatibility with modern websites.
+- **Optimized RAM Usage:** Lightweight architecture engineered to use significantly less memory for an ultra-snappy experience.
 - **Windows Default Browser Ready:** Built-in automated registry setup enabling Windows to recognize EcoBrowser in Default Apps (`http`/`https` associations).
 - **Protocol & Command Line Handling:** Accepts URL arguments when launched from external applications (e.g., Discord, Word, Outlook).
 - **Browsing History & Downloads Manager:** Automatically logs visited web locations, features a dedicated downloads menu (`Ctrl+J`) with live progress tracking, and provides direct file/folder access.
