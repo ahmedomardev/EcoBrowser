@@ -30,5 +30,5 @@ You can download EcoBrowser through the following:
 
 - **GitHub Releases:** To get the latest installer (`EcoBrowser_Setup.exe`) directly from the [GitHub Releases page](https://github.com/ahmedomardev/EcoBrowser/releases).
 - **Uptodown:** Download **EcoBrowser for Windows** for free on [Uptodown](https://en.uptodown.com/windows).
-- NOTE:
-  It is recommended to download ecobrowser from the github page because the latest versions release eariler on github due to uptodown requring an update review which takes a week.
+~ NOTE:
+It is recommended to download ecobrowser from the github repo because the latest versions come first on github because Uptodown takes about a week to review the new version.
