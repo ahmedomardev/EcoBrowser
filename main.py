@@ -1,9 +1,20 @@
+#!/usr/bin/env python3
+"""
+EcoBrowser — High-Performance Python Web Browser
+Built with PyQt6-WebEngine, Modern Arc/Chrome-inspired UI,
+Built-in Ad Blocker, NSFW Media Blurring, and AI-Generated Media Watermarking.
+Repository: ahmedomardev/EcoBrowser
+"""
+
 import os
 import sys
 import gc
+import base64
 import json
+import shlex
 import subprocess
 from datetime import datetime
+from urllib.parse import quote, urlsplit
 
 # Windows registry for default browser registration (only on Windows)
 if sys.platform == "win32":
@@ -15,9 +26,11 @@ else:
     reg = None
 
 from PyQt6.QtCore import QUrl, QTimer, Qt, QByteArray, QSize, QStandardPaths
-from PyQt6.QtGui import QIcon, QPixmap, QPainter,QKeySequence, QShortcut, QColor
+from PyQt6.QtGui import QIcon, QPixmap, QPainter, QKeySequence, QShortcut, QColor
+from PyQt6.QtNetwork import QNetworkProxy, QNetworkProxyFactory
 from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWebEngineCore import (
+    QWebEngineGlobalSettings,
     QWebEnginePage,
     QWebEngineProfile,
     QWebEngineUrlRequestInterceptor,
@@ -49,6 +62,9 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QColorDialog,
     QGridLayout,
+    QComboBox,
+    QDialogButtonBox,
+    QFormLayout,
 )
 
 # =============================================================================
@@ -56,7 +72,7 @@ from PyQt6.QtWidgets import (
 # =============================================================================
 
 APP_NAME = "EcoBrowser"
-APP_VERSION = "1.5"
+APP_VERSION = "1.6"
 HOME_URL = "https://www.google.com"
 
 # Built-in Search Engines
@@ -106,6 +122,55 @@ COLOR_PRESETS = [
     {"name": "Gold Amber", "color": "#eab308", "dark_color": "#facc15"},
 ]
 DEFAULT_ACCENT_COLOR = "#58a6ff"
+
+DNS_PROVIDERS = {
+    "cloudflare_family": {
+        "label": "Cloudflare Family",
+        "url": "https://family.cloudflare-dns.com/dns-query",
+    },
+    "cloudflare_standard": {
+        "label": "Cloudflare Standard",
+        "url": "https://cloudflare-dns.com/dns-query",
+    },
+    "custom": {
+        "label": "Custom DNS-over-HTTPS",
+        "url": "",
+    },
+}
+
+DEFAULT_SETTINGS = {
+    "dark_mode": True,
+    "search_engine": DEFAULT_SEARCH_ENGINE,
+    "custom_accent": DEFAULT_ACCENT_COLOR,
+    "registry_registered": False,
+    "dns_enabled": True,
+    "dns_provider": "cloudflare_family",
+    "custom_doh_url": "",
+    "proxy_enabled": False,
+    "proxy_type": "SOCKS5",
+    "proxy_host": "",
+    "proxy_port": 1080,
+    "proxy_username": "",
+    "proxy_password": "",
+}
+
+
+def is_valid_https_url(value):
+    if not value or any(character.isspace() for character in value):
+        return False
+    try:
+        parsed_url = urlsplit(value)
+        port = parsed_url.port
+    except ValueError:
+        return False
+    return (
+        parsed_url.scheme.lower() == "https"
+        and bool(parsed_url.hostname)
+        and parsed_url.username is None
+        and parsed_url.password is None
+        and (port is None or 1 <= port <= 65535)
+    )
+
 
 # Network Filter Lists
 AD_DOMAINS = [
@@ -232,8 +297,8 @@ DARK_THEME = {
 
 # High-resolution, modern SVG Icons
 SVG_ICONS = {
-    "back": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.51-1.51L7.83 13H20v-2z"/></svg>',
-    "forward": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 4l-1.51 1.51L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>',
+    "back": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>',
+    "forward": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>',
     "reload": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>',
     "stop": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
     "new_tab": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>',
@@ -245,10 +310,10 @@ SVG_ICONS = {
     "sparkles": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M9 21.5L10.5 15l6.5-1.5L10.5 12 9 5.5 7.5 12 1 13.5l6.5 1.5L9 21.5zm10-7.5l1-4.5 4.5-1L20 7.5 19 3l-1 4.5-4.5 1 4.5 1 1 4.5z"/></svg>',
     "download": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>',
     "file": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
-    "check_circle": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.51-1.51L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+    "check_circle": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
     "tab_close": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
     "globe": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
-    "palette": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.51.39.39 1.02.39 1.51 0l1.9-1.9C9.23 19.59 10.57 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>',
+    "palette": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.23 19.59 10.57 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>',
     "search": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>',
 }
 
@@ -291,13 +356,30 @@ AI_SAFEGUARD_SCRIPT = r"""
         markAiGenerated: true,
         detectAiSlop: true,
         blurAiSlop: true,
-        autoMuteNsfwVideo: true
+        autoMuteNsfwVideo: true,
+        blockYtPornBots: true
     };
 
     // Keyword heuristics for explicit / adult media attributes (NSFW) - Images & Videos
     const NSFW_PATTERNS = [
         /\b(nude|nudity|nsfw|naked|explicit|porn|porno|xxx|erotic|erotica|sex|sexual|boob|breast|butt|ass|genital|penis|vagina|uncensored|sensual|intimate|topless|tits|cleavage|stripper|fetish|camgirl|onlyfans|fansly|rule34|hentai|nsfw_sensitive|sexvideo|camshow|striptease|hardcore|softcore)\b/i,
         /pornhub|xvideos|xnxx|redtube|youporn|xhamster|stripchat|chaturbate|onlyfans|spankbang|eporner|brazzers|rule34|txxx|tnaflix|porntrex|cam4|livejasmin/i
+    ];
+
+    // YouTube Porn Bot / Comment Spam Patterns (PFP lures, bio redirects, adult spam)
+    const YT_PORN_BOT_PATTERNS = [
+        /\b(tap|click|check|look\s*at|view|see)\s+(my\s+)?(pfp|avatar|profile|bio|channel|page|link|story|feed|photos?|pics?|vids?|videos?)\b/i,
+        /\b(in\s+my\s+(bio|profile|channel|description|telegram|onlyfans|link))\b/i,
+        /\b(link\s+in\s+(bio|description|profile|comments?|channel))\b/i,
+        /\b(nudes?|spicy|exclusive|leaks?|onlyfans|hot\s+vids?|hot\s+photos?|private\s+photos?|camshow)\s+(in|on|at)\s+(my\s+)?(bio|channel|profile|link|telegram)\b/i,
+        /\b(18\+\s*(content|photos?|videos?|dating|singles?|only|exclusive|channel))\b/i,
+        /\b(free\s+onlyfans|fansly\s+link|telegram\s+channel|snapchat\s+premium|adult\s+dating)\b/i,
+        /\b(wanna\s+have\s+fun|lonely\s+tonight|meet\s+singles?|horny\s+tonight|who\s+wants?\s+to\s+see|chat\s+with\s+me)\b/i,
+        /\b(sex\s*dating|hookup|fuck\s*me|hot\s*babes|cam\s*girl|erotic\s*chat)\b/i,
+        /(t[\W_]*a[\W_]*p|c[\W_]*l[\W_]*i[\W_]*c[\W_]*k)[\W_]*(m[\W_]*y)?[\W_]*(p[\W_]*f[\W_]*p|a[\W_]*v[\W_]*a[\W_]*t[\W_]*a[\W_]*r|b[\W_]*i[\W_]*o)/i,
+        /(n[\W_]*u[\W_]*d[\W_]*e[\W_]*s?|p[\W_]*o[\W_]*r[\W_]*n|s[\W_]*e[\W_]*x[\W_]*y?)[\W_]*(in|on)?[\W_]*(b[\W_]*i[\W_]*o|c[\W_]*h[\W_]*a[\W_]*n[\W_]*n[\W_]*e[\W_]*l|p[\W_]*r[\W_]*o[\W_]*f[\W_]*i[\W_]*l[\W_]*e)/i,
+        /[🔞🍑🍆💋👙👅💦🤤👄🍒].*(bio|pfp|avatar|channel|video|telegram|dating|link)/i,
+        /(bio|pfp|avatar|channel|video|telegram|dating|link).*[🔞🍑🍆💋👙👅💦🤤👄🍒]/i
     ];
 
     // Heuristics for AI Slop / Synthetic Spam / Hallucinations / Mutant Anatomy
@@ -315,12 +397,12 @@ AI_SAFEGUARD_SCRIPT = r"""
         /\b(sora|runwayml|runway|gen[-_]?[23]|kling|luma|dream[-_]?machine|pika|pikalabs|hailuo|minimax|animatediff|svd|stable[-_]?video|deforum|text[-_]?to[-_]?video|image[-_]?to[-_]?video|t2v|i2v)\b/i,
         /\b(midjourney|dall[-_]?e|dalle|stable[-_]?diffusion|sdxl|sd1\.5|flux|flux[-_]?(1|schnell|dev)|comfyui|civitai|genai|ai[-_]?generated|synthid|tensorart|novelai|leonardo[-_]?ai|ideogram|wuerstchen|deepfake|synthetic[-_]?media)\b/i,
         /\b(prompt|negative[-_]?prompt|seed|cfg[-_]?scale|steps|sampler|euler|dpm\+\+|checkpoint|lora|denoising)[:=]/i,
-        /v[1-6]_[0-9a-f]{8}/i, // Common Midjourney hash pattern
-        /_(grid_\d|upscaled?|mj_\w+)/i, // Midjourney grid/upscale naming convention
+        /v[1-6]_[0-9a-f]{8}/i,
+        /_(grid_\d|upscaled?|mj_\w+)/i,
         /(oaidalleapiprodscus|images\.midjourney\.com|civitai\.com)/i
     ];
 
-    // Style injection for blur overlays, controls and AI Watermarks
+    // Style injection for blur overlays, controls, AI Watermarks, and YouTube Avatar PFP shields
     const style = document.createElement('style');
     style.id = '__ecobrowser_guard_styles';
     style.textContent = `
@@ -333,6 +415,66 @@ AI_SAFEGUARD_SCRIPT = r"""
         .eco-nsfw-unblurred, .eco-slop-unblurred {
             filter: none !important;
             transition: filter 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        .eco-avatar-blurred {
+            filter: blur(24px) !important;
+            opacity: 0.65 !important;
+            transition: filter 0.3s ease, opacity 0.3s ease !important;
+            pointer-events: auto !important;
+            user-select: none !important;
+        }
+        .eco-avatar-unblurred {
+            filter: none !important;
+            opacity: 1 !important;
+            transition: filter 0.3s ease, opacity 0.3s ease !important;
+        }
+        .eco-avatar-shield-badge {
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: rgba(18, 20, 24, 0.82) !important;
+            backdrop-filter: blur(4px) !important;
+            border-radius: 9999px !important;
+            cursor: pointer !important;
+            font-size: 13px !important;
+            z-index: 100 !important;
+            color: #f87171 !important;
+            border: 1.5px solid rgba(239, 68, 68, 0.7) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+            transition: transform 0.2s ease !important;
+        }
+        .eco-avatar-shield-badge:hover {
+            transform: scale(1.1) !important;
+            background: rgba(220, 38, 38, 0.9) !important;
+            color: #ffffff !important;
+        }
+        .eco-bot-banner {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            color: #fca5a5 !important;
+            background: rgba(153, 27, 27, 0.25) !important;
+            border: 1px solid rgba(239, 68, 68, 0.4) !important;
+            border-radius: 6px !important;
+            padding: 3px 8px !important;
+            margin: 4px 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            cursor: pointer !important;
+        }
+        .eco-bot-comment-shielded {
+            opacity: 0.3 !important;
+            filter: blur(4px) !important;
+            transition: filter 0.25s ease, opacity 0.25s ease !important;
+        }
+        .eco-bot-comment-revealed {
+            opacity: 1 !important;
+            filter: none !important;
         }
         .eco-media-wrapper {
             position: relative !important;
@@ -442,16 +584,197 @@ AI_SAFEGUARD_SCRIPT = r"""
 
     function evaluateTextHeuristics(str) {
         if (!str || typeof str !== 'string') return { isNsfw: false, isAi: false, isSlop: false };
-        const isNsfw = NSFW_PATTERNS.some(p => p.test(str));
+        const isNsfw = NSFW_PATTERNS.some(p => p.test(str)) || YT_PORN_BOT_PATTERNS.some(p => p.test(str));
         const isSlop = AI_SLOP_PATTERNS.some(p => p.test(str));
         const isAi = isSlop || AI_GENERATED_PATTERNS.some(p => p.test(str));
         return { isNsfw, isAi, isSlop };
     }
 
-    // Inspect image / video elements with clean separation between NSFW, AI-Generated, and AI Slop
+    function isSkinPixel(r, g, b) {
+        const y = 0.299 * r + 0.587 * g + 0.114 * b;
+        const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+        const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+        const isYCbCr = cb >= 77 && cb <= 127 && cr >= 133 && cr <= 175 && y > 50;
+        const isRgb = r > 95 && g > 40 && b > 20 && (r - g) > 15 && r > b && (Math.max(r, g, b) - Math.min(r, g, b) > 15);
+        return isYCbCr && isRgb;
+    }
+
+    // Check if element is an avatar / profile picture (YouTube comment author, avatar shape, etc.)
+    function isAvatarElement(elem) {
+        if (!elem) return false;
+        try {
+            if (elem.closest && elem.closest('#author-thumbnail, yt-avatar-shape, ytd-comment-view-model, ytd-comment-renderer, ytd-comment-thread-renderer, #avatar, #channel-header, ytd-channel-name')) {
+                return true;
+            }
+        } catch(e) {}
+        const cls = (elem.className || '') + ' ' + (elem.parentElement ? elem.parentElement.className : '');
+        if (/avatar|profile-pic|pfp|author-thumb|user-pic/i.test(cls)) return true;
+        const id = (elem.id || '') + ' ' + (elem.parentElement ? elem.parentElement.id : '');
+        if (/avatar|profile-pic|pfp|author-thumb/i.test(id)) return true;
+        return false;
+    }
+
+    // Inspect surrounding YouTube comment container for bot author names and lure comments
+    function inspectCommentContext(elem) {
+        let commentBox = null;
+        try {
+            commentBox = elem.closest ? elem.closest('ytd-comment-view-model, ytd-comment-renderer, ytd-comment-thread-renderer, .comment, [class*="comment-renderer"]') : null;
+        } catch(e) {}
+        if (!commentBox) return { isBot: false, reason: '' };
+
+        const contentElem = commentBox.querySelector('#content-text, yt-formatted-string#content-text, .comment-text');
+        const authorElem = commentBox.querySelector('#author-text, a[href*="/@"], .comment-author');
+        
+        const commentText = contentElem ? contentElem.textContent || '' : '';
+        const authorText = authorElem ? authorElem.textContent || '' : '';
+
+        for (const pat of YT_PORN_BOT_PATTERNS) {
+            if (pat.test(authorText)) {
+                return { isBot: true, reason: 'Porn bot author name lure', matched: authorText.match(pat)?.[0] || '', commentBox, contentElem };
+            }
+            if (pat.test(commentText)) {
+                return { isBot: true, reason: 'Porn bot comment lure / bio redirect', matched: commentText.match(pat)?.[0] || '', commentBox, contentElem };
+            }
+        }
+        for (const pat of NSFW_PATTERNS) {
+            if (pat.test(authorText)) {
+                return { isBot: true, reason: 'Adult keyword in author name', matched: authorText.match(pat)?.[0] || '', commentBox, contentElem };
+            }
+            if (pat.test(commentText)) {
+                return { isBot: true, reason: 'Adult keyword in comment text', matched: commentText.match(pat)?.[0] || '', commentBox, contentElem };
+            }
+        }
+        return { isBot: false, reason: '', commentBox, contentElem };
+    }
+
+    function applyAvatarNsfwBlur(elem, reason) {
+        elem.classList.add('eco-avatar-blurred');
+        elem.title = (reason || 'Shielded by EcoBrowser Modesty Guard') + ' • Click shield to reveal';
+
+        const parent = elem.parentElement;
+        if (!parent) return;
+
+        if (window.getComputedStyle(parent).position === 'static') {
+            parent.style.position = 'relative';
+        }
+
+        // Add sleek circular micro-shield overlay
+        let shield = parent.querySelector('.eco-avatar-shield-badge');
+        if (!shield) {
+            shield = document.createElement('div');
+            shield.className = 'eco-avatar-shield-badge';
+            shield.innerHTML = '🔞';
+            shield.title = (reason || 'Porn Bot Avatar') + ' • Click to view';
+            let unblurred = false;
+            shield.onclick = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                unblurred = !unblurred;
+                if (unblurred) {
+                    elem.classList.remove('eco-avatar-blurred');
+                    elem.classList.add('eco-avatar-unblurred');
+                    shield.innerHTML = '👁️';
+                    shield.style.background = 'rgba(0,0,0,0.3)';
+                    shield.title = 'Re-blur Bot Avatar';
+                } else {
+                    elem.classList.remove('eco-avatar-unblurred');
+                    elem.classList.add('eco-avatar-blurred');
+                    shield.innerHTML = '🔞';
+                    shield.style.background = 'rgba(18, 20, 24, 0.82)';
+                    shield.title = (reason || 'Porn Bot Avatar') + ' • Click to view';
+                }
+            };
+            parent.appendChild(shield);
+        }
+    }
+
+    function shieldBotComment(commentBox, contentElem, reason) {
+        if (!commentBox || !contentElem || contentElem.__ecoBotShielded) return;
+        contentElem.__ecoBotShielded = true;
+        contentElem.classList.add('eco-bot-comment-shielded');
+
+        const banner = document.createElement('div');
+        banner.className = 'eco-bot-banner';
+        banner.innerHTML = `<span>🛡️</span><span>Blocked YouTube Porn Bot Comment (${reason}) • Click to show</span>`;
+        let revealed = false;
+        banner.onclick = (e) => {
+            e.stopPropagation();
+            revealed = !revealed;
+            if (revealed) {
+                contentElem.classList.remove('eco-bot-comment-shielded');
+                contentElem.classList.add('eco-bot-comment-revealed');
+                banner.innerHTML = `<span>🔒</span><span>Hide Porn Bot Comment</span>`;
+            } else {
+                contentElem.classList.remove('eco-bot-comment-revealed');
+                contentElem.classList.add('eco-bot-comment-shielded');
+                banner.innerHTML = `<span>🛡️</span><span>Blocked YouTube Porn Bot Comment (${reason}) • Click to show</span>`;
+            }
+        };
+
+        if (contentElem.parentElement) {
+            contentElem.parentElement.insertBefore(banner, contentElem);
+        }
+    }
+
+    function scanImagePixelsForHaram(imgElem, callback) {
+        try {
+            const isAvatar = isAvatarElement(imgElem);
+            const minDim = isAvatar ? 16 : 40;
+            if (!imgElem.complete || (imgElem.naturalWidth || imgElem.width || 0) < minDim) {
+                imgElem.addEventListener('load', () => scanImagePixelsForHaram(imgElem, callback), { once: true });
+                return;
+            }
+
+            const offscreen = new Image();
+            offscreen.crossOrigin = 'anonymous';
+            offscreen.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 48;
+                    canvas.height = 48;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return;
+                    ctx.drawImage(offscreen, 0, 0, 48, 48);
+                    const imgData = ctx.getImageData(0, 0, 48, 48).data;
+                    let total = 0;
+                    let skin = 0;
+                    for (let i = 0; i < imgData.length; i += 16) {
+                        if (imgData[i + 3] < 40) continue;
+                        total++;
+                        if (isSkinPixel(imgData[i], imgData[i + 1], imgData[i + 2])) skin++;
+                    }
+                    if (total > 0) {
+                        const ratio = skin / total;
+                        const threshold = isAvatar ? 0.20 : 0.25;
+                        if (ratio >= threshold) {
+                            callback(true, Math.round(ratio * 100));
+                        }
+                    }
+                } catch(e) {}
+            };
+            offscreen.src = imgElem.currentSrc || imgElem.src || '';
+        } catch(e) {}
+    }
+
+    // Inspect image / video elements with clean separation between NSFW, AI-Generated, AI Slop, and YouTube Porn Bots
     function inspectMediaElement(elem) {
         if (elem.__ecoProcessed) return;
         elem.__ecoProcessed = true;
+
+        const isAvatar = isAvatarElement(elem);
+
+        // Priority 1: YouTube Porn Bot & Comment Spam Avatar Check
+        if (isAvatar && window.__ecoSettings.blockYtPornBots && !elem.__ecoNsfwHandled) {
+            const botCheck = inspectCommentContext(elem);
+            if (botCheck.isBot) {
+                elem.__ecoNsfwHandled = true;
+                applyAvatarNsfwBlur(elem, `🔞 YouTube Porn Bot Avatar Shielded (${botCheck.reason})`);
+                if (botCheck.contentElem && !botCheck.contentElem.__ecoBotShielded) {
+                    shieldBotComment(botCheck.commentBox, botCheck.contentElem, botCheck.reason);
+                }
+                return;
+            }
+        }
 
         let src = elem.currentSrc || elem.src || elem.getAttribute('src') || '';
         const alt = elem.getAttribute('alt') || '';
@@ -485,10 +808,27 @@ AI_SAFEGUARD_SCRIPT = r"""
             attachAiWatermark(elem, label);
         }
 
-        // Filter 3: NSFW Adult Content Blurring (Images & Videos)
-        if (window.__ecoSettings.blurNude && textNsfw && !elem.__ecoNsfwHandled) {
-            elem.__ecoNsfwHandled = true;
-            applyNsfwBlur(elem);
+        // Filter 3: NSFW Adult Content Blurring (Images & Videos) - Text Heuristics + HaramBlur Pixel Scanner
+        if (window.__ecoSettings.blurNude && !elem.__ecoNsfwHandled) {
+            if (textNsfw) {
+                elem.__ecoNsfwHandled = true;
+                if (isAvatar) {
+                    applyAvatarNsfwBlur(elem, '🔞 NSFW Avatar Filtered');
+                } else {
+                    applyNsfwBlur(elem);
+                }
+            } else if (elem.tagName === 'IMG') {
+                scanImagePixelsForHaram(elem, (isSkinNsfw, ratio) => {
+                    if (isSkinNsfw && !elem.__ecoNsfwHandled) {
+                        elem.__ecoNsfwHandled = true;
+                        if (isAvatar) {
+                            applyAvatarNsfwBlur(elem, `🛡️ HaramBlur Avatar Modesty (${ratio}% skin ratio)`);
+                        } else {
+                            applyNsfwBlur(elem);
+                        }
+                    }
+                });
+            }
         }
     }
 
@@ -549,7 +889,7 @@ AI_SAFEGUARD_SCRIPT = r"""
         // Add interactive unlock badge
         const badge = document.createElement('div');
         badge.className = 'eco-nsfw-badge';
-        badge.innerHTML = '<span>👁️</span><span>NSFW Filtered • Click to View</span>';
+        badge.innerHTML = '<span>🛡️</span><span>HaramBlur: NSFW Filtered • Click to View</span>';
         
         let isBlurred = true;
         badge.onclick = (e) => {
@@ -559,11 +899,11 @@ AI_SAFEGUARD_SCRIPT = r"""
             if (isBlurred) {
                 elem.classList.remove('eco-nsfw-unblurred');
                 elem.classList.add('eco-nsfw-blurred');
-                badge.innerHTML = '<span>👁️</span><span>NSFW Filtered • Click to View</span>';
+                badge.innerHTML = '<span>🛡️</span><span>HaramBlur: NSFW Filtered • Click to View</span>';
             } else {
                 elem.classList.remove('eco-nsfw-blurred');
                 elem.classList.add('eco-nsfw-unblurred');
-                badge.innerHTML = '<span>🔒</span><span>Hide Sensitive Content</span>';
+                badge.innerHTML = '<span>🔒</span><span>Re-blur (HaramBlur Modesty)</span>';
                 if (elem.tagName === 'VIDEO') elem.play();
             }
         };
@@ -614,7 +954,7 @@ AI_SAFEGUARD_SCRIPT = r"""
         images.forEach(inspectMediaElement);
     }
 
-    // Dynamic Mutation Observer for lazy-loaded media
+    // Dynamic Mutation Observer for lazy-loaded media & YouTube comments
     const observer = new MutationObserver((mutations) => {
         for (const m of mutations) {
             for (const node of m.addedNodes) {
@@ -811,7 +1151,7 @@ class ContentBlocker(QWebEngineUrlRequestInterceptor):
 
 
 class EcoWebEnginePage(QWebEnginePage):
-    """Handles window.open, target='_blank', and file downloads."""
+    """Handles window.open, target='_blank', and navigation interception for porn/NSFW blocking."""
 
     def __init__(self, profile, browser_window, parent=None):
         super().__init__(profile, parent)
@@ -820,6 +1160,30 @@ class EcoWebEnginePage(QWebEnginePage):
     def createWindow(self, _window_type):
         new_view = self.browser_window.add_new_tab("about:blank")
         return new_view.page()
+
+    def acceptNavigationRequest(self, url, nav_type, is_main_frame):
+        url_str = url.toString()
+        lower = url_str.lower()
+        host = url.host().lower()
+
+        # Intercept explicit adult content & pornography
+        if getattr(self.browser_window.interceptor, "nude_block_enabled", True):
+            is_adult_host = any(domain in host for domain in ADULT_DOMAINS)
+            is_adult_keyword = any(kw in lower for kw in ADULT_KEYWORDS)
+            if is_adult_host or is_adult_keyword:
+                blocked_html = build_blocked_page_html(
+                    host or url_str,
+                    "HaramBlur SafeShield: Adult / Pornography Intercepted",
+                )
+                self.setHtml(blocked_html, url)
+                return False
+
+        # Intercept ad networks
+        if getattr(self.browser_window.interceptor, "ad_block_enabled", True):
+            if any(ad in host for ad in AD_DOMAINS):
+                return False
+
+        return super().acceptNavigationRequest(url, nav_type, is_main_frame)
 
 
 # =============================================================================
@@ -1477,6 +1841,211 @@ class HistoryDialog(QDialog):
         self.text_view.setText("No browsing history found.")
 
 
+class NetworkSettingsDialog(QDialog):
+    def __init__(self, settings, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Network, VPN and DNS — EcoBrowser")
+        self.setMinimumWidth(480)
+        self.values = None
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(12)
+
+        intro = QLabel(
+            "Configure secure DNS and a proxy for EcoBrowser. Proxy routing applies "
+            "to this browser only; it is not a device-wide VPN service."
+        )
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
+
+        dns_group = QGroupBox("Secure DNS (DNS over HTTPS)")
+        dns_layout = QVBoxLayout(dns_group)
+        self.dns_enabled_checkbox = QCheckBox("Use encrypted DNS")
+        self.dns_enabled_checkbox.setChecked(settings.get("dns_enabled", True))
+        dns_layout.addWidget(self.dns_enabled_checkbox)
+
+        dns_form = QFormLayout()
+        self.dns_provider_combo = QComboBox()
+        for provider_key, provider in DNS_PROVIDERS.items():
+            self.dns_provider_combo.addItem(provider["label"], provider_key)
+        saved_provider = settings.get("dns_provider", "cloudflare_family")
+        provider_index = self.dns_provider_combo.findData(saved_provider)
+        self.dns_provider_combo.setCurrentIndex(
+            provider_index if provider_index >= 0 else 0
+        )
+        dns_form.addRow("Resolver", self.dns_provider_combo)
+
+        self.custom_doh_label = QLabel("Custom HTTPS resolver URL")
+        self.custom_doh_input = QLineEdit(settings.get("custom_doh_url", ""))
+        self.custom_doh_input.setPlaceholderText("https://resolver.example/dns-query")
+        dns_form.addRow(self.custom_doh_label, self.custom_doh_input)
+        dns_layout.addLayout(dns_form)
+
+        dns_note = QLabel(
+            "Cloudflare Family filters known malware and adult-content domains. "
+            "Secure DNS does not fall back to unencrypted DNS if the resolver is unavailable."
+        )
+        dns_note.setWordWrap(True)
+        dns_layout.addWidget(dns_note)
+        layout.addWidget(dns_group)
+
+        proxy_group = QGroupBox("VPN / Proxy")
+        proxy_layout = QVBoxLayout(proxy_group)
+        self.proxy_enabled_checkbox = QCheckBox(
+            "Route EcoBrowser traffic through my proxy"
+        )
+        self.proxy_enabled_checkbox.setChecked(settings.get("proxy_enabled", False))
+        proxy_layout.addWidget(self.proxy_enabled_checkbox)
+
+        proxy_form = QFormLayout()
+        self.proxy_type_combo = QComboBox()
+        self.proxy_type_combo.addItem("SOCKS5", "SOCKS5")
+        self.proxy_type_combo.addItem("HTTP", "HTTP")
+        saved_proxy_type = settings.get("proxy_type", "SOCKS5")
+        proxy_index = self.proxy_type_combo.findData(saved_proxy_type)
+        self.proxy_type_combo.setCurrentIndex(proxy_index if proxy_index >= 0 else 0)
+        proxy_form.addRow("Proxy type", self.proxy_type_combo)
+
+        self.proxy_host_input = QLineEdit(settings.get("proxy_host", ""))
+        self.proxy_host_input.setPlaceholderText("Host name or IP address")
+        proxy_form.addRow("Proxy host", self.proxy_host_input)
+
+        self.proxy_port_input = QLineEdit(
+            str(settings.get("proxy_port", DEFAULT_SETTINGS["proxy_port"]))
+        )
+        self.proxy_port_input.setPlaceholderText("1080")
+        proxy_form.addRow("Port", self.proxy_port_input)
+
+        self.proxy_username_input = QLineEdit(settings.get("proxy_username", ""))
+        self.proxy_username_input.setPlaceholderText("Proxy account username")
+        proxy_form.addRow("Username", self.proxy_username_input)
+
+        self.proxy_password_input = QLineEdit(settings.get("proxy_password", ""))
+        self.proxy_password_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.proxy_password_input.setPlaceholderText("Proxy account password")
+        proxy_form.addRow("Password", self.proxy_password_input)
+        proxy_layout.addLayout(proxy_form)
+
+        proxy_note = QLabel(
+            "HTTP proxies can use these credentials. Chromium does not support "
+            "username/password authentication for SOCKS5 proxies. Credentials are "
+            "encrypted for your Windows account. Use only a trusted HTTP proxy because "
+            "some proxy authentication methods can expose credentials on the connection."
+        )
+        proxy_note.setWordWrap(True)
+        proxy_layout.addWidget(proxy_note)
+        layout.addWidget(proxy_group)
+
+        restart_note = QLabel(
+            "Save these settings, then restart EcoBrowser for them to take effect."
+        )
+        restart_note.setWordWrap(True)
+        layout.addWidget(restart_note)
+
+        self.dns_enabled_checkbox.toggled.connect(self._update_control_states)
+        self.dns_provider_combo.currentIndexChanged.connect(self._update_control_states)
+        self.proxy_enabled_checkbox.toggled.connect(self._update_control_states)
+        self.proxy_type_combo.currentIndexChanged.connect(self._update_control_states)
+        self.proxy_username_input.textChanged.connect(self._update_control_states)
+        self.proxy_password_input.textChanged.connect(self._update_control_states)
+        self._update_control_states()
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save
+            | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self._accept_settings)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def _update_control_states(self, *_):
+        dns_enabled = self.dns_enabled_checkbox.isChecked()
+        is_custom_dns = self.dns_provider_combo.currentData() == "custom"
+        self.dns_provider_combo.setEnabled(dns_enabled)
+        self.custom_doh_label.setVisible(dns_enabled and is_custom_dns)
+        self.custom_doh_input.setVisible(dns_enabled and is_custom_dns)
+        proxy_enabled = self.proxy_enabled_checkbox.isChecked()
+        is_http_proxy = self.proxy_type_combo.currentData() == "HTTP"
+        self.proxy_type_combo.setEnabled(proxy_enabled)
+        self.proxy_host_input.setEnabled(proxy_enabled)
+        self.proxy_port_input.setEnabled(proxy_enabled)
+        has_saved_credentials = bool(
+            self.proxy_username_input.text() or self.proxy_password_input.text()
+        )
+        auth_fields_enabled = is_http_proxy or has_saved_credentials
+        self.proxy_username_input.setEnabled(auth_fields_enabled)
+        self.proxy_password_input.setEnabled(auth_fields_enabled)
+
+    def _accept_settings(self):
+        dns_enabled = self.dns_enabled_checkbox.isChecked()
+        dns_provider = self.dns_provider_combo.currentData()
+        custom_doh_url = self.custom_doh_input.text().strip()
+        if (
+            dns_enabled
+            and dns_provider == "custom"
+            and not is_valid_https_url(custom_doh_url)
+        ):
+            QMessageBox.warning(
+                self,
+                "Invalid DNS URL",
+                "Enter a valid HTTPS DNS-over-HTTPS URL without embedded credentials.",
+            )
+            return
+
+        proxy_enabled = self.proxy_enabled_checkbox.isChecked()
+        proxy_host = self.proxy_host_input.text().strip()
+        port_text = self.proxy_port_input.text().strip()
+        proxy_type = self.proxy_type_combo.currentData()
+        proxy_username = self.proxy_username_input.text()
+        proxy_password = self.proxy_password_input.text()
+        if bool(proxy_username) != bool(proxy_password):
+            QMessageBox.warning(
+                self,
+                "Incomplete proxy credentials",
+                "Enter both a proxy username and password, or leave both blank.",
+            )
+            return
+        if (proxy_username or proxy_password) and proxy_type != "HTTP":
+            QMessageBox.warning(
+                self,
+                "SOCKS5 authentication unavailable",
+                "Chromium does not support username/password authentication for "
+                "SOCKS5 proxies. Choose HTTP or clear both credential fields.",
+            )
+            return
+        if proxy_enabled:
+            if not proxy_host or any(character.isspace() for character in proxy_host):
+                QMessageBox.warning(
+                    self,
+                    "Invalid proxy host",
+                    "Enter a valid proxy host or IP address.",
+                )
+                return
+            if not port_text.isdigit() or not 1 <= int(port_text) <= 65535:
+                QMessageBox.warning(
+                    self, "Invalid proxy port", "Enter a port from 1 to 65535."
+                )
+                return
+
+        self.values = {
+            "dns_enabled": dns_enabled,
+            "dns_provider": dns_provider,
+            "custom_doh_url": custom_doh_url,
+            "proxy_enabled": proxy_enabled,
+            "proxy_type": proxy_type,
+            "proxy_host": proxy_host,
+            "proxy_username": proxy_username,
+            "proxy_password": proxy_password,
+            "proxy_port": (
+                int(port_text)
+                if port_text.isdigit()
+                else DEFAULT_SETTINGS["proxy_port"]
+            ),
+        }
+        self.accept()
+
+
 # =============================================================================
 # Main Window: Modern EcoBrowser
 # =============================================================================
@@ -1581,6 +2150,9 @@ class EcoBrowserWindow(QMainWindow):
         self.tab_bar.setElideMode(Qt.TextElideMode.ElideRight)
         self.tab_bar.setIconSize(QSize(16, 16))
         self.tab_bar.currentChanged.connect(self.switch_tab)
+        self.tab_bar.tabMoved.connect(self.on_tab_moved)
+        self.tab_bar.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tab_bar.customContextMenuRequested.connect(self.show_tab_context_menu)
         tab_strip_layout.addWidget(self.tab_bar)
 
         self.new_tab_button = QPushButton()
@@ -1666,6 +2238,9 @@ class EcoBrowserWindow(QMainWindow):
         theme = DARK_THEME if self.is_dark_mode else LIGHT_THEME
         self.menu = QMenu(self)
         self.menu.addAction("Blockers and filters", self.open_block_manager_dialog)
+        self.menu.addAction(
+            "Network / VPN and DNS...", self.open_network_settings_dialog
+        )
         self.menu.addSeparator()
 
         # 1. Search Engine selection submenu
@@ -1731,6 +2306,21 @@ class EcoBrowserWindow(QMainWindow):
     def open_color_customizer_dialog(self):
         dialog = ColorCustomizerDialog(self)
         dialog.exec()
+
+    def open_network_settings_dialog(self):
+        dialog = NetworkSettingsDialog(self.settings, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted or dialog.values is None:
+            return
+
+        if not self.save_settings_batch(dialog.values):
+            return
+
+        QMessageBox.information(
+            self,
+            "Network settings saved",
+            "Your DNS and proxy settings have been saved. Restart EcoBrowser to apply them.\n\n"
+            "The proxy affects EcoBrowser only; it does not create a device-wide VPN.",
+        )
 
     def toggle_or_view_registry_status(self):
         if sys.platform != "win32" or reg is None:
@@ -1873,32 +2463,36 @@ class EcoBrowserWindow(QMainWindow):
         return os.path.join(get_app_data_folder(), "settings.json")
 
     def load_all_settings(self):
-        path = self.settings_file_path()
-        defaults = {
-            "dark_mode": True,
-            "search_engine": DEFAULT_SEARCH_ENGINE,
-            "custom_accent": DEFAULT_ACCENT_COLOR,
-            "registry_registered": False,
-        }
-        if not os.path.exists(path):
-            return defaults
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                defaults.update(data)
-                return defaults
-        except Exception:
-            return defaults
+        return load_saved_settings()
 
     def save_setting(self, key, value):
         path = self.settings_file_path()
         current = self.load_all_settings()
         current[key] = value
         try:
+            stored_settings = prepare_settings_for_storage(current)
             with open(path, "w", encoding="utf-8") as f:
-                json.dump(current, f, indent=4)
+                json.dump(stored_settings, f, indent=4)
         except Exception:
             pass
+
+    def save_settings_batch(self, updates):
+        path = self.settings_file_path()
+        current = self.load_all_settings()
+        current.update(updates)
+        try:
+            stored_settings = prepare_settings_for_storage(current)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(stored_settings, f, indent=4)
+        except Exception as error:
+            QMessageBox.warning(
+                self,
+                "Could not save settings securely",
+                f"EcoBrowser could not save these settings:\n{error}",
+            )
+            return False
+        self.settings = current
+        return True
 
     def load_theme_setting(self):
         return self.load_all_settings().get("dark_mode", True)
@@ -2027,10 +2621,6 @@ class EcoBrowserWindow(QMainWindow):
         web_view.loadFinished.connect(
             lambda ok, view=web_view: self.handle_load_finished(view, ok)
         )
-        page.navigationRequested.connect(
-            lambda req, view=web_view: self.handle_navigation(req, view)
-        )
-
         stack_index = self.stack.addWidget(web_view)
 
         theme = DARK_THEME if self.is_dark_mode else LIGHT_THEME
@@ -2044,6 +2634,57 @@ class EcoBrowserWindow(QMainWindow):
         self.stack.setCurrentIndex(stack_index)
         web_view.setUrl(QUrl(url))
         return web_view
+
+    def on_tab_moved(self, from_idx, to_idx):
+        if from_idx == to_idx:
+            return
+        # Move corresponding web view widget inside QStackedWidget so tabs and web pages stay strictly 1:1!
+        widget = self.stack.widget(from_idx)
+        if widget:
+            self.stack.removeWidget(widget)
+            self.stack.insertWidget(to_idx, widget)
+            self.stack.setCurrentIndex(to_idx)
+        self._update_all_tab_close_buttons()
+        view = self.get_current_view()
+        if view:
+            self.sync_address_bar(view)
+
+    def show_tab_context_menu(self, pos):
+        tab_index = self.tab_bar.tabAt(pos)
+        if tab_index < 0:
+            return
+        menu = QMenu(self)
+        new_win_action = menu.addAction("Snap Out into New Window (Edge Multitasking)")
+        new_win_action.triggered.connect(lambda: self.detach_tab_to_window(tab_index))
+        menu.addSeparator()
+        if tab_index > 0:
+            move_left = menu.addAction("Move Tab Left")
+            move_left.triggered.connect(lambda: self.move_tab_direction(tab_index, -1))
+        if tab_index < self.tab_bar.count() - 1:
+            move_right = menu.addAction("Move Tab Right")
+            move_right.triggered.connect(lambda: self.move_tab_direction(tab_index, 1))
+        menu.addSeparator()
+        close_action = menu.addAction("Close Tab")
+        close_action.triggered.connect(lambda: self.close_tab(tab_index))
+        menu.exec(self.tab_bar.mapToGlobal(pos))
+
+    def move_tab_direction(self, index, direction):
+        target = index + direction
+        if 0 <= target < self.tab_bar.count():
+            self.tab_bar.moveTab(index, target)
+
+    def detach_tab_to_window(self, index):
+        if index < 0 or index >= self.tab_bar.count():
+            return
+        view = self.stack.widget(index)
+        url = view.url().toString() if view else self.home_url
+        new_win = EcoBrowser(initial_url=url)
+        new_win.show()
+        if not hasattr(self, "_detached_windows"):
+            self._detached_windows = []
+        self._detached_windows.append(new_win)
+        if self.tab_bar.count() > 1:
+            self.close_tab(index)
 
     def close_tab(self, index):
         if self.tab_bar.count() <= 1:
@@ -2415,14 +3056,357 @@ def get_app_data_folder():
     return folder
 
 
+PROXY_CREDENTIALS_STORAGE_KEY = "proxy_credentials_dpapi"
+
+
+def _dpapi_crypt(data, protect):
+    if sys.platform != "win32":
+        raise RuntimeError(
+            "Saving proxy credentials is supported on Windows using Windows DPAPI."
+        )
+
+    import ctypes
+    from ctypes import wintypes
+
+    class DataBlob(ctypes.Structure):
+        _fields_ = [
+            ("cbData", wintypes.DWORD),
+            ("pbData", ctypes.POINTER(ctypes.c_ubyte)),
+        ]
+
+    input_buffer = (ctypes.c_ubyte * len(data)).from_buffer_copy(data)
+    input_blob = DataBlob(
+        len(data), ctypes.cast(input_buffer, ctypes.POINTER(ctypes.c_ubyte))
+    )
+    output_blob = DataBlob()
+    crypt32 = ctypes.WinDLL("crypt32", use_last_error=True)
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.LocalFree.argtypes = [ctypes.c_void_p]
+    kernel32.LocalFree.restype = ctypes.c_void_p
+
+    flags = 0x1  # CRYPTPROTECT_UI_FORBIDDEN
+    description = wintypes.LPWSTR()
+    if protect:
+        crypt_function = crypt32.CryptProtectData
+        crypt_function.argtypes = [
+            ctypes.POINTER(DataBlob),
+            wintypes.LPCWSTR,
+            ctypes.POINTER(DataBlob),
+            wintypes.LPVOID,
+            wintypes.LPVOID,
+            wintypes.DWORD,
+            ctypes.POINTER(DataBlob),
+        ]
+        arguments = (
+            ctypes.byref(input_blob),
+            "EcoBrowser proxy credentials",
+            None,
+            None,
+            None,
+            flags,
+            ctypes.byref(output_blob),
+        )
+    else:
+        crypt_function = crypt32.CryptUnprotectData
+        crypt_function.argtypes = [
+            ctypes.POINTER(DataBlob),
+            ctypes.POINTER(wintypes.LPWSTR),
+            ctypes.POINTER(DataBlob),
+            wintypes.LPVOID,
+            wintypes.LPVOID,
+            wintypes.DWORD,
+            ctypes.POINTER(DataBlob),
+        ]
+        arguments = (
+            ctypes.byref(input_blob),
+            ctypes.byref(description),
+            None,
+            None,
+            None,
+            flags,
+            ctypes.byref(output_blob),
+        )
+    crypt_function.restype = wintypes.BOOL
+
+    try:
+        if not crypt_function(*arguments):
+            raise ctypes.WinError(ctypes.get_last_error())
+        return ctypes.string_at(output_blob.pbData, output_blob.cbData)
+    finally:
+        if output_blob.pbData:
+            kernel32.LocalFree(ctypes.cast(output_blob.pbData, ctypes.c_void_p))
+        if description:
+            kernel32.LocalFree(ctypes.cast(description, ctypes.c_void_p))
+
+
+def protect_proxy_credentials(username, password):
+    if not username and not password:
+        return None
+    payload = json.dumps(
+        {"username": username, "password": password}, ensure_ascii=False
+    ).encode("utf-8")
+    return base64.b64encode(_dpapi_crypt(payload, protect=True)).decode("ascii")
+
+
+def unprotect_proxy_credentials(protected_value):
+    encrypted = base64.b64decode(protected_value, validate=True)
+    data = json.loads(_dpapi_crypt(encrypted, protect=False).decode("utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("Saved proxy credentials have an invalid format.")
+    return {
+        "proxy_username": str(data.get("username", "")),
+        "proxy_password": str(data.get("password", "")),
+    }
+
+
+def prepare_settings_for_storage(settings):
+    stored_settings = dict(settings)
+    username = str(stored_settings.pop("proxy_username", "") or "")
+    password = str(stored_settings.pop("proxy_password", "") or "")
+    stored_settings.pop("proxy_credentials_error", None)
+    stored_settings.pop(PROXY_CREDENTIALS_STORAGE_KEY, None)
+
+    if bool(username) != bool(password):
+        raise ValueError("Both a proxy username and password must be configured.")
+    protected_credentials = protect_proxy_credentials(username, password)
+    if protected_credentials:
+        stored_settings[PROXY_CREDENTIALS_STORAGE_KEY] = protected_credentials
+    return stored_settings
+
+
+def load_saved_settings():
+    settings = dict(DEFAULT_SETTINGS)
+    settings_path = os.path.join(get_app_data_folder(), "settings.json")
+    try:
+        with open(settings_path, "r", encoding="utf-8") as settings_file:
+            saved_settings = json.load(settings_file)
+        if isinstance(saved_settings, dict):
+            protected_credentials = saved_settings.pop(
+                PROXY_CREDENTIALS_STORAGE_KEY, None
+            )
+            settings.update(saved_settings)
+            if protected_credentials:
+                try:
+                    settings.update(unprotect_proxy_credentials(protected_credentials))
+                except Exception:
+                    settings["proxy_username"] = ""
+                    settings["proxy_password"] = ""
+                    settings["proxy_credentials_error"] = True
+    except (OSError, json.JSONDecodeError):
+        pass
+    return settings
+
+
+def get_dns_server_template(settings):
+    if not settings.get("dns_enabled", True):
+        return None
+
+    provider_key = settings.get("dns_provider", "cloudflare_family")
+    provider = DNS_PROVIDERS.get(provider_key, DNS_PROVIDERS["cloudflare_family"])
+    server_template = (
+        settings.get("custom_doh_url", "")
+        if provider_key == "custom"
+        else provider["url"]
+    )
+    if not is_valid_https_url(server_template):
+        raise ValueError("The configured DNS-over-HTTPS URL must be a valid HTTPS URL.")
+    return server_template
+
+
+def _take_chromium_switch(arguments, switch_name):
+    kept = []
+    values = []
+    index = 0
+    while index < len(arguments):
+        argument = arguments[index]
+        if argument == switch_name:
+            if index + 1 < len(arguments):
+                values.append(arguments[index + 1])
+                index += 2
+            else:
+                index += 1
+        elif argument.startswith(f"{switch_name}="):
+            values.append(argument.split("=", 1)[1])
+            index += 1
+        else:
+            kept.append(argument)
+            index += 1
+    return kept, values
+
+
+def _merge_switch_items(values):
+    return list(
+        dict.fromkeys(item for value in values for item in value.split(",") if item)
+    )
+
+
+def configure_chromium_doh_flags(server_template):
+    """Configure DoH for PyQt builds that do not expose setDnsMode()."""
+    arguments = shlex.split(os.environ.get("QTWEBENGINE_CHROMIUM_FLAGS", ""))
+
+    switch_values = {}
+    for switch_name in (
+        "--enable-features",
+        "--disable-features",
+        "--force-fieldtrials",
+        "--force-fieldtrial-params",
+    ):
+        arguments, values = _take_chromium_switch(arguments, switch_name)
+        switch_values[switch_name] = values
+
+    def is_doh_feature(feature):
+        feature_name = feature.split("<", 1)[0].split(":", 1)[0].lower()
+        return feature_name in {"dnsoverhttps", "dns-over-https"}
+
+    enabled_features = [
+        feature
+        for feature in _merge_switch_items(switch_values["--enable-features"])
+        if not is_doh_feature(feature)
+    ]
+    disabled_features = [
+        feature
+        for feature in _merge_switch_items(switch_values["--disable-features"])
+        if not is_doh_feature(feature)
+    ]
+
+    field_trials = []
+    trial_values = [
+        item
+        for value in switch_values["--force-fieldtrials"]
+        for item in value.split("/")
+    ]
+    for index in range(0, len(trial_values) - 1, 2):
+        if trial_values[index] != "DoHTrial":
+            field_trials.extend(trial_values[index : index + 2])
+
+    trial_params = [
+        item
+        for value in switch_values["--force-fieldtrial-params"]
+        for item in value.split(",")
+        if item and not item.startswith("DoHTrial.Group1:")
+    ]
+
+    if server_template:
+        enabled_features.append("DnsOverHttps<DoHTrial")
+        field_trials.extend(["DoHTrial", "Group1"])
+        encoded_template = quote(server_template, safe="")
+        trial_params.append(
+            f"DoHTrial.Group1:Fallback/false/Templates/{encoded_template}"
+        )
+    else:
+        disabled_features.append("DnsOverHttps")
+
+    final_switches = (
+        ("--enable-features", enabled_features),
+        ("--disable-features", disabled_features),
+        ("--force-fieldtrials", field_trials),
+        ("--force-fieldtrial-params", trial_params),
+    )
+    for switch_name, values in final_switches:
+        if values:
+            separator = (
+                "," if "features" in switch_name or "params" in switch_name else "/"
+            )
+            arguments.append(f"{switch_name}={separator.join(values)}")
+
+    # Qt reads this as a Chromium argument string, not a shell command. Avoid
+    # shell-specific quoting because the browser may run on Windows.
+    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = " ".join(arguments)
+
+
+def apply_webengine_network_settings(settings, doh_flags_preconfigured=False):
+    dns_server_template = get_dns_server_template(settings)
+    dns_setter = getattr(QWebEngineGlobalSettings, "setDnsMode", None)
+    if callable(dns_setter):
+        dns_mode = QWebEngineGlobalSettings.DnsMode()
+        if dns_server_template:
+            dns_mode.secureMode = QWebEngineGlobalSettings.SecureDnsMode.SecureOnly
+            dns_mode.serverTemplates = [dns_server_template]
+        else:
+            dns_mode.secureMode = QWebEngineGlobalSettings.SecureDnsMode.SystemOnly
+            dns_mode.serverTemplates = []
+
+        if not dns_setter(dns_mode):
+            raise RuntimeError("Qt WebEngine rejected the DNS-over-HTTPS settings.")
+    elif not doh_flags_preconfigured:
+        configure_chromium_doh_flags(dns_server_template)
+
+    if not settings.get("proxy_enabled", False):
+        QNetworkProxyFactory.setUseSystemConfiguration(True)
+        return
+
+    proxy_host = str(settings.get("proxy_host", "")).strip()
+    proxy_port = int(settings.get("proxy_port", DEFAULT_SETTINGS["proxy_port"]))
+    if not proxy_host or not 1 <= proxy_port <= 65535:
+        raise ValueError("The configured browser proxy host or port is invalid.")
+
+    if settings.get("proxy_type", "SOCKS5") == "HTTP":
+        proxy_type = QNetworkProxy.ProxyType.HttpProxy
+    else:
+        proxy_type = QNetworkProxy.ProxyType.Socks5Proxy
+    proxy = QNetworkProxy(proxy_type, proxy_host, proxy_port)
+    proxy_username = str(settings.get("proxy_username", ""))
+    proxy_password = str(settings.get("proxy_password", ""))
+    if bool(proxy_username) != bool(proxy_password):
+        raise ValueError("Both a proxy username and password must be configured.")
+    if proxy_username and settings.get("proxy_type", "SOCKS5") != "HTTP":
+        raise ValueError(
+            "Chromium does not support username/password authentication for SOCKS5 proxies."
+        )
+    if proxy_username:
+        proxy.setUser(proxy_username)
+        proxy.setPassword(proxy_password)
+    QNetworkProxyFactory.setUseSystemConfiguration(False)
+    QNetworkProxy.setApplicationProxy(proxy)
+
+
 def get_initial_url_from_args(argv):
     return argv[1] if len(argv) > 1 and argv[1].startswith("http") else None
 
 
 if __name__ == "__main__":
     register_as_browser()
+    startup_settings = load_saved_settings()
+    doh_flags_preconfigured = not callable(
+        getattr(QWebEngineGlobalSettings, "setDnsMode", None)
+    )
+    if doh_flags_preconfigured:
+        try:
+            configure_chromium_doh_flags(get_dns_server_template(startup_settings))
+        except ValueError as error:
+            startup_network_error = error
+        else:
+            startup_network_error = None
+    else:
+        startup_network_error = None
+
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
+    if startup_settings.get("proxy_credentials_error"):
+        QMessageBox.warning(
+            None,
+            "Proxy credentials unavailable",
+            "EcoBrowser could not decrypt the saved proxy credentials for this "
+            "Windows account. Re-enter the username and password in Network settings.",
+        )
+    if startup_network_error:
+        QMessageBox.critical(
+            None,
+            "Network settings error",
+            f"EcoBrowser could not apply its DNS settings:\n{startup_network_error}",
+        )
+        sys.exit(1)
+    try:
+        apply_webengine_network_settings(
+            startup_settings, doh_flags_preconfigured=doh_flags_preconfigured
+        )
+    except (RuntimeError, ValueError) as error:
+        QMessageBox.critical(
+            None,
+            "Network settings error",
+            f"EcoBrowser could not apply its DNS or proxy settings:\n{error}",
+        )
+        sys.exit(1)
     window = EcoBrowserWindow(get_initial_url_from_args(sys.argv))
     window.show()
     sys.exit(app.exec())
