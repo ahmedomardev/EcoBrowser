@@ -72,7 +72,7 @@ from PyQt6.QtWidgets import (
 # =============================================================================
 
 APP_NAME = "EcoBrowser"
-APP_VERSION = "1.6"
+APP_VERSION = "1.7"
 HOME_URL = "https://www.google.com"
 
 # Built-in Search Engines
@@ -123,6 +123,57 @@ COLOR_PRESETS = [
 ]
 DEFAULT_ACCENT_COLOR = "#58a6ff"
 
+# Reader Mode Constants
+READER_THEMES = {
+    "auto": {
+        "label": "Auto (Match Browser)",
+        "light_bg": "#ffffff",
+        "light_fg": "#1a1a1a",
+        "dark_bg": "#121418",
+        "dark_fg": "#e6edf3",
+    },
+    "light": {"label": "Light", "bg": "#ffffff", "fg": "#1a1a1a", "accent": "#0969da"},
+    "sepia": {"label": "Sepia", "bg": "#f4ecd8", "fg": "#5b4636", "accent": "#8b5e34"},
+    "dark": {"label": "Dark", "bg": "#1a1a1a", "fg": "#e0e0e0", "accent": "#58a6ff"},
+    "paper": {"label": "Paper", "bg": "#fdfcf9", "fg": "#2d2d2d", "accent": "#1a7f37"},
+    "midnight": {
+        "label": "Midnight",
+        "bg": "#0d1117",
+        "fg": "#c9d1d9",
+        "accent": "#f778ba",
+    },
+}
+
+READER_FONTS = {
+    "serif": {
+        "label": "Serif (Literata)",
+        "stack": "Georgia, 'Times New Roman', Literata, serif",
+    },
+    "sans": {
+        "label": "Sans (System)",
+        "stack": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    },
+    "mono": {
+        "label": "Mono (JetBrains)",
+        "stack": "'JetBrains Mono', 'SF Mono', Consolas, monospace",
+    },
+    "dyslexic": {
+        "label": "Dyslexic-Friendly",
+        "stack": "'OpenDyslexic', 'Lexie Readable', Verdana, sans-serif",
+    },
+    "news": {
+        "label": "News (Charter)",
+        "stack": "Charter, 'Bitstream Charter', Georgia, serif",
+    },
+}
+
+READER_WIDTHS = {
+    "narrow": {"label": "Narrow", "px": 640},
+    "medium": {"label": "Medium", "px": 740},
+    "wide": {"label": "Wide", "px": 860},
+    "xwide": {"label": "Extra Wide", "px": 1020},
+}
+
 DNS_PROVIDERS = {
     "cloudflare_family": {
         "label": "Cloudflare Family",
@@ -152,6 +203,28 @@ DEFAULT_SETTINGS = {
     "proxy_port": 1080,
     "proxy_username": "",
     "proxy_password": "",
+    # Reader Mode defaults
+    "reader_font": "serif",
+    "reader_font_size": 19,
+    "reader_line_height": 1.8,
+    "reader_width": "medium",
+    "reader_theme": "auto",
+    "reader_text_align": "start",
+    # Userscript manager
+    "userscripts_enabled": True,
+    # Toolbar customization - what to pin
+    "toolbar_pinned": {
+        "back": True,
+        "forward": True,
+        "reload": True,
+        "reader": True,
+        "userscript": True,
+        "downloads": True,
+        "vpn": True,
+        "blockers": True,
+        "bookmarks": True,
+    },
+    "reader_hide_chrome": True,
 }
 
 
@@ -315,6 +388,15 @@ SVG_ICONS = {
     "globe": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
     "palette": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.23 19.59 10.57 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>',
     "search": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>',
+    "reader": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M19 4H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V6h14v12zM7 8h10v2H7V8zm0 4h10v2H7v-2zm0 4h7v2H7v-2z"/></svg>',
+    "reader_active": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7v-7zm4-3h2v10h-2V7zm4 6h2v4h-2v-4z"/></svg>',
+    "code": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>',
+    "script": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 14H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
+    "text_size": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M2.5 4v3h5v12h3V7h5V4h-13zm19 5v3h-5v12h-3V9h-5V6.5h13z"/></svg>',
+    "vpn": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4c1.86 0 3.41 1.28 3.86 3H21v2c0 4.29-2.91 8.29-9 9.87-6.09-1.58-9-5.58-9-9.87v-2h5.14C8.59 6.28 10.14 5 12 5zm0 2a2 2 0 100 4 2 2 0 000-4z"/></svg>',
+    "shield": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-4-4 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z"/></svg>',
+    "pin": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M16 9V4L8 4v5l-4 4v2h5v5h2v-5h5v-2l-4-4z"/></svg>',
+    "close_small": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
 }
 
 
@@ -978,6 +1060,473 @@ AI_SAFEGUARD_SCRIPT = r"""
 """
 
 # =============================================================================
+# Reader Mode: Distraction-Free Reading View (Pairs with Content Blocker)
+# =============================================================================
+
+READER_MODE_JS = r"""
+(function() {
+    if (window.__ecoReaderInitialized) return;
+    window.__ecoReaderInitialized = true;
+
+    const READER_THEMES_CSS = {
+        light: { bg: '#ffffff', fg: '#1a1a1a', muted: '#6b7280', border: '#e5e7eb', accent: '#0969da', codeBg: '#f3f4f6' },
+        sepia: { bg: '#f4ecd8', fg: '#5b4636', muted: '#8b7355', border: '#e8dcc6', accent: '#8b5e34', codeBg: '#efe3c8' },
+        dark: { bg: '#1e2229', fg: '#e6edf3', muted: '#8b949e', border: '#30363d', accent: '#58a6ff', codeBg: '#161b22' },
+        paper: { bg: '#fdfcf9', fg: '#2d2d2d', muted: '#6b6b6b', border: '#ece9e3', accent: '#1a7f37', codeBg: '#f6f3ee' },
+        midnight: { bg: '#0d1117', fg: '#c9d1d9', muted: '#8b949e', border: '#21262d', accent: '#f778ba', codeBg: '#161b22' },
+        auto: null
+    };
+
+    const POSITIVE_RE = /article|body|content|entry|hentry|main|page|post|text|blog|story|story-body|article-body/i;
+    const NEGATIVE_RE = /comment|combx|disqus|foot|header|menu|nav|remark|rss|shoutbox|sidebar|sponsor|ad-break|agegate|pagination|pager|popup|tweet|twitter|social|advert|comic|share|login|form|signup|related|recommended|trending|promo/i;
+    const UNLIKELY_CANDIDATES = /combx|comment|community|disqus|extra|foot|header|menu|remark|rss|shoutbox|sidebar|sponsor|ad-break|agegate|pagination|pager|popup|tweet|twitter|social|advert|comic|share|login|form|signup/i;
+    const OK_MAYBE_CANDIDATE = /and|article|body|column|main|shadow/i;
+
+    window.__ecoReader = {
+        isActive: false,
+        original: { html: null, scrollY: 0, bodyOverflow: '' },
+        settings: {
+            font: 'serif',
+            fontSize: 19,
+            lineHeight: 1.8,
+            width: 'medium',
+            theme: 'auto',
+            textAlign: 'start',
+            isDarkBrowser: false
+        },
+        articleMeta: null,
+
+        _injectBaseStyles() {
+            if (document.getElementById('__ecoReader_base')) return;
+            const s = document.createElement('style');
+            s.id = '__ecoReader_base';
+            s.textContent = `
+                #eco-reader-overlay {
+                    position: fixed !important;
+                    inset: 0 !important;
+                    z-index: 2147483646 !important;
+                    overflow-y: auto !important;
+                    overflow-x: hidden !important;
+                    -webkit-font-smoothing: antialiased !important;
+                    font-synthesis: none !important;
+                    overscroll-behavior: contain !important;
+                }
+                #eco-reader-overlay * { box-sizing: border-box !important; }
+                .eco-reader-toolbar {
+                    position: sticky !important;
+                    top: 0 !important;
+                    z-index: 10 !important;
+                    backdrop-filter: blur(16px) !important;
+                    -webkit-backdrop-filter: blur(16px) !important;
+                    border-bottom: 1px solid var(--er-border) !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    padding: 10px 18px 10px 56px !important;
+                    gap: 12px !important;
+                }
+                .eco-reader-toolbar-group { display: flex !important; align-items: center !important; gap: 8px !important; flex-wrap: wrap !important; }
+                .eco-reader-btn {
+                    appearance: none !important;
+                    border: 1px solid var(--er-border) !important;
+                    background: var(--er-bg) !important;
+                    color: var(--er-fg) !important;
+                    border-radius: 9999px !important;
+                    padding: 6px 12px !important;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+                    font-size: 12.5px !important;
+                    font-weight: 500 !important;
+                    cursor: pointer !important;
+                    transition: all .2s ease !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    user-select: none !important;
+                }
+                .eco-reader-btn:hover { transform: translateY(-1px) !important; filter: brightness(1.08) !important; }
+                .eco-reader-btn.active { background: var(--er-accent) !important; color: white !important; border-color: var(--er-accent) !important; }
+                .eco-reader-select {
+                    background: var(--er-bg) !important;
+                    color: var(--er-fg) !important;
+                    border: 1px solid var(--er-border) !important;
+                    border-radius: 8px !important;
+                    padding: 6px 10px !important;
+                    font-size: 12.5px !important;
+                    font-family: inherit !important;
+                }
+                .eco-reader-mini-fab {
+                    position: fixed !important;
+                    top: 10px !important;
+                    left: 12px !important;
+                    z-index: 2147483647 !important;
+                    width: 36px !important;
+                    height: 36px !important;
+                    border-radius: 9999px !important;
+                    border: 1px solid var(--er-border) !important;
+                    background: var(--er-bg) !important;
+                    color: var(--er-fg) !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    font-size: 16px !important;
+                    font-weight: 700 !important;
+                    cursor: pointer !important;
+                    box-shadow: 0 4px 12px rgba(0,0,0,.15) !important;
+                    transition: all .2s ease !important;
+                }
+                .eco-reader-mini-fab:hover { transform: scale(1.08) !important; background: var(--er-accent) !important; color: white !important; border-color: var(--er-accent) !important; }
+                .eco-reader-content-wrap {
+                    margin: 0 auto !important;
+                    padding: 32px 24px 80px !important;
+                    transition: max-width .3s ease !important;
+                }
+                .eco-reader-article { line-height: var(--er-lh) !important; font-size: var(--er-fs) !important; font-family: var(--er-font) !important; color: var(--er-fg) !important; text-align: var(--er-align, start) !important; }
+                .eco-reader-article h1 { font-size: 1.9em !important; line-height: 1.25 !important; margin: 0 0 .4em !important; font-weight: 800 !important; letter-spacing: -.02em !important; }
+                .eco-reader-article h2 { font-size: 1.45em !important; margin: 1.6em 0 .6em !important; font-weight: 700 !important; }
+                .eco-reader-article h3 { font-size: 1.2em !important; margin: 1.4em 0 .5em !important; font-weight: 600 !important; }
+                .eco-reader-article p { margin: 0 0 1.2em !important; }
+                .eco-reader-article a { color: var(--er-accent) !important; text-decoration: underline !important; text-underline-offset: 3px !important; }
+                .eco-reader-article img { max-width: 100% !important; height: auto !important; border-radius: 12px !important; margin: 1.5em 0 !important; display: block !important; }
+                .eco-reader-article figure { margin: 1.8em 0 !important; }
+                .eco-reader-article figcaption { font-size: .85em !important; color: var(--er-muted) !important; margin-top: .6em !important; text-align: center !important; }
+                .eco-reader-article blockquote { border-left: 3px solid var(--er-accent) !important; margin: 1.5em 0 !important; padding: .4em 0 .4em 1.2em !important; color: var(--er-muted) !important; font-style: italic !important; }
+                .eco-reader-article pre { background: var(--er-codeBg) !important; padding: 16px !important; border-radius: 12px !important; overflow-x: auto !important; font-size: .85em !important; margin: 1.5em 0 !important; border: 1px solid var(--er-border) !important; }
+                .eco-reader-article code { background: var(--er-codeBg) !important; padding: 2px 6px !important; border-radius: 6px !important; font-size: .9em !important; }
+                .eco-reader-article pre code { background: transparent !important; padding: 0 !important; }
+                .eco-reader-article ul, .eco-reader-article ol { margin: 0 0 1.2em 1.4em !important; }
+                .eco-reader-article li { margin: .4em 0 !important; }
+                .eco-reader-meta { color: var(--er-muted) !important; font-size: 13px !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important; margin-bottom: 24px !important; display: flex !important; gap: 12px !important; flex-wrap: wrap !important; align-items: center !important; }
+                .eco-reader-est { background: var(--er-codeBg) !important; border: 1px solid var(--er-border) !important; padding: 4px 10px !important; border-radius: 9999px !important; font-weight: 600 !important; }
+                .eco-reader-divider { height: 1px !important; background: var(--er-border) !important; margin: 24px 0 !important; border: 0 !important; }
+            `;
+            (document.head || document.documentElement).appendChild(s);
+        },
+
+        _getThemeColors() {
+            let themeKey = this.settings.theme;
+            if (themeKey === 'auto') {
+                themeKey = this.settings.isDarkBrowser ? 'dark' : 'light';
+            }
+            return READER_THEMES_CSS[themeKey] || READER_THEMES_CSS.light;
+        },
+
+        _applyTheme() {
+            const colors = this._getThemeColors();
+            const overlay = document.getElementById('eco-reader-overlay');
+            if (!overlay) return;
+            overlay.style.background = colors.bg;
+            overlay.style.color = colors.fg;
+            overlay.style.setProperty('--er-bg', colors.bg);
+            overlay.style.setProperty('--er-fg', colors.fg);
+            overlay.style.setProperty('--er-muted', colors.muted);
+            overlay.style.setProperty('--er-border', colors.border);
+            overlay.style.setProperty('--er-accent', colors.accent);
+            overlay.style.setProperty('--er-codeBg', colors.codeBg);
+            overlay.style.setProperty('--er-font', this._getFontStack());
+            overlay.style.setProperty('--er-fs', this.settings.fontSize + 'px');
+            overlay.style.setProperty('--er-lh', this.settings.lineHeight);
+            overlay.style.setProperty('--er-align', this.settings.textAlign === 'justify' ? 'justify' : 'start');
+        },
+
+        _getFontStack() {
+            const fonts = {
+                serif: "Georgia, 'Times New Roman', Literata, Charter, serif",
+                sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                mono: "'JetBrains Mono', 'SF Mono', Consolas, Menlo, monospace",
+                dyslexic: "'OpenDyslexic', 'Lexie Readable', Verdana, sans-serif",
+                news: "Charter, 'Bitstream Charter', Georgia, serif"
+            };
+            return fonts[this.settings.font] || fonts.serif;
+        },
+
+        _getWidthPx() {
+            const map = { narrow: 640, medium: 740, wide: 860, xwide: 1020, full: 1200 };
+            return map[this.settings.width] || 740;
+        },
+
+        isProbablyReaderable() {
+            try {
+                const text = document.body ? document.body.innerText : '';
+                if (text.length < 600) return false;
+                const pCount = document.querySelectorAll('p').length;
+                if (pCount < 3) return false;
+                if (document.querySelector('article')) return true;
+                let score = 0;
+                document.querySelectorAll('p').forEach(p => {
+                    if (p.textContent.length > 100) score++;
+                });
+                return score >= 4;
+            } catch(e) { return false; }
+        },
+
+        _extractArticle() {
+            const doc = document;
+            const allElements = Array.from(doc.querySelectorAll('div, article, section, main'));
+            let candidates = [];
+            allElements.forEach(el => {
+                const text = el.innerText || '';
+                if (text.length < 200) return;
+                const classId = (el.className || '') + ' ' + (el.id || '');
+                if (UNLIKELY_CANDIDATES.test(classId) && !OK_MAYBE_CANDIDATE.test(classId)) return;
+                let score = Math.min(Math.floor(text.length / 100), 5);
+                if (POSITIVE_RE.test(classId)) score += 3;
+                if (NEGATIVE_RE.test(classId)) score -= 3;
+                const pCount = el.querySelectorAll('p').length;
+                score += pCount * 0.5;
+                if (score > 1.5) candidates.push({ el, score, textLen: text.length });
+            });
+            candidates.sort((a,b) => b.score - a.score || b.textLen - a.textLen);
+            let topCandidate = candidates[0] ? candidates[0].el : null;
+            if (!topCandidate) {
+                topCandidate = doc.querySelector('article') || doc.querySelector('main') || doc.body;
+            }
+            let title = doc.querySelector('meta[property="og:title"]')?.content || doc.title || '';
+            const h1 = doc.querySelector('h1');
+            if (h1 && h1.innerText.trim().length > 10 && h1.innerText.trim().length < 200) {
+                title = h1.innerText.trim();
+            }
+            const bylineEl = doc.querySelector('[rel="author"], .author, .byline, [class*="byline"], [class*="author"]');
+            const byline = bylineEl ? bylineEl.innerText.trim().slice(0,120) : '';
+            const timeEl = doc.querySelector('time, [class*="publish"], [property*="published"]');
+            const date = timeEl ? (timeEl.getAttribute('datetime') || timeEl.innerText.trim().slice(0,40)) : '';
+            const clone = topCandidate.cloneNode(true);
+            const killSel = 'script, style, nav, aside, footer, header, form, button, input, textarea, select, noscript, iframe, .ad, [class*="ad-"], [id*="ad-"], [class*="share"], [class*="social"], [class*="comment"], [class*="sidebar"], [class*="popup"], [class*="modal"]';
+            clone.querySelectorAll(killSel).forEach(n => n.remove());
+            clone.querySelectorAll('div, section').forEach(n => {
+                if (!n.innerText || n.innerText.trim().length < 20) {
+                    if (n.querySelectorAll('p, img, h1, h2, h3').length === 0) n.remove();
+                }
+            });
+            let html = clone.innerHTML;
+            const words = clone.innerText.split(/\s+/).length;
+            const minutes = Math.max(1, Math.round(words / 220));
+            return { title, byline, date, html, words, minutes };
+        },
+
+        enter() {
+            if (this.isActive) return;
+            this.original.scrollY = window.scrollY;
+            this.original.bodyOverflow = document.body.style.overflow;
+            const article = this._extractArticle();
+            this.articleMeta = article;
+            const colors = this._getThemeColors();
+            const width = this._getWidthPx();
+            const overlay = document.createElement('div');
+            overlay.id = 'eco-reader-overlay';
+            overlay.setAttribute('role', 'document');
+            overlay.style.background = colors.bg;
+            overlay.style.color = colors.fg;
+            overlay.innerHTML = `
+                <button id="eco-reader-mini-exit" class="eco-reader-mini-fab" title="Exit Reader Mode (Esc)">✕</button>
+                <div class="eco-reader-toolbar" style="background: color-mix(in srgb, ${colors.bg} 85%, transparent);">
+                    <div class="eco-reader-toolbar-group">
+                        <button class="eco-reader-btn" id="eco-reader-close" title="Exit Reader (Esc)">✕ Exit Reader</button>
+                        <span style="opacity:.4">|</span>
+                        <span style="font-family:-apple-system,sans-serif;font-size:12px;color:var(--er-muted)">Reader • EcoBrowser</span>
+                    </div>
+                    <div class="eco-reader-toolbar-group">
+                        <select class="eco-reader-select" id="eco-reader-font">
+                            <option value="serif" ${this.settings.font==='serif'?'selected':''}>Serif</option>
+                            <option value="sans" ${this.settings.font==='sans'?'selected':''}>Sans</option>
+                            <option value="news" ${this.settings.font==='news'?'selected':''}>News</option>
+                            <option value="mono" ${this.settings.font==='mono'?'selected':''}>Mono</option>
+                            <option value="dyslexic" ${this.settings.font==='dyslexic'?'selected':''}>Dyslexic</option>
+                        </select>
+                        <select class="eco-reader-select" id="eco-reader-theme">
+                            <option value="auto" ${this.settings.theme==='auto'?'selected':''}>Auto</option>
+                            <option value="light" ${this.settings.theme==='light'?'selected':''}>Light</option>
+                            <option value="sepia" ${this.settings.theme==='sepia'?'selected':''}>Sepia</option>
+                            <option value="paper" ${this.settings.theme==='paper'?'selected':''}>Paper</option>
+                            <option value="dark" ${this.settings.theme==='dark'?'selected':''}>Dark</option>
+                            <option value="midnight" ${this.settings.theme==='midnight'?'selected':''}>Midnight</option>
+                        </select>
+                        <select class="eco-reader-select" id="eco-reader-width">
+                            <option value="narrow" ${this.settings.width==='narrow'?'selected':''}>Narrow</option>
+                            <option value="medium" ${this.settings.width==='medium'?'selected':''}>Medium</option>
+                            <option value="wide" ${this.settings.width==='wide'?'selected':''}>Wide</option>
+                            <option value="xwide" ${this.settings.width==='xwide'?'selected':''}>X-Wide</option>
+                        </select>
+                        <button class="eco-reader-btn" id="eco-reader-fs-dec" title="Smaller">A-</button>
+                        <button class="eco-reader-btn" id="eco-reader-fs-inc" title="Larger">A+</button>
+                    </div>
+                </div>
+                <div class="eco-reader-content-wrap" style="max-width:${width}px">
+                    <article class="eco-reader-article">
+                        <h1>${this._escape(article.title)}</h1>
+                        <div class="eco-reader-meta">
+                            ${article.byline ? `<span>By ${this._escape(article.byline)}</span>` : ''}
+                            ${article.date ? `<span>• ${this._escape(article.date)}</span>` : ''}
+                            <span class="eco-reader-est">${article.minutes} min read • ${article.words.toLocaleString()} words</span>
+                            <span>• ${this._escape(window.location.hostname)}</span>
+                        </div>
+                        <hr class="eco-reader-divider"/>
+                        <div class="eco-reader-body">${article.html}</div>
+                    </article>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            document.body.style.overflow = 'hidden';
+            overlay.scrollTop = 0;
+            this._applyTheme();
+            this._bindToolbarEvents();
+            this.isActive = true;
+            try { window.dispatchEvent(new CustomEvent('ecoReaderEntered')); } catch(e) {}
+            overlay.tabIndex = -1;
+            overlay.focus();
+        },
+
+        _escape(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; },
+
+        _bindToolbarEvents() {
+            const overlay = document.getElementById('eco-reader-overlay');
+            if (!overlay) return;
+            const close = overlay.querySelector('#eco-reader-close');
+            if (close) close.onclick = () => this.exit();
+            const mini = overlay.querySelector('#eco-reader-mini-exit');
+            if (mini) mini.onclick = () => this.exit();
+            const fontSel = overlay.querySelector('#eco-reader-font');
+            if (fontSel) fontSel.onchange = (e) => { this.settings.font = e.target.value; this._applyTheme(); this._persist(); };
+            const themeSel = overlay.querySelector('#eco-reader-theme');
+            if (themeSel) themeSel.onchange = (e) => { this.settings.theme = e.target.value; this._applyTheme(); this._persist(); };
+            const widthSel = overlay.querySelector('#eco-reader-width');
+            if (widthSel) widthSel.onchange = (e) => { this.settings.width = e.target.value; const wrap = overlay.querySelector('.eco-reader-content-wrap'); if (wrap) wrap.style.maxWidth = this._getWidthPx() + 'px'; this._persist(); };
+            const dec = overlay.querySelector('#eco-reader-fs-dec');
+            const inc = overlay.querySelector('#eco-reader-fs-inc');
+            if (dec) dec.onclick = () => { this.settings.fontSize = Math.max(12, this.settings.fontSize - 1); this._applyTheme(); this._persist(); };
+            if (inc) inc.onclick = () => { this.settings.fontSize = Math.min(36, this.settings.fontSize + 1); this._applyTheme(); this._persist(); };
+            overlay.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.exit(); });
+        },
+
+        _persist() {
+            try {
+                localStorage.setItem('__ecoReaderSettings', JSON.stringify(this.settings));
+            } catch(e) {}
+        },
+
+        exit() {
+            if (!this.isActive) return;
+            const overlay = document.getElementById('eco-reader-overlay');
+            if (overlay) overlay.remove();
+            document.body.style.overflow = this.original.bodyOverflow || '';
+            window.scrollTo(0, this.original.scrollY || 0);
+            this.isActive = false;
+            try { window.dispatchEvent(new CustomEvent('ecoReaderExited')); } catch(e) {}
+        },
+
+        toggle() {
+            if (this.isActive) this.exit();
+            else this.enter();
+        },
+
+        updateSettings(newSettings) {
+            Object.assign(this.settings, newSettings);
+            this._applyTheme();
+            const overlay = document.getElementById('eco-reader-overlay');
+            if (overlay) {
+                const wrap = overlay.querySelector('.eco-reader-content-wrap');
+                if (wrap) wrap.style.maxWidth = this._getWidthPx() + 'px';
+            }
+        },
+
+        setBrowserDark(isDark) {
+            this.settings.isDarkBrowser = !!isDark;
+            if (this.settings.theme === 'auto' && this.isActive) this._applyTheme();
+        }
+    };
+
+    try {
+        const saved = localStorage.getItem('__ecoReaderSettings');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            Object.assign(window.__ecoReader.settings, parsed);
+        }
+    } catch(e) {}
+
+    window.__ecoReaderIsReadable = () => window.__ecoReader.isProbablyReaderable();
+    window.__ecoReaderToggle = () => window.__ecoReader.toggle();
+    window.__ecoReaderUpdate = (jsonStr) => {
+        try { window.__ecoReader.updateSettings(JSON.parse(jsonStr)); } catch(e) {}
+    };
+})();
+"""
+
+
+# =============================================================================
+# Userscript Support: Tampermonkey-compatible .user.js manager
+# =============================================================================
+
+USERSCRIPT_POLYFILL_JS = r"""
+(function() {
+    if (window.__ecoUserscriptPolyfill) return;
+    window.__ecoUserscriptPolyfill = true;
+
+    // Minimal GM_* polyfill that works without extension privileges
+    window.GM = window.GM || {};
+    window.GM_info = {
+        scriptHandler: 'EcoBrowser',
+        version: '1.6',
+        script: { version: '1.0', name: 'EcoBrowser Userscript' }
+    };
+
+    window.GM_addStyle = window.GM_addStyle || function(css) {
+        const s = document.createElement('style');
+        s.textContent = css;
+        s.className = 'eco-userscript-style';
+        (document.head || document.documentElement).appendChild(s);
+        return s;
+    };
+    window.GM_getValue = window.GM_getValue || function(key, def) {
+        try {
+            const v = localStorage.getItem('eco_gm_' + key);
+            return v !== null ? JSON.parse(v) : def;
+        } catch(e) { return def; }
+    };
+    window.GM_setValue = window.GM_setValue || function(key, val) {
+        try { localStorage.setItem('eco_gm_' + key, JSON.stringify(val)); } catch(e) {}
+    };
+    window.GM_deleteValue = window.GM_deleteValue || function(key) { localStorage.removeItem('eco_gm_' + key); };
+    window.GM_listValues = window.GM_listValues || function() {
+        const keys = [];
+        for (let i=0;i<localStorage.length;i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('eco_gm_')) keys.push(k.slice(7));
+        }
+        return keys;
+    };
+    window.GM_log = window.GM_log || function(...args){ console.log('[GM]', ...args); };
+    window.GM_openInTab = window.GM_openInTab || function(url, opts) { window.open(url, '_blank'); return { close:()=>{} }; };
+    window.GM_xmlhttpRequest = window.GM_xmlhttpRequest || function(details) {
+        const url = details.url;
+        const method = (details.method || 'GET').toUpperCase();
+        const headers = details.headers || {};
+        fetch(url, { method, headers, body: details.data })
+            .then(r => r.text().then(t => {
+                if (details.onload) details.onload({ responseText: t, status: r.status, statusText: r.statusText, responseHeaders: '', finalUrl: r.url });
+            }))
+            .catch(e => { if (details.onerror) details.onerror(e); });
+    };
+    window.GM_registerMenuCommand = window.GM_registerMenuCommand || function() {};
+    // Legacy aliases
+    window.GM_getValue = window.GM_getValue; window.GM_setValue = window.GM_setValue;
+    window.unsafeWindow = window;
+    window.GM = Object.assign(window.GM, {
+        getValue: window.GM_getValue,
+        setValue: window.GM_setValue,
+        deleteValue: window.GM_deleteValue,
+        listValues: window.GM_listValues,
+        addStyle: window.GM_addStyle,
+        log: window.GM_log,
+        openInTab: window.GM_openInTab,
+        xmlHttpRequest: window.GM_xmlhttpRequest,
+        info: window.GM_info
+    });
+    // console marker
+    console.log('%c[EcoBrowser] Userscript polyfill ready','color:#58a6ff;font-weight:bold');
+})();
+"""
+
+
+# =============================================================================
 # Windows Default Browser Registration Helper
 # =============================================================================
 
@@ -1148,6 +1697,375 @@ class ContentBlocker(QWebEngineUrlRequestInterceptor):
                 info.block(True)
                 self.blocked_nude_count += 1
                 return
+
+
+# =============================================================================
+# Userscript Manager - Lightweight Tampermonkey-compatible .user.js support
+# =============================================================================
+
+import re as _re_userscript
+
+
+class Userscript:
+    """Represents a single .user.js userscript with parsed metadata."""
+
+    def __init__(self, filepath):
+        self.filepath = filepath
+        self.filename = os.path.basename(filepath)
+        self.name = self.filename
+        self.namespace = ""
+        self.version = "1.0"
+        self.description = ""
+        self.author = ""
+        self.matches = []  # @match
+        self.includes = []  # @include
+        self.excludes = []  # @exclude
+        self.exclude_matches = []  # @exclude-match
+        self.grants = []
+        self.run_at = "document-idle"
+        self.enabled = True
+        self.code = ""
+        self.meta_block = ""
+        self._parse()
+
+    def _parse(self):
+        try:
+            with open(self.filepath, "r", encoding="utf-8", errors="ignore") as f:
+                self.code = f.read()
+        except Exception:
+            self.code = ""
+            return
+
+        meta_match = _re_userscript.search(
+            r"//\s*==UserScript==.*?//\s*==/UserScript==",
+            self.code,
+            _re_userscript.DOTALL,
+        )
+        if not meta_match:
+            # No meta block, treat whole file as script with wildcard match
+            self.matches = ["*://*/*"]
+            return
+        self.meta_block = meta_match.group(0)
+
+        # Parse directives
+        def get_all(tag):
+            pattern = rf"@{{tag}}\s+(.+)"  # placeholder, will replace
+            return []
+
+        # Manual parse line by line
+        for line in self.meta_block.splitlines():
+            line = line.strip()
+            # Remove leading //
+            if line.startswith("//"):
+                line = line[2:].strip()
+            if not line.startswith("@"):
+                continue
+            parts = line.split(None, 1)
+            if len(parts) < 2:
+                continue
+            key = parts[0].lower().lstrip("@")
+            value = parts[1].strip()
+            if key == "name":
+                self.name = value
+            elif key == "namespace":
+                self.namespace = value
+            elif key == "version":
+                self.version = value
+            elif key == "description":
+                self.description = value
+            elif key == "author":
+                self.author = value
+            elif key == "match":
+                self.matches.append(value)
+            elif key == "include":
+                self.includes.append(value)
+            elif key == "exclude":
+                self.excludes.append(value)
+            elif key == "exclude-match":
+                self.exclude_matches.append(value)
+            elif key == "grant":
+                self.grants.append(value)
+            elif key == "run-at":
+                self.run_at = value.lower().strip()
+
+        # Default to match all if nothing specified
+        if not self.matches and not self.includes:
+            self.matches = ["*://*/*"]
+
+    def matches_url(self, url):
+        """Check if this userscript should run on given URL."""
+        if (
+            not url
+            or url.startswith("about:")
+            or url.startswith("eco://")
+            or url.startswith("data:")
+        ):
+            return False
+
+        # Exclude checks first - if any exclude matches, don't run
+        for pat in self.excludes + self.exclude_matches:
+            if _userscript_url_matches(pat, url):
+                return False
+
+        # If includes are present, at least one must match (unless matches also present - OR logic like Tampermonkey)
+        has_match_rule = bool(self.matches)
+        has_include_rule = bool(self.includes)
+
+        if has_match_rule and has_include_rule:
+            # Tampermonkey: matches OR includes
+            return any(_userscript_url_matches(p, url) for p in self.matches) or any(
+                _userscript_url_matches(p, url) for p in self.includes
+            )
+        elif has_match_rule:
+            return any(_userscript_url_matches(p, url) for p in self.matches)
+        elif has_include_rule:
+            return any(_userscript_url_matches(p, url) for p in self.includes)
+        return False
+
+    def get_injection_code(self):
+        """Wrap code with IIFE and polyfill context, strip meta block for injection."""
+        # Remove meta block from code for execution
+        code_without_meta = self.code
+        if self.meta_block:
+            code_without_meta = code_without_meta.replace(self.meta_block, "", 1)
+        # Ensure code doesn't have premature </script>
+        # Wrap in IIFE
+        wrapped = f"""
+(function() {{
+    try {{
+        // EcoBrowser Userscript: {self.name} v{self.version}
+        const __ecoScriptInfo = {{
+            name: {json.dumps(self.name)},
+            version: {json.dumps(self.version)},
+            filename: {json.dumps(self.filename)}
+        }};
+        {code_without_meta}
+    }} catch(e) {{
+        console.error('[EcoBrowser Userscript Error]', __ecoScriptInfo.name, e);
+    }}
+}})();
+"""
+        return wrapped
+
+
+def _glob_to_regex(pattern):
+    """Convert glob/match pattern to regex. Supports * wildcards."""
+    # Escape regex chars except * and handle Chrome match pattern specially
+    # For @match: scheme://host/path with wildcards
+    # Simplified: convert * to .*, ? to ., escape rest
+    regex = ""
+    i = 0
+    while i < len(pattern):
+        c = pattern[i]
+        if c == "*":
+            # Check for **?
+            if i + 1 < len(pattern) and pattern[i + 1] == "*":
+                regex += ".*"
+                i += 2
+                continue
+            else:
+                regex += ".*"
+        elif c in ".+^$()[]{}|\\":
+            regex += "\\" + c
+        elif c == "?":
+            regex += "."
+        else:
+            regex += c
+        i += 1
+    return regex
+
+
+def _userscript_url_matches(pattern, url):
+    """Test if URL matches a @match or @include pattern."""
+    if not pattern:
+        return False
+    pattern = pattern.strip()
+    if pattern == "<all_urls>" or pattern == "*://*/*" or pattern == "*":
+        return True
+    # Chrome match pattern handling
+    # Example: *://*.example.com/*, https://example.com/*
+    try:
+        # If pattern looks like regex (starts and ends with /)
+        if pattern.startswith("/") and pattern.endswith("/") and len(pattern) > 2:
+            return bool(_re_userscript.search(pattern[1:-1], url))
+        # Handle scheme wildcard
+        # Convert to regex
+        # For *:// prefix -> https?://
+        p = pattern
+        # Replace scheme *:// with (https?|file):// or .+://
+        if p.startswith("*://"):
+            p = p.replace("*://", r".*://", 1)
+        # For host wildcard
+        # Convert glob to regex and test
+        regex_str = _glob_to_regex(p)
+        # Full match or substring? Tampermonkey uses full URL match for @match, substring for @include
+        # We'll allow partial match: search
+        return bool(_re_userscript.search(regex_str, url, _re_userscript.IGNORECASE))
+    except Exception:
+        return False
+
+
+class UserscriptManager:
+    """Manages loading, enabling, and injecting .user.js scripts."""
+
+    def __init__(self, app_data_folder):
+        self.folder = os.path.join(app_data_folder, "userscripts")
+        os.makedirs(self.folder, exist_ok=True)
+        self.state_file = os.path.join(app_data_folder, "userscripts_state.json")
+        self.scripts = {}  # filename -> Userscript
+        self.enabled_map = {}  # filename -> bool
+        self._load_state()
+        self.load_scripts()
+
+    def _load_state(self):
+        try:
+            if os.path.exists(self.state_file):
+                with open(self.state_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        self.enabled_map = data
+        except Exception:
+            self.enabled_map = {}
+
+    def _save_state(self):
+        try:
+            with open(self.state_file, "w", encoding="utf-8") as f:
+                json.dump(self.enabled_map, f, indent=2)
+        except Exception:
+            pass
+
+    def load_scripts(self):
+        self.scripts.clear()
+        try:
+            for fname in os.listdir(self.folder):
+                if not fname.lower().endswith(".user.js"):
+                    continue
+                fpath = os.path.join(self.folder, fname)
+                if not os.path.isfile(fpath):
+                    continue
+                us = Userscript(fpath)
+                # Apply saved enabled state
+                if fname in self.enabled_map:
+                    us.enabled = bool(self.enabled_map[fname])
+                else:
+                    self.enabled_map[fname] = us.enabled
+                self.scripts[fname] = us
+        except Exception as e:
+            print(f"[UserscriptManager] load error: {e}")
+        self._save_state()
+
+    def get_all_scripts(self):
+        return list(self.scripts.values())
+
+    def get_matching_scripts(self, url):
+        if not url:
+            return []
+        matching = []
+        for script in self.scripts.values():
+            if not script.enabled:
+                continue
+            if script.matches_url(url):
+                matching.append(script)
+        # Sort by name
+        matching.sort(key=lambda s: s.name.lower())
+        return matching
+
+    def set_enabled(self, filename, enabled):
+        if filename in self.scripts:
+            self.scripts[filename].enabled = enabled
+        self.enabled_map[filename] = enabled
+        self._save_state()
+
+    def add_script_from_file(self, src_path):
+        try:
+            fname = os.path.basename(src_path)
+            if not fname.lower().endswith(".js"):
+                fname += ".user.js"
+            dest = os.path.join(self.folder, fname)
+            # Avoid overwrite conflict -> add suffix
+            base, ext = os.path.splitext(dest)
+            counter = 1
+            while os.path.exists(dest):
+                dest = f"{base}_{counter}{ext}"
+                counter += 1
+            import shutil
+
+            shutil.copy2(src_path, dest)
+            self.load_scripts()
+            return os.path.basename(dest)
+        except Exception as e:
+            print(f"[UserscriptManager] add error: {e}")
+            return None
+
+    def add_script_from_code(self, code, filename="custom.user.js"):
+        try:
+            dest = os.path.join(self.folder, filename)
+            base, ext = os.path.splitext(dest)
+            counter = 1
+            while os.path.exists(dest):
+                dest = f"{base}_{counter}{ext}"
+                counter += 1
+            with open(dest, "w", encoding="utf-8") as f:
+                f.write(code)
+            self.load_scripts()
+            return os.path.basename(dest)
+        except Exception as e:
+            print(f"[UserscriptManager] add code error: {e}")
+            return None
+
+    def delete_script(self, filename):
+        try:
+            fpath = os.path.join(self.folder, filename)
+            if os.path.exists(fpath):
+                os.remove(fpath)
+            self.scripts.pop(filename, None)
+            self.enabled_map.pop(filename, None)
+            self._save_state()
+            return True
+        except Exception:
+            return False
+
+    def open_folder(self):
+        try:
+            if sys.platform == "win32":
+                os.startfile(self.folder)
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", self.folder])
+            else:
+                subprocess.Popen(["xdg-open", self.folder])
+        except Exception:
+            pass
+
+    def build_injection_js(self, url):
+        """Build combined JS for all matching scripts + polyfill."""
+        matching = self.get_matching_scripts(url)
+        if not matching:
+            return None
+        parts = [USERSCRIPT_POLYFILL_JS]
+        for script in matching:
+            # Inject run-at handling: wrap in appropriate event
+            run_at = script.run_at
+            code = script.get_injection_code()
+            if run_at == "document-start":
+                # Run immediately
+                parts.append(code)
+            elif run_at == "document-body":
+                parts.append(f"""
+if (document.body) {{ {code} }} else {{ document.addEventListener('DOMContentLoaded', function() {{ {code} }}); }}
+""")
+            else:  # document-end, document-idle default
+                parts.append(f"""
+(function() {{
+    function __ecoRun() {{ {code} }}
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {{
+        setTimeout(__ecoRun, 1);
+    }} else {{
+        document.addEventListener('DOMContentLoaded', __ecoRun);
+    }}
+}})();
+""")
+        combined = "\n".join(parts)
+        return combined
 
 
 class EcoWebEnginePage(QWebEnginePage):
@@ -2046,6 +2964,546 @@ class NetworkSettingsDialog(QDialog):
         self.accept()
 
 
+class ReaderSettingsDialog(QDialog):
+    """Reader Mode customization: fonts, margins, paper themes - pairs with content blocker."""
+
+    def __init__(self, browser_window, parent=None):
+        super().__init__(parent or browser_window)
+        self.browser_window = browser_window
+        self.setWindowTitle("Reader Mode Settings — EcoBrowser")
+        self.resize(520, 580)
+        self.settings = browser_window.settings
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(18)
+
+        header = QLabel("Reader Mode / Distraction-Free Reading")
+        hf = header.font()
+        hf.setPointSize(12)
+        hf.setBold(True)
+        header.setFont(hf)
+        layout.addWidget(header)
+
+        desc = QLabel(
+            "Clean, minimal reading layout that strips away ads, sidebars and clutter. "
+            "Pairs exceptionally well with your built-in content blocker and focus features. "
+            "Customize fonts, margins, and paper themes below."
+        )
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #8b949e; font-size: 9.5pt; line-height: 1.4;")
+        layout.addWidget(desc)
+
+        form = QFormLayout()
+        form.setSpacing(12)
+
+        # Font
+        self.font_combo = QComboBox()
+        for key, info in READER_FONTS.items():
+            self.font_combo.addItem(info["label"], key)
+        current_font = self.settings.get("reader_font", "serif")
+        idx = self.font_combo.findData(current_font)
+        if idx >= 0:
+            self.font_combo.setCurrentIndex(idx)
+        form.addRow("Font Family:", self.font_combo)
+
+        # Font size
+        self.font_size_combo = QComboBox()
+        for sz in [14, 16, 18, 19, 20, 22, 24, 26, 28]:
+            self.font_size_combo.addItem(f"{sz} px", sz)
+        cur_sz = self.settings.get("reader_font_size", 19)
+        idx = self.font_size_combo.findData(cur_sz)
+        if idx >= 0:
+            self.font_size_combo.setCurrentIndex(idx)
+        else:
+            self.font_size_combo.addItem(f"{cur_sz} px (custom)", cur_sz)
+            self.font_size_combo.setCurrentIndex(self.font_size_combo.count() - 1)
+        form.addRow("Font Size:", self.font_size_combo)
+
+        # Line height
+        self.line_height_combo = QComboBox()
+        for lh in [1.4, 1.6, 1.8, 2.0, 2.2]:
+            self.line_height_combo.addItem(str(lh), lh)
+        cur_lh = self.settings.get("reader_line_height", 1.8)
+        idx = self.line_height_combo.findData(cur_lh)
+        if idx >= 0:
+            self.line_height_combo.setCurrentIndex(idx)
+        form.addRow("Line Height:", self.line_height_combo)
+
+        # Width
+        self.width_combo = QComboBox()
+        for key, info in READER_WIDTHS.items():
+            self.width_combo.addItem(f"{info['label']} ({info['px']}px)", key)
+        cur_w = self.settings.get("reader_width", "medium")
+        idx = self.width_combo.findData(cur_w)
+        if idx >= 0:
+            self.width_combo.setCurrentIndex(idx)
+        form.addRow("Page Width:", self.width_combo)
+
+        # Theme
+        self.theme_combo = QComboBox()
+        for key, info in READER_THEMES.items():
+            self.theme_combo.addItem(info["label"], key)
+        cur_theme = self.settings.get("reader_theme", "auto")
+        idx = self.theme_combo.findData(cur_theme)
+        if idx >= 0:
+            self.theme_combo.setCurrentIndex(idx)
+        form.addRow("Paper Theme:", self.theme_combo)
+
+        # Text align
+        self.align_combo = QComboBox()
+        self.align_combo.addItem("Left / Start", "start")
+        self.align_combo.addItem("Justified", "justify")
+        cur_align = self.settings.get("reader_text_align", "start")
+        idx = self.align_combo.findData(cur_align)
+        if idx >= 0:
+            self.align_combo.setCurrentIndex(idx)
+        form.addRow("Text Align:", self.align_combo)
+
+        layout.addLayout(form)
+
+        # Preview
+        preview_group = QGroupBox("Preview")
+        preview_layout = QVBoxLayout(preview_group)
+        self.preview_label = QLabel(
+            "The quick brown fox jumps over the lazy dog.\n\n"
+            "Reader Mode strips away clutter, ads and sidebars, leaving only the essential content. "
+            "It pairs perfectly with EcoBrowser's ad blocker to give you a calm, focused reading experience, "
+            "like reading a beautifully typeset book."
+        )
+        self.preview_label.setWordWrap(True)
+        self.preview_label.setStyleSheet(
+            "font-family: Georgia, serif; font-size: 14pt; padding: 12px; border: 1px dashed #30363d; border-radius: 8px;"
+        )
+        preview_layout.addWidget(self.preview_label)
+        layout.addWidget(preview_group)
+
+        # Buttons
+        btn_box = QHBoxLayout()
+        btn_box.addStretch()
+        btn_cancel = QPushButton("Cancel")
+        btn_cancel.clicked.connect(self.reject)
+        btn_box.addWidget(btn_cancel)
+
+        btn_apply = QPushButton("Save & Apply")
+        btn_apply.setStyleSheet(
+            "background-color: #0969da; color: white; font-weight: bold; padding: 6px 14px; border-radius: 6px;"
+        )
+        btn_apply.clicked.connect(self._save)
+        btn_box.addWidget(btn_apply)
+
+        layout.addLayout(btn_box)
+
+        # Connect preview update
+        self.font_combo.currentIndexChanged.connect(self._update_preview)
+        self.font_size_combo.currentIndexChanged.connect(self._update_preview)
+        self.width_combo.currentIndexChanged.connect(self._update_preview)
+        self.theme_combo.currentIndexChanged.connect(self._update_preview)
+        self._update_preview()
+
+    def _update_preview(self):
+        font_key = self.font_combo.currentData()
+        font_info = READER_FONTS.get(font_key, READER_FONTS["serif"])
+        size = self.font_size_combo.currentData() or 19
+        theme_key = self.theme_combo.currentData() or "light"
+        theme = READER_THEMES.get(theme_key, READER_THEMES["light"])
+        bg = (
+            theme.get("bg", theme.get("light_bg", "#fff"))
+            if theme_key != "auto"
+            else "#ffffff"
+        )
+        fg = (
+            theme.get("fg", theme.get("light_fg", "#1a1a1a"))
+            if theme_key != "auto"
+            else "#1a1a1a"
+        )
+        self.preview_label.setStyleSheet(
+            f"font-family: {font_info['stack']}; font-size: {size}pt; background: {bg}; color: {fg}; padding: 14px; border-radius: 8px; border: 1px solid #30363d;"
+        )
+
+    def _save(self):
+        values = {
+            "reader_font": self.font_combo.currentData(),
+            "reader_font_size": self.font_size_combo.currentData(),
+            "reader_line_height": self.line_height_combo.currentData(),
+            "reader_width": self.width_combo.currentData(),
+            "reader_theme": self.theme_combo.currentData(),
+            "reader_text_align": self.align_combo.currentData(),
+        }
+        if self.browser_window.save_settings_batch(values):
+            # Apply to current view if reader active
+            view = self.browser_window.get_current_view()
+            if view:
+                self.browser_window.apply_reader_settings_to_view(view)
+        self.accept()
+
+
+class UserscriptManagerDialog(QDialog):
+    """Lightweight userscript manager similar to Tampermonkey - .user.js support."""
+
+    def __init__(self, browser_window, parent=None):
+        super().__init__(parent or browser_window)
+        self.browser_window = browser_window
+        self.manager = browser_window.userscript_manager
+        self.setWindowTitle("Userscript Manager — EcoBrowser (.user.js)")
+        self.resize(720, 520)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
+
+        header_layout = QHBoxLayout()
+        title = QLabel("Custom Userscript & Extension Support")
+        tf = title.font()
+        tf.setPointSize(11)
+        tf.setBold(True)
+        title.setFont(tf)
+        header_layout.addWidget(title)
+        header_layout.addStretch()
+
+        btn_open_folder = QPushButton("Open Folder")
+        btn_open_folder.clicked.connect(self.manager.open_folder)
+        header_layout.addWidget(btn_open_folder)
+
+        btn_refresh = QPushButton("Refresh")
+        btn_refresh.clicked.connect(self.refresh_list)
+        header_layout.addWidget(btn_refresh)
+
+        layout.addLayout(header_layout)
+
+        desc = QLabel(
+            "Lightweight userscript manager similar to Tampermonkey. Load custom JavaScript enhancements (.user.js), "
+            "ad-injection scripts, and site customizations. Scripts run automatically based on @match / @include rules. "
+            "Vastly expands website compatibility and customization for power users."
+        )
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #8b949e; font-size: 9pt;")
+        layout.addWidget(desc)
+
+        # Table-like list
+        from PyQt6.QtWidgets import QListWidget, QListWidgetItem
+
+        self.list_widget = QListWidget()
+        self.list_widget.setStyleSheet("QListWidget::item { padding: 6px; }")
+        layout.addWidget(self.list_widget, 1)
+
+        # Controls
+        controls = QHBoxLayout()
+        btn_add_file = QPushButton("Install from File...")
+        btn_add_file.clicked.connect(self._install_from_file)
+        controls.addWidget(btn_add_file)
+
+        btn_add_code = QPushButton("New Script...")
+        btn_add_code.clicked.connect(self._new_script)
+        controls.addWidget(btn_add_code)
+
+        controls.addStretch()
+
+        btn_edit = QPushButton("Edit")
+        btn_edit.clicked.connect(self._edit_selected)
+        controls.addWidget(btn_edit)
+
+        btn_toggle = QPushButton("Enable/Disable")
+        btn_toggle.clicked.connect(self._toggle_selected)
+        controls.addWidget(btn_toggle)
+
+        btn_delete = QPushButton("Delete")
+        btn_delete.setStyleSheet("color: #f85149;")
+        btn_delete.clicked.connect(self._delete_selected)
+        controls.addWidget(btn_delete)
+
+        layout.addLayout(controls)
+
+        bottom = QHBoxLayout()
+        bottom.addStretch()
+        btn_close = QPushButton("Close")
+        btn_close.clicked.connect(self.accept)
+        bottom.addWidget(btn_close)
+        layout.addLayout(bottom)
+
+        self.refresh_list()
+
+    def refresh_list(self):
+        self.manager.load_scripts()
+        self.list_widget.clear()
+        scripts = self.manager.get_all_scripts()
+        if not scripts:
+            from PyQt6.QtWidgets import QListWidgetItem
+
+            item = QListWidgetItem(
+                "No userscripts installed. Place .user.js files in the userscripts folder or install via 'Install from File'."
+            )
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
+            self.list_widget.addItem(item)
+            return
+        for script in scripts:
+            status = "✓ Enabled" if script.enabled else "✕ Disabled"
+            display = f"[{status}] {script.name} v{script.version} — {script.filename}"
+            if script.description:
+                display += f" — {script.description[:80]}"
+            from PyQt6.QtWidgets import QListWidgetItem
+
+            item = QListWidgetItem(display)
+            item.setData(Qt.ItemDataRole.UserRole, script.filename)
+            self.list_widget.addItem(item)
+
+    def _selected_filename(self):
+        item = self.list_widget.currentItem()
+        if not item:
+            return None
+        return item.data(Qt.ItemDataRole.UserRole)
+
+    def _install_from_file(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Install Userscript",
+            "",
+            "Userscript Files (*.user.js *.js);;All Files (*)",
+        )
+        if not path:
+            return
+        result = self.manager.add_script_from_file(path)
+        if result:
+            QMessageBox.information(
+                self, "Installed", f"Installed userscript: {result}"
+            )
+            self.refresh_list()
+        else:
+            QMessageBox.warning(self, "Error", "Failed to install userscript.")
+
+    def _new_script(self):
+        # Open dialog for code entry
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Create New Userscript")
+        dlg.resize(600, 500)
+        v = QVBoxLayout(dlg)
+
+        info = QLabel(
+            "Enter userscript code with ==UserScript== metadata block. Example:"
+        )
+        v.addWidget(info)
+
+        example = QTextEdit()
+        example.setPlainText(
+            "// ==UserScript==\n"
+            "// @name         My Custom Script\n"
+            "// @namespace    ecobrowser.local\n"
+            "// @version      1.0\n"
+            "// @description  Custom enhancement\n"
+            "// @match        *://*/*\n"
+            "// @grant        none\n"
+            "// @run-at       document-idle\n"
+            "// ==/UserScript==\n\n"
+            "(function() {\n"
+            "    'use strict';\n"
+            "    console.log('EcoBrowser userscript running on', location.href);\n"
+            "    // Your code here...\n"
+            "    // Example: remove annoying banners\n"
+            "    // document.querySelectorAll('.annoying').forEach(e=>e.remove());\n"
+            "})();\n"
+        )
+        example.setStyleSheet("font-family: monospace; font-size: 9pt;")
+        v.addWidget(example, 1)
+
+        btns = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save
+            | QDialogButtonBox.StandardButton.Cancel
+        )
+        v.addWidget(btns)
+        btns.accepted.connect(dlg.accept)
+        btns.rejected.connect(dlg.reject)
+
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            code = example.toPlainText()
+            # Extract name for filename
+            import re
+
+            m = re.search(r"@name\s+(.+)", code)
+            fname = "custom.user.js"
+            if m:
+                safe = re.sub(r"[^a-zA-Z0-9_-]", "_", m.group(1).strip())[:30]
+                fname = f"{safe}.user.js"
+            result = self.manager.add_script_from_code(code, fname)
+            if result:
+                QMessageBox.information(
+                    self, "Created", f"Created userscript: {result}"
+                )
+                self.refresh_list()
+
+    def _edit_selected(self):
+        fname = self._selected_filename()
+        if not fname:
+            return
+        fpath = os.path.join(self.manager.folder, fname)
+        if not os.path.exists(fpath):
+            return
+        # Open in text edit dialog
+        dlg = QDialog(self)
+        dlg.setWindowTitle(f"Edit {fname}")
+        dlg.resize(700, 600)
+        v = QVBoxLayout(dlg)
+        editor = QTextEdit()
+        try:
+            with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
+                editor.setPlainText(f.read())
+        except Exception:
+            editor.setPlainText("")
+        editor.setStyleSheet("font-family: monospace; font-size: 10pt;")
+        v.addWidget(editor, 1)
+        btns = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save
+            | QDialogButtonBox.StandardButton.Cancel
+        )
+        v.addWidget(btns)
+        btns.accepted.connect(dlg.accept)
+        btns.rejected.connect(dlg.reject)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            try:
+                with open(fpath, "w", encoding="utf-8") as f:
+                    f.write(editor.toPlainText())
+                self.manager.load_scripts()
+                QMessageBox.information(
+                    self, "Saved", f"Saved {fname}. Reload page to apply."
+                )
+                self.refresh_list()
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Failed to save: {e}")
+
+    def _toggle_selected(self):
+        fname = self._selected_filename()
+        if not fname:
+            return
+        script = self.manager.scripts.get(fname)
+        if not script:
+            return
+        new_state = not script.enabled
+        self.manager.set_enabled(fname, new_state)
+        self.refresh_list()
+
+    def _delete_selected(self):
+        fname = self._selected_filename()
+        if not fname:
+            return
+        ret = QMessageBox.question(
+            self,
+            "Delete",
+            f"Delete userscript '{fname}'?\nThis cannot be undone.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if ret == QMessageBox.StandardButton.Yes:
+            self.manager.delete_script(fname)
+            self.refresh_list()
+
+
+class ToolbarCustomizerDialog(QDialog):
+    """Customize what to pin in toolbar - download, vpn, blockers, etc."""
+
+    def __init__(self, browser_window, parent=None):
+        super().__init__(parent or browser_window)
+        self.browser_window = browser_window
+        self.setWindowTitle("Customize Toolbar — Pin / Unpin")
+        self.resize(460, 520)
+        self.settings = browser_window.settings
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(14)
+
+        title = QLabel("Pin what you want in the top bar")
+        f = title.font()
+        f.setPointSize(11)
+        f.setBold(True)
+        title.setFont(f)
+        layout.addWidget(title)
+
+        desc = QLabel(
+            "Choose which buttons show in the toolbar. Hide what you don't use. Changes apply instantly."
+        )
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #8b949e; font-size: 9pt;")
+        layout.addWidget(desc)
+
+        # Checkboxes
+        self.checkboxes = {}
+        pinned = self.settings.get("toolbar_pinned", DEFAULT_SETTINGS["toolbar_pinned"])
+
+        items = [
+            ("back", "Back", "Go back"),
+            ("forward", "Forward", "Go forward"),
+            ("reload", "Reload / Stop", "Reload or stop loading"),
+            ("reader", "Reader Mode", "Distraction-free reading (Ctrl+Shift+R)"),
+            ("userscript", "Userscripts (.user.js)", "Custom JS enhancements"),
+            ("downloads", "Downloads", "Downloads bubble (Ctrl+J)"),
+            ("vpn", "VPN / DNS & Proxy", "Network, DNS, Proxy settings"),
+            ("blockers", "Blockers & Filters", "Ad & NSFW blocker settings"),
+            ("bookmarks", "Bookmark Star", "Star to bookmark current page"),
+        ]
+
+        from PyQt6.QtWidgets import QCheckBox, QScrollArea
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet(
+            "QScrollArea { border: 1px solid #30363d; border-radius: 8px; }"
+        )
+        inner = QWidget()
+        inner_layout = QVBoxLayout(inner)
+        inner_layout.setSpacing(10)
+
+        for key, label, tip in items:
+            cb = QCheckBox(f"{label} — {tip}")
+            cb.setChecked(pinned.get(key, True))
+            cb.setToolTip(tip)
+            self.checkboxes[key] = cb
+            inner_layout.addWidget(cb)
+
+        inner_layout.addStretch()
+        scroll.setWidget(inner)
+        layout.addWidget(scroll, 1)
+
+        # Reader hide chrome option
+        self.hide_chrome_cb = QCheckBox(
+            "Reader Mode hides Nav & Bookmark bar (immersive)"
+        )
+        self.hide_chrome_cb.setChecked(self.settings.get("reader_hide_chrome", True))
+        layout.addWidget(self.hide_chrome_cb)
+
+        btn_box = QHBoxLayout()
+        btn_box.addStretch()
+        btn_reset = QPushButton("Reset Defaults")
+        btn_reset.clicked.connect(self._reset)
+        btn_box.addWidget(btn_reset)
+
+        btn_cancel = QPushButton("Cancel")
+        btn_cancel.clicked.connect(self.reject)
+        btn_box.addWidget(btn_cancel)
+
+        btn_save = QPushButton("Save")
+        btn_save.setStyleSheet(
+            "background-color: #0969da; color: white; font-weight: bold; padding: 6px 14px; border-radius: 6px;"
+        )
+        btn_save.clicked.connect(self._save)
+        btn_box.addWidget(btn_save)
+
+        layout.addLayout(btn_box)
+
+    def _reset(self):
+        defaults = DEFAULT_SETTINGS["toolbar_pinned"]
+        for key, cb in self.checkboxes.items():
+            cb.setChecked(defaults.get(key, True))
+        self.hide_chrome_cb.setChecked(True)
+
+    def _save(self):
+        pinned = {k: cb.isChecked() for k, cb in self.checkboxes.items()}
+        updates = {
+            "toolbar_pinned": pinned,
+            "reader_hide_chrome": self.hide_chrome_cb.isChecked(),
+        }
+        if self.browser_window.save_settings_batch(updates):
+            self.browser_window.apply_toolbar_config()
+        self.accept()
+
+
 # =============================================================================
 # Main Window: Modern EcoBrowser
 # =============================================================================
@@ -2061,6 +3519,8 @@ class EcoBrowserWindow(QMainWindow):
 
         self.active_downloads = {}
         self.downloads_bubble = None
+        self.reader_state = {}  # view_id -> bool
+        self.readable_state = {}  # view_id -> bool
 
         self.settings = self.load_all_settings()
         self.is_dark_mode = self.settings.get("dark_mode", True)
@@ -2069,6 +3529,9 @@ class EcoBrowserWindow(QMainWindow):
         self.home_url = SEARCH_ENGINES.get(
             self.search_engine, SEARCH_ENGINES["Google"]
         )["home_url"]
+
+        # Userscript manager
+        self.userscript_manager = UserscriptManager(get_app_data_folder())
 
         self._setup_web_profile()
         self._setup_ui()
@@ -2080,7 +3543,45 @@ class EcoBrowserWindow(QMainWindow):
         self.shortcut_new_tab = QShortcut(QKeySequence("Ctrl+T"), self)
         self.shortcut_new_tab.activated.connect(lambda: self.add_new_tab(self.home_url))
 
+        self.shortcut_reader = QShortcut(QKeySequence("Ctrl+Shift+R"), self)
+        self.shortcut_reader.activated.connect(self.toggle_reader_mode)
+
+        self.shortcut_reader_esc = QShortcut(QKeySequence("Escape"), self)
+        self.shortcut_reader_esc.activated.connect(self._handle_escape_reader)
+
+        # Timer to detect JS-initiated reader exit (mini button inside page)
+        self.reader_check_timer = QTimer(self)
+        self.reader_check_timer.timeout.connect(self._check_reader_js_state)
+        self.reader_check_timer.start(700)
+
         self.add_new_tab(self.initial_url or self.home_url)
+
+    def _check_reader_js_state(self):
+        """If JS reader overlay exited via its own button, sync Python chrome."""
+        try:
+            view = self.get_current_view()
+            if not view:
+                return
+            vid = id(view)
+            if not self.reader_state.get(vid, False):
+                return
+
+            # Ask JS if still active
+            def cb(is_active):
+                try:
+                    if not is_active:
+                        # JS says not active, but Python thinks active -> fix
+                        self.reader_state[vid] = False
+                        self._refresh_reader_button_ui()
+                        self._set_reader_chrome_hidden(False)
+                except Exception:
+                    pass
+
+            view.page().runJavaScript(
+                "window.__ecoReader ? window.__ecoReader.isActive : false", cb
+            )
+        except Exception:
+            pass
 
     def _setup_web_profile(self):
         app_data_path = get_app_data_folder()
@@ -2101,6 +3602,26 @@ class EcoBrowserWindow(QMainWindow):
         script.setRunsOnSubFrames(True)
         self.profile.scripts().insert(script)
 
+        # Reader Mode Script
+        reader_script = QWebEngineScript()
+        reader_script.setName("EcoBrowserReaderMode")
+        reader_script.setSourceCode(READER_MODE_JS)
+        reader_script.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentReady)
+        reader_script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
+        reader_script.setRunsOnSubFrames(False)
+        self.profile.scripts().insert(reader_script)
+
+        # Userscript Polyfill
+        polyfill_script = QWebEngineScript()
+        polyfill_script.setName("EcoBrowserUserscriptPolyfill")
+        polyfill_script.setSourceCode(USERSCRIPT_POLYFILL_JS)
+        polyfill_script.setInjectionPoint(
+            QWebEngineScript.InjectionPoint.DocumentCreation
+        )
+        polyfill_script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
+        polyfill_script.setRunsOnSubFrames(True)
+        self.profile.scripts().insert(polyfill_script)
+
         self.interceptor = ContentBlocker()
         self.profile.setUrlRequestInterceptor(self.interceptor)
         self.profile.downloadRequested.connect(self.handle_download_request)
@@ -2109,6 +3630,18 @@ class EcoBrowserWindow(QMainWindow):
         central_widget = QWidget()
         central_widget.setObjectName("centralWidget")
         self.setCentralWidget(central_widget)
+        self.central_widget = central_widget
+
+        # Reader mini FAB - small button top-left to toggle just reader (no shi)
+        self.reader_mini_fab = QPushButton("✕", self.central_widget)
+        self.reader_mini_fab.setObjectName("readerMiniFab")
+        self.reader_mini_fab.setFixedSize(36, 36)
+        self.reader_mini_fab.setToolTip("Exit Reader Mode (Esc)")
+        self.reader_mini_fab.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.reader_mini_fab.hide()
+        self.reader_mini_fab.clicked.connect(self._handle_escape_reader)
+        self.reader_mini_fab.raise_()
+        # Style will be applied in apply_theme
 
         main_layout = QVBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -2221,6 +3754,27 @@ class EcoBrowserWindow(QMainWindow):
         address_layout.addWidget(self.bookmark_button)
         toolbar_layout.addWidget(self.address_panel, 1)
 
+        # Reader Mode Button
+        self.reader_button = self._make_toolbar_button("Reader Mode (Ctrl+Shift+R)")
+        self.reader_button.setCheckable(True)
+        self.reader_button.clicked.connect(self.toggle_reader_mode)
+        toolbar_layout.addWidget(self.reader_button)
+
+        # Userscript Manager Button
+        self.userscript_button = self._make_toolbar_button("Userscripts (.user.js)")
+        self.userscript_button.clicked.connect(self.open_userscript_manager_dialog)
+        toolbar_layout.addWidget(self.userscript_button)
+
+        # VPN / DNS Button
+        self.vpn_button = self._make_toolbar_button("VPN / DNS & Proxy (Network)")
+        self.vpn_button.clicked.connect(self.open_network_settings_dialog)
+        toolbar_layout.addWidget(self.vpn_button)
+
+        # Blockers Button
+        self.blockers_button = self._make_toolbar_button("Blockers and Filters")
+        self.blockers_button.clicked.connect(self.open_block_manager_dialog)
+        toolbar_layout.addWidget(self.blockers_button)
+
         # Downloads Button
         self.downloads_button = self._make_toolbar_button("Downloads (Ctrl+J)")
         self.downloads_button.clicked.connect(self.toggle_downloads_bubble)
@@ -2232,6 +3786,8 @@ class EcoBrowserWindow(QMainWindow):
         toolbar_layout.addWidget(self.menu_button)
 
         self._build_main_menu()
+        # Apply pinned config after building
+        QTimer.singleShot(0, self.apply_toolbar_config)
         return toolbar_panel
 
     def _build_main_menu(self):
@@ -2240,6 +3796,20 @@ class EcoBrowserWindow(QMainWindow):
         self.menu.addAction("Blockers and filters", self.open_block_manager_dialog)
         self.menu.addAction(
             "Network / VPN and DNS...", self.open_network_settings_dialog
+        )
+        self.menu.addSeparator()
+
+        # Reader Mode actions
+        self.menu.addAction("Toggle Reader Mode\tCtrl+Shift+R", self.toggle_reader_mode)
+        self.menu.addAction("Reader Mode Settings...", self.open_reader_settings_dialog)
+        self.menu.addSeparator()
+
+        # Userscript manager
+        self.menu.addAction(
+            "Userscript Manager (.user.js)...", self.open_userscript_manager_dialog
+        )
+        self.menu.addAction(
+            "Customize Toolbar (Pin / Unpin)...", self.open_toolbar_customizer_dialog
         )
         self.menu.addSeparator()
 
@@ -2399,6 +3969,61 @@ class EcoBrowserWindow(QMainWindow):
 
         self.setStyleSheet(self._build_stylesheet(theme, accent))
         self.update_all_icons()
+        # Sync reader mode theme with browser dark mode
+        try:
+            for i in range(self.stack.count()):
+                v = self.stack.widget(i)
+                if v:
+                    self._sync_reader_dark_state(v)
+            self._refresh_reader_button_ui()
+        except Exception:
+            pass
+        # Style reader mini FAB (small button top left to toggle just it)
+        try:
+            if hasattr(self, "reader_mini_fab"):
+                theme = dict(base_theme)
+                accent = getattr(self, "custom_accent", theme["accent_blue"])
+                self.reader_mini_fab.setStyleSheet(f"""
+                    QPushButton#readerMiniFab {{
+                        background-color: {theme['toolbar_bg']};
+                        color: {theme['text_primary']};
+                        border: 1px solid {theme['divider']};
+                        border-radius: 18px;
+                        font-weight: bold;
+                        font-size: 14pt;
+                    }}
+                    QPushButton#readerMiniFab:hover {{
+                        background-color: {accent};
+                        color: white;
+                        border-color: {accent};
+                    }}
+                """)
+        except Exception:
+            pass
+
+        # Style reader mini FAB (small button top left to toggle just it)
+        try:
+            if hasattr(self, "reader_mini_fab"):
+                theme = dict(base_theme)
+                accent = getattr(self, "custom_accent", theme["accent_blue"])
+                self.reader_mini_fab.setStyleSheet(f"""
+                    QPushButton#readerMiniFab {{
+                        background-color: {theme['toolbar_bg']};
+                        color: {theme['text_primary']};
+                        border: 1px solid {theme['divider']};
+                        border-radius: 18px;
+                        font-weight: bold;
+                        font-size: 14pt;
+                    }}
+                    QPushButton#readerMiniFab:hover {{
+                        background-color: {accent};
+                        color: white;
+                        border-color: {accent};
+                    }}
+                """)
+        except Exception:
+            pass
+
         self._update_all_tab_close_buttons()
 
         for i in range(self.stack.count()):
@@ -2446,6 +4071,24 @@ class EcoBrowserWindow(QMainWindow):
         self.security_icon_btn.setIcon(
             render_svg_icon(SVG_ICONS[sec_icon], sec_color, 14)
         )
+        # Reader & Userscript & VPN & Blockers buttons
+        try:
+            if hasattr(self, "reader_button"):
+                self._refresh_reader_button_ui()
+            if hasattr(self, "userscript_button"):
+                self.userscript_button.setIcon(
+                    render_svg_icon(SVG_ICONS["code"], icon_color, 18)
+                )
+            if hasattr(self, "vpn_button"):
+                self.vpn_button.setIcon(
+                    render_svg_icon(SVG_ICONS["vpn"], icon_color, 18)
+                )
+            if hasattr(self, "blockers_button"):
+                self.blockers_button.setIcon(
+                    render_svg_icon(SVG_ICONS["shield"], icon_color, 18)
+                )
+        except Exception:
+            pass
 
     def toggle_dark_mode(self):
         self.is_dark_mode = not self.is_dark_mode
@@ -2708,6 +4351,10 @@ class EcoBrowserWindow(QMainWindow):
         if view:
             self.back_button.setEnabled(view.history().canGoBack())
             self.forward_button.setEnabled(view.history().canGoForward())
+        try:
+            self._refresh_reader_button_ui()
+        except Exception:
+            pass
 
     def update_tab_title(self, title, web_view):
         display_title = title or "New Tab"
@@ -2741,6 +4388,252 @@ class EcoBrowserWindow(QMainWindow):
             )
             self.back_button.setEnabled(web_view.history().canGoBack())
             self.forward_button.setEnabled(web_view.history().canGoForward())
+
+        # Inject userscripts if enabled and page loaded ok
+        if ok and self.settings.get("userscripts_enabled", True):
+            try:
+                url = web_view.url().toString()
+                injection_js = self.userscript_manager.build_injection_js(url)
+                if injection_js:
+                    QTimer.singleShot(
+                        300,
+                        lambda v=web_view, js=injection_js: self._inject_userscript(
+                            v, js
+                        ),
+                    )
+            except Exception as e:
+                print(f"[Userscript] injection error: {e}")
+
+        # Check if page is readable for Reader Mode and update button
+        if ok:
+            try:
+                self._update_reader_button_state(web_view)
+                self._sync_reader_dark_state(web_view)
+            except Exception:
+                pass
+
+    def _inject_userscript(self, web_view, js_code):
+        try:
+            if web_view and js_code:
+                web_view.page().runJavaScript(js_code)
+        except Exception:
+            pass
+
+    def _update_reader_button_state(self, web_view):
+        def callback(is_readable):
+            try:
+                vid = id(web_view)
+                self.readable_state[vid] = bool(is_readable)
+                if web_view == self.get_current_view():
+                    self._refresh_reader_button_ui()
+            except Exception:
+                pass
+
+        try:
+            web_view.page().runJavaScript(
+                "typeof window.__ecoReaderIsReadable === 'function' ? window.__ecoReaderIsReadable() : false",
+                callback,
+            )
+        except Exception:
+            pass
+
+    def _sync_reader_dark_state(self, web_view):
+        try:
+            js = f"if(window.__ecoReader) window.__ecoReader.setBrowserDark({str(self.is_dark_mode).lower()});"
+            web_view.page().runJavaScript(js)
+        except Exception:
+            pass
+
+    def _refresh_reader_button_ui(self):
+        try:
+            view = self.get_current_view()
+            if not view:
+                return
+            vid = id(view)
+            is_readable = self.readable_state.get(vid, False)
+            is_active = self.reader_state.get(vid, False)
+            theme = DARK_THEME if self.is_dark_mode else LIGHT_THEME
+            if is_active:
+                self.reader_button.setChecked(True)
+                self.reader_button.setIcon(
+                    render_svg_icon(
+                        SVG_ICONS["reader_active"], theme["accent_blue"], 18
+                    )
+                )
+                self.reader_button.setToolTip("Exit Reader Mode (Ctrl+Shift+R / Esc)")
+            else:
+                self.reader_button.setChecked(False)
+                color = theme["accent_blue"] if is_readable else theme["icon_color"]
+                icon_name = "reader_active" if is_readable else "reader"
+                self.reader_button.setIcon(
+                    render_svg_icon(SVG_ICONS[icon_name], color, 18)
+                )
+                if is_readable:
+                    self.reader_button.setToolTip(
+                        "Enter Reader Mode — Page is readable (Ctrl+Shift+R)"
+                    )
+                else:
+                    self.reader_button.setToolTip(
+                        "Reader Mode (Ctrl+Shift+R) — Page may not be readable"
+                    )
+        except Exception as e:
+            print(f"Reader button refresh error: {e}")
+
+    # ================= Reader Mode Methods =================
+    def _set_reader_chrome_hidden(self, hidden):
+        """Hide nav and bookmark bar when reader active - immersive reading."""
+        try:
+            if not self.settings.get("reader_hide_chrome", True):
+                hidden = False
+            if hidden:
+                if hasattr(self, "toolbar_panel"):
+                    self.toolbar_panel.hide()
+                if hasattr(self, "bookmarks_bar_widget"):
+                    self.bookmarks_bar_widget.hide()
+                if hasattr(self, "reader_mini_fab"):
+                    self.reader_mini_fab.show()
+                    self.reader_mini_fab.raise_()
+                    # Position top-left
+                    self.reader_mini_fab.move(12, 12)
+            else:
+                if hasattr(self, "toolbar_panel"):
+                    self.toolbar_panel.show()
+                if hasattr(self, "bookmarks_bar_widget"):
+                    # Only show if bookmarks exist or always? Respect previous state
+                    bookmarks = self.load_bookmarks()
+                    if bookmarks:
+                        self.bookmarks_bar_widget.show()
+                    else:
+                        self.bookmarks_bar_widget.hide()
+                if hasattr(self, "reader_mini_fab"):
+                    self.reader_mini_fab.hide()
+        except Exception as e:
+            print(f"Chrome hide error: {e}")
+
+    def toggle_reader_mode(self):
+        view = self.get_current_view()
+        if not view:
+            return
+        reader_settings = {
+            "font": self.settings.get("reader_font", "serif"),
+            "fontSize": self.settings.get("reader_font_size", 19),
+            "lineHeight": self.settings.get("reader_line_height", 1.8),
+            "width": self.settings.get("reader_width", "medium"),
+            "theme": self.settings.get("reader_theme", "auto"),
+            "textAlign": self.settings.get("reader_text_align", "start"),
+            "isDarkBrowser": self.is_dark_mode,
+        }
+        settings_json = __import__("json").dumps(reader_settings)
+        update_js = f"""
+        (function() {{
+            if (window.__ecoReader) {{
+                window.__ecoReader.updateSettings({settings_json});
+                window.__ecoReader.toggle();
+                return window.__ecoReader.isActive;
+            }} else if (typeof window.__ecoReaderToggle === 'function') {{
+                window.__ecoReaderToggle();
+                return true;
+            }}
+            return false;
+        }})()
+        """
+
+        def toggle_callback(is_active):
+            try:
+                vid = id(view)
+                if isinstance(is_active, bool):
+                    self.reader_state[vid] = is_active
+                else:
+                    self.reader_state[vid] = not self.reader_state.get(vid, False)
+                self._refresh_reader_button_ui()
+                # Hide/show chrome
+                self._set_reader_chrome_hidden(self.reader_state.get(vid, False))
+            except Exception as e:
+                print(f"toggle callback error: {e}")
+
+        view.page().runJavaScript(update_js, toggle_callback)
+
+    def _handle_escape_reader(self):
+        view = self.get_current_view()
+        if not view:
+            return
+        vid = id(view)
+        if self.reader_state.get(vid, False):
+            view.page().runJavaScript(
+                "if(window.__ecoReader) window.__ecoReader.exit();"
+            )
+            self.reader_state[vid] = False
+            self._refresh_reader_button_ui()
+            self._set_reader_chrome_hidden(False)
+        else:
+            # Even if state desync (JS exited via its own button), ensure chrome shown
+            self._set_reader_chrome_hidden(False)
+
+    def apply_reader_settings_to_view(self, web_view):
+        if not web_view:
+            return
+        reader_settings = {
+            "font": self.settings.get("reader_font", "serif"),
+            "fontSize": self.settings.get("reader_font_size", 19),
+            "lineHeight": self.settings.get("reader_line_height", 1.8),
+            "width": self.settings.get("reader_width", "medium"),
+            "theme": self.settings.get("reader_theme", "auto"),
+            "textAlign": self.settings.get("reader_text_align", "start"),
+            "isDarkBrowser": self.is_dark_mode,
+        }
+        js = f"if(window.__ecoReader) window.__ecoReader.updateSettings({__import__('json').dumps(reader_settings)});"
+        web_view.page().runJavaScript(js)
+
+    def open_reader_settings_dialog(self):
+        dlg = ReaderSettingsDialog(self)
+        dlg.exec()
+        view = self.get_current_view()
+        if view:
+            self.apply_reader_settings_to_view(view)
+
+    def open_userscript_manager_dialog(self):
+        dlg = UserscriptManagerDialog(self)
+        dlg.exec()
+
+    def open_toolbar_customizer_dialog(self):
+        dlg = ToolbarCustomizerDialog(self)
+        dlg.exec()
+
+    def apply_toolbar_config(self):
+        """Adjust what to pin in toolbar like download, vpn, etc."""
+        try:
+            pinned = self.settings.get(
+                "toolbar_pinned", DEFAULT_SETTINGS["toolbar_pinned"]
+            )
+
+            # Helper to show/hide
+            def set_vis(widget, key):
+                if widget and hasattr(widget, "setVisible"):
+                    widget.setVisible(pinned.get(key, True))
+
+            set_vis(getattr(self, "back_button", None), "back")
+            set_vis(getattr(self, "forward_button", None), "forward")
+            set_vis(getattr(self, "refresh_button", None), "reload")
+            set_vis(getattr(self, "reader_button", None), "reader")
+            set_vis(getattr(self, "userscript_button", None), "userscript")
+            set_vis(getattr(self, "downloads_button", None), "downloads")
+            set_vis(getattr(self, "vpn_button", None), "vpn")
+            set_vis(getattr(self, "blockers_button", None), "blockers")
+            set_vis(getattr(self, "bookmark_button", None), "bookmarks")
+            # Also update icons after visibility change
+            self.update_all_icons()
+        except Exception as e:
+            print(f"apply_toolbar_config error: {e}")
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # Keep mini FAB at top-left when reader active
+        try:
+            if hasattr(self, "reader_mini_fab") and self.reader_mini_fab.isVisible():
+                self.reader_mini_fab.move(12, 12)
+                self.reader_mini_fab.raise_()
+        except Exception:
+            pass
 
     def on_reload_clicked(self):
         view = self.get_current_view()
