@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-"""
-EcoBrowser — High-Performance Python Web Browser
-Built with PyQt6-WebEngine, Modern Arc/Chrome-inspired UI,
-Built-in Ad Blocker, NSFW Media Blurring, and AI-Generated Media Watermarking.
-Repository: ahmedomardev/EcoBrowser
-"""
-
 import os
 import sys
 import gc
@@ -25,7 +17,7 @@ if sys.platform == "win32":
 else:
     reg = None
 
-from PyQt6.QtCore import QUrl, QTimer, Qt, QByteArray, QSize, QStandardPaths
+from PyQt6.QtCore import QUrl, QTimer, Qt, QByteArray, QSize, QStandardPaths, QObject, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QKeySequence, QShortcut, QColor
 from PyQt6.QtNetwork import QNetworkProxy, QNetworkProxyFactory
 from PyQt6.QtSvg import QSvgRenderer
@@ -39,6 +31,13 @@ from PyQt6.QtWebEngineCore import (
     QWebEngineScript,
 )
 from PyQt6.QtWebEngineWidgets import QWebEngineView
+try:
+    from PyQt6.QtWebChannel import QWebChannel
+    HAS_WEBCHANNEL = True
+except ImportError:
+    QWebChannel = None
+    HAS_WEBCHANNEL = False
+
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -72,7 +71,7 @@ from PyQt6.QtWidgets import (
 # =============================================================================
 
 APP_NAME = "EcoBrowser"
-APP_VERSION = "1.7"
+APP_VERSION = "1.8"
 HOME_URL = "https://www.google.com"
 
 # Built-in Search Engines
@@ -213,6 +212,9 @@ DEFAULT_SETTINGS = {
     # Userscript manager
     "userscripts_enabled": True,
     # Toolbar customization - what to pin
+    "password_manager_enabled": True,
+    "password_autofill_enabled": True,
+    "password_save_prompt": True,
     "toolbar_pinned": {
         "back": True,
         "forward": True,
@@ -223,6 +225,7 @@ DEFAULT_SETTINGS = {
         "vpn": True,
         "blockers": True,
         "bookmarks": True,
+        "passwords": True,
     },
     "reader_hide_chrome": True,
 }
@@ -387,6 +390,7 @@ SVG_ICONS = {
     "tab_close": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
     "globe": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
     "palette": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.23 19.59 10.57 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>',
+    "key": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>',
     "search": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>',
     "reader": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M19 4H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V6h14v12zM7 8h10v2H7V8zm0 4h10v2H7v-2zm0 4h7v2H7v-2z"/></svg>',
     "reader_active": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7v-7zm4-3h2v10h-2V7zm4 6h2v4h-2v-4z"/></svg>',
@@ -1525,6 +1529,252 @@ USERSCRIPT_POLYFILL_JS = r"""
 })();
 """
 
+# =============================================================================
+# Password Manager: Detection + Autofill JS
+# =============================================================================
+
+PASSWORD_DETECTOR_JS = r"""
+(function() {
+    if (window.__ecoPasswordManagerInjected) return;
+    window.__ecoPasswordManagerInjected = true;
+
+    function ecoLogSave(data) {
+        try {
+            console.log('ECO_PASS_SAVE::' + JSON.stringify(data));
+        } catch(e) {}
+    }
+
+    function findEmailField() {
+        const selectors = [
+            'input[type="email"]',
+            'input[autocomplete="email"]',
+            'input[autocomplete="username"]',
+            'input[name*="email" i]',
+            'input[id*="email" i]',
+            'input[name*="login" i][type="text"]',
+            'input[name*="user" i][type="text"]',
+            'input[id*="user" i][type="text"]',
+            'input[type="text"][autocomplete*="email" i]'
+        ];
+        for (const sel of selectors) {
+            try {
+                const el = document.querySelector(sel);
+                if (el && el.offsetParent !== null) return el;
+            } catch(e) {}
+        }
+        try {
+            const pass = document.querySelector('input[type="password"]');
+            if (pass) {
+                const form = pass.closest('form');
+                if (form) {
+                    const txt = form.querySelector('input[type="text"], input[type="email"], input:not([type])');
+                    if (txt) return txt;
+                }
+                const allText = Array.from(document.querySelectorAll('input[type="text"], input[type="email"]')).filter(e=>e.offsetParent!==null);
+                if (allText.length>0) return allText[0];
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    function findPasswordFields() {
+        return Array.from(document.querySelectorAll('input[type="password"]')).filter(e=>true);
+    }
+
+    function tryFill(credentials) {
+        if (!credentials || !credentials.email) return false;
+        let filled = false;
+        try {
+            const emailField = findEmailField();
+            const passFields = findPasswordFields();
+            if (emailField) {
+                emailField.focus();
+                const proto = Object.getPrototypeOf(emailField);
+                const descriptor = Object.getOwnPropertyDescriptor(proto, 'value');
+                if (descriptor && descriptor.set) {
+                    descriptor.set.call(emailField, credentials.email);
+                } else {
+                    emailField.value = credentials.email;
+                }
+                emailField.dispatchEvent(new Event('input', {bubbles:true}));
+                emailField.dispatchEvent(new Event('change', {bubbles:true}));
+                emailField.dispatchEvent(new KeyboardEvent('keyup', {bubbles:true}));
+                filled = true;
+            }
+            if (passFields.length>0) {
+                for (const pf of passFields) {
+                    pf.focus();
+                    const proto = Object.getPrototypeOf(pf);
+                    const descriptor = Object.getOwnPropertyDescriptor(proto, 'value');
+                    if (descriptor && descriptor.set) {
+                        descriptor.set.call(pf, credentials.password);
+                    } else {
+                        pf.value = credentials.password;
+                    }
+                    pf.dispatchEvent(new Event('input', {bubbles:true}));
+                    pf.dispatchEvent(new Event('change', {bubbles:true}));
+                }
+                filled = true;
+            }
+            if (filled) {
+                console.log('ECO_PASS_FILLED::' + window.location.hostname);
+                showAutofillBadge();
+            }
+        } catch(e) {}
+        return filled;
+    }
+
+    function showAutofillBadge() {
+        try {
+            if (document.getElementById('__ecoPassBadge')) return;
+            const badge = document.createElement('div');
+            badge.id = '__ecoPassBadge';
+            badge.textContent = '🔑 Autofilled by EcoBrowser';
+            badge.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#1e2229;color:#58a6ff;border:1px solid #30363d;padding:8px 14px;border-radius:9999px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-size:12px;font-weight:600;z-index:2147483647;box-shadow:0 8px 24px rgba(0,0,0,0.5);transition:opacity 0.5s ease;';
+            document.body.appendChild(badge);
+            setTimeout(()=>{ badge.style.opacity='0'; setTimeout(()=>badge.remove(), 600); }, 3000);
+        } catch(e) {}
+    }
+
+    function trySave() {
+        try {
+            const emailField = findEmailField();
+            const passFields = findPasswordFields();
+            if (passFields.length===0) return;
+            const passVal = passFields[0].value;
+            if (!passVal || passVal.length < 2) return;
+            let emailVal = '';
+            if (emailField) emailVal = emailField.value.trim();
+            if (!emailVal) {
+                const candidates = Array.from(document.querySelectorAll('input[type="text"], input[type="email"]'));
+                for (const c of candidates) {
+                    if (c.value && c.value.trim().length>0) { emailVal = c.value.trim(); break; }
+                }
+            }
+            if (!emailVal) return;
+            if (emailVal.length < 3) return;
+            ecoLogSave({
+                host: window.location.hostname,
+                origin: window.location.origin,
+                href: window.location.href,
+                email: emailVal,
+                password: passVal,
+                timestamp: Date.now()
+            });
+        } catch(e) {}
+    }
+
+    function hookForms() {
+        try {
+            document.addEventListener('submit', function(e) {
+                setTimeout(trySave, 100);
+            }, true);
+            document.addEventListener('click', function(e) {
+                const target = e.target;
+                if (!target) return;
+                const isBtn = target.matches('button, input[type="submit"], input[type="button"], [role="button"]') || target.closest('button, input[type="submit"]');
+                if (isBtn) {
+                    const text = (target.innerText || target.value || '').toLowerCase();
+                    if (text.includes('log in') || text.includes('login') || text.includes('sign in') || text.includes('signin') || text.includes('submit') || text.includes('continue')) {
+                        setTimeout(trySave, 300);
+                    } else {
+                        if (findPasswordFields().length>0) setTimeout(trySave, 300);
+                    }
+                }
+            }, true);
+            document.addEventListener('focusout', function(e) {
+                if (e.target && e.target.type === 'password') {
+                    setTimeout(trySave, 500);
+                }
+            }, true);
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.target && e.target.type === 'password') {
+                    setTimeout(trySave, 100);
+                }
+            }, true);
+        } catch(e) {}
+    }
+
+    window.__ecoPassTryFill = function(email, password) {
+        return tryFill({email: email, password: password});
+    };
+    window.__ecoPassFindFields = function() {
+        const ef = findEmailField();
+        const pf = findPasswordFields();
+        return { hasEmail: !!ef, hasPassword: pf.length>0, emailSelector: ef ? (ef.id || ef.name || ef.type) : null };
+    };
+    window.__ecoPassCheckAndFillSaved = function() {
+        if (window.__ecoSavedCredentials) {
+            tryFill(window.__ecoSavedCredentials);
+        }
+    };
+
+    hookForms();
+
+    try {
+        const observer = new MutationObserver(function(mutations) {
+            let shouldCheck = false;
+            for (const m of mutations) {
+                if (m.addedNodes && m.addedNodes.length>0) shouldCheck = true;
+            }
+            if (shouldCheck) {
+                setTimeout(function() {
+                    if (window.__ecoSavedCredentials) tryFill(window.__ecoSavedCredentials);
+                }, 500);
+            }
+        });
+        observer.observe(document.documentElement || document.body, { childList: true, subtree: true });
+    } catch(e) {}
+
+    setTimeout(function() {
+        if (window.__ecoSavedCredentials) tryFill(window.__ecoSavedCredentials);
+    }, 800);
+
+    console.log('%c[EcoBrowser] Password Manager detector ready','color:#10b981;font-weight:bold');
+})();
+"""
+
+def build_password_autofill_js(email, password):
+    return f"""
+(function() {{
+    window.__ecoSavedCredentials = {{email: {json.dumps(email)}, password: {json.dumps(password)}}};
+    if (window.__ecoPassTryFill) {{
+        window.__ecoPassTryFill({json.dumps(email)}, {json.dumps(password)});
+    }} else {{
+        setTimeout(function() {{
+            try {{
+                const emailSelectors = ['input[type="email"]','input[autocomplete="email"]','input[autocomplete="username"]','input[name*="email" i]','input[id*="email" i]','input[name*="user" i][type="text"]'];
+                let ef = null;
+                for (const s of emailSelectors) {{ try {{ const e=document.querySelector(s); if(e){{ ef=e; break; }} }} catch(e){{}} }}
+                if (!ef) {{
+                    const txts = document.querySelectorAll('input[type="text"]');
+                    if (txts.length>0) ef = txts[0];
+                }}
+                const pfs = document.querySelectorAll('input[type="password"]');
+                if (ef) {{
+                    ef.focus();
+                    ef.value = {json.dumps(email)};
+                    ef.dispatchEvent(new Event('input', {{bubbles:true}}));
+                    ef.dispatchEvent(new Event('change', {{bubbles:true}}));
+                }}
+                pfs.forEach(function(pf) {{
+                    pf.focus();
+                    pf.value = {json.dumps(password)};
+                    pf.dispatchEvent(new Event('input', {{bubbles:true}}));
+                    pf.dispatchEvent(new Event('change', {{bubbles:true}}));
+                }});
+                if (pfs.length>0 || ef) {{
+                    console.log('ECO_PASS_FILLED::' + window.location.hostname);
+                }}
+            }} catch(e) {{}}
+        }}, 300);
+    }}
+}})();
+"""
+
+
+
+
 
 # =============================================================================
 # Windows Default Browser Registration Helper
@@ -2068,12 +2318,448 @@ if (document.body) {{ {code} }} else {{ document.addEventListener('DOMContentLoa
         return combined
 
 
+
+# =============================================================================
+# Password Manager - Secure Storage + Manager Dialog
+# =============================================================================
+
+class PasswordManager:
+    """Secure password manager that stores email + password per host."""
+
+    def __init__(self, app_data_folder):
+        self.folder = app_data_folder
+        self.file_path = os.path.join(app_data_folder, "passwords.json")
+        self.key_path = os.path.join(app_data_folder, ".pm_key")
+        self._key = None
+        self._data = {}
+        self._load_key()
+        self._load()
+
+    def _load_key(self):
+        try:
+            # Try to use cryptography Fernet if available for strong encryption
+            try:
+                from cryptography.fernet import Fernet
+                self._has_fernet = True
+            except ImportError:
+                self._has_fernet = False
+
+            if os.path.exists(self.key_path):
+                with open(self.key_path, "r", encoding="utf-8") as kf:
+                    k = kf.read().strip()
+                    if k:
+                        self._key = k
+                        return
+            # Generate new key
+            if self._has_fernet:
+                from cryptography.fernet import Fernet
+                new_key = Fernet.generate_key().decode()
+            else:
+                # fallback: random 32 bytes base64
+                import secrets
+                new_key = base64.b64encode(secrets.token_bytes(32)).decode()
+            self._key = new_key
+            try:
+                with open(self.key_path, "w", encoding="utf-8") as kf:
+                    kf.write(new_key)
+                # Hide file on Windows
+                if sys.platform == "win32":
+                    try:
+                        import ctypes
+                        ctypes.windll.kernel32.SetFileAttributesW(self.key_path, 2)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+        except Exception:
+            self._key = None
+            self._has_fernet = False
+
+    def _encrypt(self, plaintext):
+        if not plaintext:
+            return ""
+        try:
+            if getattr(self, "_has_fernet", False) and self._key:
+                from cryptography.fernet import Fernet
+                f = Fernet(self._key.encode() if isinstance(self._key, str) else self._key)
+                return f.encrypt(plaintext.encode()).decode()
+        except Exception:
+            pass
+        # Fallback: simple obfuscation with key xor + base64
+        try:
+            data = plaintext.encode()
+            key = (self._key or "ecobrowser_default_key").encode()
+            enc = bytes([b ^ key[i % len(key)] for i, b in enumerate(data)])
+            return base64.b64encode(enc).decode()
+        except Exception:
+            return base64.b64encode(plaintext.encode()).decode()
+
+    def _decrypt(self, ciphertext):
+        if not ciphertext:
+            return ""
+        try:
+            if getattr(self, "_has_fernet", False) and self._key:
+                from cryptography.fernet import Fernet
+                f = Fernet(self._key.encode() if isinstance(self._key, str) else self._key)
+                return f.decrypt(ciphertext.encode()).decode()
+        except Exception:
+            pass
+        try:
+            # Try xor+base64 fallback
+            raw = base64.b64decode(ciphertext.encode())
+            key = (self._key or "ecobrowser_default_key").encode()
+            dec = bytes([b ^ key[i % len(key)] for i, b in enumerate(raw)])
+            return dec.decode()
+        except Exception:
+            try:
+                return base64.b64decode(ciphertext.encode()).decode()
+            except Exception:
+                return ciphertext
+
+    def _load(self):
+        try:
+            if os.path.exists(self.file_path):
+                with open(self.file_path, "r", encoding="utf-8") as f:
+                    self._data = json.load(f)
+            else:
+                self._data = {}
+        except Exception:
+            self._data = {}
+
+    def _save(self):
+        try:
+            with open(self.file_path, "w", encoding="utf-8") as f:
+                json.dump(self._data, f, indent=2)
+        except Exception as e:
+            print(f"[PasswordManager] save error: {e}")
+
+    def save_credential(self, host, email, password, origin="", href=""):
+        if not host or not password:
+            return False
+        host = host.lower().strip()
+        if not host:
+            return False
+        # Normalize: remove www.
+        # Keep full host as key to allow subdomains separate
+        existing = self._data.get(host, {})
+        # Encrypt password
+        enc_pass = self._encrypt(password)
+        entry = {
+            "host": host,
+            "email": email,
+            "username": email,
+            "password": enc_pass,
+            "password_plain_len": len(password),
+            "origin": origin or existing.get("origin", ""),
+            "href": href or existing.get("href", ""),
+            "updated": datetime.now().isoformat(),
+            "created": existing.get("created", datetime.now().isoformat()),
+        }
+        self._data[host] = entry
+        self._save()
+        return True
+
+    def get_credential(self, host):
+        if not host:
+            return None
+        host = host.lower().strip()
+        # Exact match first
+        if host in self._data:
+            entry = self._data[host]
+            try:
+                dec_pass = self._decrypt(entry.get("password", ""))
+                return {
+                    "host": entry.get("host", host),
+                    "email": entry.get("email", ""),
+                    "username": entry.get("username", entry.get("email", "")),
+                    "password": dec_pass,
+                    "origin": entry.get("origin", ""),
+                    "updated": entry.get("updated", ""),
+                }
+            except Exception:
+                return None
+        # Try without www.
+        host_no_www = host[4:] if host.startswith("www.") else host
+        if host_no_www in self._data:
+            return self.get_credential(host_no_www)
+        # Try parent domain (e.g., login.example.com -> example.com)
+        parts = host.split(".")
+        if len(parts) > 2:
+            parent = ".".join(parts[-2:])
+            if parent in self._data:
+                return self.get_credential(parent)
+        return None
+
+    def has_credential(self, host):
+        return self.get_credential(host) is not None
+
+    def get_all(self):
+        result = []
+        for host, entry in self._data.items():
+            try:
+                dec_pass = self._decrypt(entry.get("password", ""))
+                result.append({
+                    "host": host,
+                    "email": entry.get("email", ""),
+                    "password": dec_pass,
+                    "origin": entry.get("origin", ""),
+                    "updated": entry.get("updated", ""),
+                    "created": entry.get("created", ""),
+                })
+            except Exception:
+                continue
+        # Sort by host
+        result.sort(key=lambda x: x["host"])
+        return result
+
+    def delete(self, host):
+        if not host:
+            return False
+        host = host.lower().strip()
+        if host in self._data:
+            del self._data[host]
+            self._save()
+            return True
+        return False
+
+    def count(self):
+        return len(self._data)
+
+
+class PasswordManagerDialog(QDialog):
+    """Dialog to view, search, reveal and delete saved passwords."""
+
+    def __init__(self, password_manager, parent=None):
+        super().__init__(parent)
+        self.password_manager = password_manager
+        self.setWindowTitle("Password Manager — EcoBrowser")
+        self.resize(720, 520)
+        self._revealed = {}  # host -> bool
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(14)
+
+        # Header
+        header = QLabel("Saved Passwords")
+        hf = header.font()
+        hf.setPointSize(12)
+        hf.setBold(True)
+        header.setFont(hf)
+        layout.addWidget(header)
+
+        sub = QLabel("EcoBrowser detects input[type=password] + input[type=email] and saves them encrypted. Autofills on return.")
+        sub.setWordWrap(True)
+        sub.setStyleSheet("color: #8b949e; font-size: 9pt;")
+        layout.addWidget(sub)
+
+        # Search + actions
+        top_bar = QHBoxLayout()
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Search by site or email...")
+        self.search_input.setFixedHeight(32)
+        self.search_input.textChanged.connect(self.refresh)
+        top_bar.addWidget(self.search_input, 1)
+
+        self.btn_export = QPushButton("Export")
+        self.btn_export.setToolTip("Export as JSON (passwords decrypted) - keep safe!")
+        self.btn_export.clicked.connect(self.export_passwords)
+        top_bar.addWidget(self.btn_export)
+
+        self.btn_clear_all = QPushButton("Clear All")
+        self.btn_clear_all.clicked.connect(self.clear_all)
+        top_bar.addWidget(self.btn_clear_all)
+        layout.addLayout(top_bar)
+
+        # Scroll area for cards
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.container_widget = QWidget()
+        self.cards_layout = QVBoxLayout(self.container_widget)
+        self.cards_layout.setContentsMargins(0, 0, 0, 0)
+        self.cards_layout.setSpacing(8)
+        self.cards_layout.addStretch()
+        self.scroll.setWidget(self.container_widget)
+        layout.addWidget(self.scroll, 1)
+
+        # Bottom
+        bottom = QHBoxLayout()
+        bottom.addStretch()
+        self.btn_close = QPushButton("Done")
+        self.btn_close.clicked.connect(self.accept)
+        bottom.addWidget(self.btn_close)
+        layout.addLayout(bottom)
+
+        self.refresh()
+
+    def refresh(self):
+        # Clear existing cards except stretch
+        while self.cards_layout.count() > 1:
+            item = self.cards_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        query = self.search_input.text().strip().lower()
+        all_creds = self.password_manager.get_all()
+
+        filtered = []
+        for c in all_creds:
+            if not query or query in c["host"].lower() or query in c["email"].lower():
+                filtered.append(c)
+
+        if not filtered:
+            lbl = QLabel("No saved passwords" if not query else "No matching passwords")
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl.setStyleSheet("color: #8b949e; padding: 30px;")
+            self.cards_layout.insertWidget(0, lbl)
+            return
+
+        for cred in filtered:
+            card = self._create_card(cred)
+            self.cards_layout.insertWidget(self.cards_layout.count()-1, card)
+
+    def _create_card(self, cred):
+        host = cred["host"]
+        email = cred["email"]
+        password = cred["password"]
+        updated = cred.get("updated", "")[:19].replace("T", " ")
+
+        frame = QFrame()
+        frame.setObjectName("passCard")
+        frame.setStyleSheet("""
+            QFrame#passCard { background-color: rgba(255,255,255,0.04); border: 1px solid #30363d; border-radius: 10px; }
+            QFrame#passCard:hover { border-color: #58a6ff; }
+        """)
+
+        vbox = QVBoxLayout(frame)
+        vbox.setContentsMargins(14, 12, 14, 12)
+        vbox.setSpacing(6)
+
+        top_row = QHBoxLayout()
+        icon_lbl = QLabel("🔑")
+        icon_lbl.setFixedWidth(24)
+        top_row.addWidget(icon_lbl)
+
+        host_lbl = QLabel(f"<b>{host}</b>")
+        host_lbl.setTextFormat(Qt.TextFormat.RichText)
+        top_row.addWidget(host_lbl, 1)
+
+        date_lbl = QLabel(updated)
+        date_lbl.setStyleSheet("color: #8b949e; font-size: 8pt;")
+        top_row.addWidget(date_lbl)
+
+        vbox.addLayout(top_row)
+
+        email_row = QHBoxLayout()
+        email_row.addWidget(QLabel("Email:"))
+        email_val = QLineEdit(email)
+        email_val.setReadOnly(True)
+        email_val.setStyleSheet("background: rgba(0,0,0,0.2); border: 1px solid #30363d; border-radius: 6px; padding: 4px 8px;")
+        email_row.addWidget(email_val, 1)
+        vbox.addLayout(email_row)
+
+        pass_row = QHBoxLayout()
+        pass_row.addWidget(QLabel("Password:"))
+        is_revealed = self._revealed.get(host, False)
+        pass_display = password if is_revealed else "•" * min(len(password), 16)
+        self_pass = QLineEdit(pass_display)
+        self_pass.setReadOnly(True)
+        self_pass.setEchoMode(QLineEdit.EchoMode.Normal if is_revealed else QLineEdit.EchoMode.Password)
+        self_pass.setStyleSheet("background: rgba(0,0,0,0.2); border: 1px solid #30363d; border-radius: 6px; padding: 4px 8px;")
+        pass_row.addWidget(self_pass, 1)
+
+        btn_show = QPushButton("Hide" if is_revealed else "Show")
+        btn_show.setFixedWidth(60)
+        btn_show.clicked.connect(lambda _, h=host: self.toggle_reveal(h))
+        pass_row.addWidget(btn_show)
+
+        vbox.addLayout(pass_row)
+
+        actions = QHBoxLayout()
+        actions.addStretch()
+        btn_copy_email = QPushButton("Copy Email")
+        btn_copy_email.clicked.connect(lambda _, e=email: QApplication.clipboard().setText(e))
+        actions.addWidget(btn_copy_email)
+
+        btn_copy_pass = QPushButton("Copy Pass")
+        btn_copy_pass.clicked.connect(lambda _, p=password: QApplication.clipboard().setText(p))
+        actions.addWidget(btn_copy_pass)
+
+        btn_delete = QPushButton("Delete")
+        btn_delete.setStyleSheet("color: #f85149;")
+        btn_delete.clicked.connect(lambda _, h=host: self.delete_entry(h))
+        actions.addWidget(btn_delete)
+
+        vbox.addLayout(actions)
+
+        return frame
+
+    def toggle_reveal(self, host):
+        self._revealed[host] = not self._revealed.get(host, False)
+        self.refresh()
+
+    def delete_entry(self, host):
+        reply = QMessageBox.question(self, "Delete Password", f"Delete saved password for {host}?",
+                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
+            self.password_manager.delete(host)
+            self._revealed.pop(host, None)
+            self.refresh()
+
+    def clear_all(self):
+        reply = QMessageBox.warning(self, "Clear All Passwords", "Delete ALL saved passwords? This cannot be undone.",
+                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
+            for cred in self.password_manager.get_all():
+                self.password_manager.delete(cred["host"])
+            self._revealed.clear()
+            self.refresh()
+
+    def export_passwords(self):
+        path, _ = QFileDialog.getSaveFileName(self, "Export Passwords", os.path.join(os.path.expanduser("~"), "ecobrowser_passwords_export.json"), "JSON Files (*.json)")
+        if not path:
+            return
+        try:
+            data = self.password_manager.get_all()
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            QMessageBox.information(self, "Exported", f"Exported {len(data)} passwords to {path}\nKeep this file secure!")
+        except Exception as e:
+            QMessageBox.critical(self, "Export Failed", str(e))
+
+
+
 class EcoWebEnginePage(QWebEnginePage):
-    """Handles window.open, target='_blank', and navigation interception for porn/NSFW blocking."""
+    """Handles window.open, target='_blank', and navigation interception for porn/NSFW blocking + password manager."""
 
     def __init__(self, profile, browser_window, parent=None):
         super().__init__(profile, parent)
         self.browser_window = browser_window
+
+    def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
+        # Intercept password manager messages
+        try:
+            if isinstance(message, str) and message.startswith("ECO_PASS_SAVE::"):
+                payload_str = message[len("ECO_PASS_SAVE::"):]
+                try:
+                    data = json.loads(payload_str)
+                    # Forward to browser window on main thread
+                    QTimer.singleShot(0, lambda d=data: self.browser_window.handle_password_save_request(d))
+                except Exception as e:
+                    print(f"[PasswordManager] failed to parse save request: {e}")
+                return
+            if isinstance(message, str) and message.startswith("ECO_PASS_FILLED::"):
+                host = message[len("ECO_PASS_FILLED::"):].strip()
+                print(f"[PasswordManager] Autofilled credentials for {host}")
+                return
+        except Exception:
+            pass
+        # Default handling - let parent handle or ignore
+        try:
+            super().javaScriptConsoleMessage(level, message, lineNumber, sourceID)
+        except Exception:
+            pass
 
     def createWindow(self, _window_type):
         new_view = self.browser_window.add_new_tab("about:blank")
@@ -3426,6 +4112,9 @@ class ToolbarCustomizerDialog(QDialog):
         # Checkboxes
         self.checkboxes = {}
         pinned = self.settings.get("toolbar_pinned", DEFAULT_SETTINGS["toolbar_pinned"])
+        # Ensure passwords key exists
+        if "passwords" not in pinned:
+            pinned["passwords"] = True
 
         items = [
             ("back", "Back", "Go back"),
@@ -3437,6 +4126,7 @@ class ToolbarCustomizerDialog(QDialog):
             ("vpn", "VPN / DNS & Proxy", "Network, DNS, Proxy settings"),
             ("blockers", "Blockers & Filters", "Ad & NSFW blocker settings"),
             ("bookmarks", "Bookmark Star", "Star to bookmark current page"),
+            ("passwords", "Password Manager", "Saved logins & autofill"),
         ]
 
         from PyQt6.QtWidgets import QCheckBox, QScrollArea
@@ -3523,6 +4213,13 @@ class EcoBrowserWindow(QMainWindow):
         self.readable_state = {}  # view_id -> bool
 
         self.settings = self.load_all_settings()
+        # Password Manager
+        try:
+            self.password_manager = PasswordManager(get_app_data_folder())
+        except Exception as e:
+            print(f"[PasswordManager] init failed: {e}")
+            self.password_manager = None
+        self._pending_password_save = None  # store pending save to avoid duplicate prompts
         self.is_dark_mode = self.settings.get("dark_mode", True)
         self.search_engine = self.settings.get("search_engine", DEFAULT_SEARCH_ENGINE)
         self.custom_accent = self.settings.get("custom_accent", DEFAULT_ACCENT_COLOR)
@@ -3621,6 +4318,18 @@ class EcoBrowserWindow(QMainWindow):
         polyfill_script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
         polyfill_script.setRunsOnSubFrames(True)
         self.profile.scripts().insert(polyfill_script)
+
+        # Password Manager detector script - runs on every page
+        try:
+            pm_script = QWebEngineScript()
+            pm_script.setName("EcoBrowserPasswordManager")
+            pm_script.setSourceCode(PASSWORD_DETECTOR_JS)
+            pm_script.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentReady)
+            pm_script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
+            pm_script.setRunsOnSubFrames(True)
+            self.profile.scripts().insert(pm_script)
+        except Exception as e:
+            print(f"[PasswordManager] script injection failed: {e}")
 
         self.interceptor = ContentBlocker()
         self.profile.setUrlRequestInterceptor(self.interceptor)
@@ -3775,6 +4484,11 @@ class EcoBrowserWindow(QMainWindow):
         self.blockers_button.clicked.connect(self.open_block_manager_dialog)
         toolbar_layout.addWidget(self.blockers_button)
 
+        # Password Manager Button
+        self.passwords_button = self._make_toolbar_button("Password Manager (Saved logins)")
+        self.passwords_button.clicked.connect(self.open_password_manager_dialog)
+        toolbar_layout.addWidget(self.passwords_button)
+
         # Downloads Button
         self.downloads_button = self._make_toolbar_button("Downloads (Ctrl+J)")
         self.downloads_button.clicked.connect(self.toggle_downloads_bubble)
@@ -3841,6 +4555,7 @@ class EcoBrowserWindow(QMainWindow):
         self.menu.addAction("New tab\tCtrl+T", lambda: self.add_new_tab(self.home_url))
         self.menu.addAction("Downloads\tCtrl+J", self.open_downloads_dialog)
         self.menu.addAction("Bookmarks Manager", self.open_bookmarks_dialog)
+        self.menu.addAction("Password Manager 🔑", self.open_password_manager_dialog)
         self.menu.addAction("History\tCtrl+H", self.open_history_dialog)
         self.menu.addAction("Clear browsing cookies", self.clear_cookies)
         self.menu.addSeparator()
@@ -4087,6 +4802,20 @@ class EcoBrowserWindow(QMainWindow):
                 self.blockers_button.setIcon(
                     render_svg_icon(SVG_ICONS["shield"], icon_color, 18)
                 )
+            if hasattr(self, "passwords_button"):
+                # Use key icon, accent if passwords saved for current site
+                try:
+                    cur_host = self.get_current_view().url().host().lower() if self.get_current_view() else ""
+                    has_saved = self.password_manager and self.password_manager.has_credential(cur_host)
+                    p_color = accent if has_saved else icon_color
+                    p_icon = "key_filled" if has_saved else "key"
+                    self.passwords_button.setIcon(
+                        render_svg_icon(SVG_ICONS[p_icon], p_color, 18)
+                    )
+                except Exception:
+                    self.passwords_button.setIcon(
+                        render_svg_icon(SVG_ICONS["key"], icon_color, 18)
+                    )
         except Exception:
             pass
 
@@ -4404,6 +5133,15 @@ class EcoBrowserWindow(QMainWindow):
             except Exception as e:
                 print(f"[Userscript] injection error: {e}")
 
+        # Password Manager autofill
+        if ok:
+            try:
+                self._try_autofill_passwords(web_view)
+                # Update icon color if saved
+                QTimer.singleShot(1000, self.update_all_icons)
+            except Exception as e:
+                print(f"[PasswordManager] autofill error: {e}")
+
         # Check if page is readable for Reader Mode and update button
         if ok:
             try:
@@ -4620,6 +5358,7 @@ class EcoBrowserWindow(QMainWindow):
             set_vis(getattr(self, "vpn_button", None), "vpn")
             set_vis(getattr(self, "blockers_button", None), "blockers")
             set_vis(getattr(self, "bookmark_button", None), "bookmarks")
+            set_vis(getattr(self, "passwords_button", None), "passwords")
             # Also update icons after visibility change
             self.update_all_icons()
         except Exception as e:
@@ -4923,6 +5662,144 @@ class EcoBrowserWindow(QMainWindow):
         bubble_y = btn_pos.y() + 4
         self.downloads_bubble.move(bubble_x, bubble_y)
         self.downloads_bubble.show()
+
+
+    # =========================================================================
+    # Password Manager Integration
+    # =========================================================================
+
+    def _try_autofill_passwords(self, web_view):
+        if not getattr(self, "password_manager", None):
+            return
+        if not self.settings.get("password_manager_enabled", True):
+            return
+        if not self.settings.get("password_autofill_enabled", True):
+            return
+        try:
+            url = web_view.url()
+            host = url.host()
+            if not host:
+                return
+            # Skip internal pages
+            if host in ("", "newtab", "about"):
+                return
+            cred = self.password_manager.get_credential(host)
+            if not cred:
+                return
+            # Don't autofill if already filled? We still try - JS will handle
+            email = cred.get("email", "")
+            password = cred.get("password", "")
+            if not email or not password:
+                return
+            js = build_password_autofill_js(email, password)
+            # Small delay to let page DOM settle + SPA
+            QTimer.singleShot(700, lambda v=web_view, j=js: self._inject_autofill(v, j))
+            QTimer.singleShot(2000, lambda v=web_view, j=js: self._inject_autofill(v, j))
+        except Exception as e:
+            print(f"[PasswordManager] _try_autofill error: {e}")
+
+    def _inject_autofill(self, web_view, js_code):
+        try:
+            if web_view and js_code:
+                web_view.page().runJavaScript(js_code)
+        except Exception:
+            pass
+
+    def handle_password_save_request(self, data):
+        try:
+            if not getattr(self, "password_manager", None):
+                return
+            if not self.settings.get("password_manager_enabled", True):
+                return
+
+            host = data.get("host", "").lower().strip()
+            email = data.get("email", "").strip()
+            password = data.get("password", "")
+            origin = data.get("origin", "")
+            href = data.get("href", "")
+
+            if not host or not password or not email:
+                return
+
+            # Deduplicate rapid duplicate saves
+            now_key = f"{host}|{email}|{len(password)}"
+            import time
+            current = time.time()
+            if getattr(self, "_last_save_key", None) == now_key and current - getattr(self, "_last_save_time", 0) < 3:
+                return
+            self._last_save_key = now_key
+            self._last_save_time = current
+
+            # Check if already saved with same values
+            existing = self.password_manager.get_credential(host)
+            if existing and existing.get("email") == email and existing.get("password") == password:
+                return  # Already saved
+
+            if self.settings.get("password_save_prompt", True):
+                # Show prompt to user - use QTimer to avoid blocking console handler
+                QTimer.singleShot(100, lambda: self._prompt_save_password(host, email, password, origin, href))
+            else:
+                self.password_manager.save_credential(host, email, password, origin, href)
+                # Show brief notification via status? Use autofill badge already
+                print(f"[PasswordManager] Auto-saved {host}")
+        except Exception as e:
+            print(f"[PasswordManager] save request error: {e}")
+
+    def _prompt_save_password(self, host, email, password, origin, href):
+        try:
+            # Check if this host is currently visible tab
+            view = self.get_current_view()
+            if view:
+                current_host = view.url().host().lower()
+                if current_host != host and not host in current_host and not current_host in host:
+                    # Still allow but only if user is on that page? We'll allow anyway but check
+                    pass
+
+            msg = QMessageBox(self)
+            msg.setWindowTitle("Save Password?")
+            msg.setIcon(QMessageBox.Icon.Question)
+            msg.setText(f"Save password for {host}?")
+            msg.setInformativeText(f"Email/Username: {email}\nPassword: {'•'*min(len(password), 12)} ({len(password)} chars)\n\nEcoBrowser will autofill it next time you visit {host}.")
+            msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            msg.setDefaultButton(QMessageBox.StandardButton.Yes)
+            # Add checkbox for never save? For simplicity skip
+
+            # Apply dark theme to messagebox if needed
+            # ...
+
+            reply = msg.exec()
+            if reply == QMessageBox.StandardButton.Yes:
+                self.password_manager.save_credential(host, email, password, origin, href)
+                # Show confirmation badge via JS
+                try:
+                    view = self.get_current_view()
+                    if view:
+                        view.page().runJavaScript(
+                            """
+                            (function(){
+                                try {
+                                    let b=document.createElement('div');
+                                    b.textContent='🔑 Password saved for %s';
+                                    b.style.cssText='position:fixed;bottom:20px;right:20px;background:#10b981;color:white;border-radius:9999px;padding:10px 18px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-size:12px;font-weight:700;z-index:2147483647;box-shadow:0 8px 24px rgba(0,0,0,0.5);';
+                                    document.body.appendChild(b);
+                                    setTimeout(()=>{b.style.opacity='0'; setTimeout(()=>b.remove(), 600);}, 3000);
+                                } catch(e){}
+                            })();
+                            """ % host
+                        )
+                except Exception:
+                    pass
+        except Exception as e:
+            print(f"[PasswordManager] prompt error: {e}")
+
+    def open_password_manager_dialog(self):
+        try:
+            if not getattr(self, "password_manager", None):
+                self.password_manager = PasswordManager(get_app_data_folder())
+            dialog = PasswordManagerDialog(self.password_manager, self)
+            dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(self, "Password Manager Error", f"Failed to open password manager:\n{e}")
 
     def open_downloads_dialog(self):
         dialog = DownloadsDialog(self)

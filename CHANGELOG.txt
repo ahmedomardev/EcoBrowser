@@ -1,0 +1,38 @@
+EcoBrowser - Changelog
+=======================
+
+v1.8 - Password Manager Update
+------------------------------------------
+NEW FEATURE: Built-in Password Manager
+
+- Automatically detects login forms containing input type password and input type email
+- Supports detection of username fields: input name containing user, login, email, id containing user/email
+- Works on modern frameworks: React, Vue, Angular, and SPA sites using MutationObserver
+- Triggers on form submit, login button click, Enter key in password field, focusout
+- When credentials are detected, prompts user: Save password for [host]?
+- Saves credentials encrypted to passwords.json in app data folder
+- Encryption: Uses cryptography Fernet AES if available, fallback to XOR + Base64 with local key file .pm_key
+- Never stores passwords in plain text
+- Stores per hostname: host, email, encrypted password, origin, timestamps
+- Autofill on return: Automatically writes saved email and password back into login forms
+- Dispatches input, change, keyup events for compatibility with React forms
+- Shows badge notification: Autofilled by EcoBrowser and Password saved confirmation
+- Handles www and subdomains: login.example.com can use saved credentials from example.com
+- Deduplication: Prevents saving same credentials twice within 3 seconds
+- Toolbar button: Key icon, turns blue and filled when current site has saved password
+- Menu entry: EcoBrowser Menu -> Password Manager
+- Manager UI: Search by site or email, Show/Hide password, Copy Email, Copy Password, Delete, Clear All, Export to JSON
+- Files: passwords.json and .pm_key created in EcoBrowser app data folder
+- Local only, no cloud sync, no external requests
+- Prompt can be disabled in settings: password_save_prompt
+- Autofill can be disabled in settings: password_autofill_enabled
+
+Improved:
+- Updated toolbar customizer to include Password Manager button
+- Updated icons to include key and key_filled
+- Improved loadFinished handling to trigger autofill at 0.7s and 2s for slow pages
+
+Security:
+- Passwords encrypted at rest
+- Key file hidden on Windows
+- Export feature warns to keep exported file secure
