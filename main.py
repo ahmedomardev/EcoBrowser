@@ -5,6 +5,7 @@ import base64
 import json
 import shlex
 import subprocess
+import time
 from datetime import datetime
 from urllib.parse import quote, urlsplit
 
@@ -18,6 +19,24 @@ else:
     reg = None
 
 from PyQt6.QtCore import QUrl, QTimer, Qt, QByteArray, QSize, QStandardPaths, QObject, pyqtSignal, pyqtSlot
+# sip handling for all PyQt versions - robust fallback
+try:
+    from PyQt6 import sip as _sip_module  # type: ignore
+    _sip = _sip_module
+except ImportError:
+    try:
+        import sip as _sip_module  # type: ignore
+        _sip = _sip_module
+    except ImportError:
+        _sip = None
+
+def is_view_deleted(view):
+    try:
+        if _sip is None:
+            return False
+        return _sip.isdeleted(view)
+    except Exception:
+        return False
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QKeySequence, QShortcut, QColor
 from PyQt6.QtNetwork import QNetworkProxy, QNetworkProxyFactory
 from PyQt6.QtSvg import QSvgRenderer
@@ -47,6 +66,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QStackedWidget,
     QTabBar,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
     QFileDialog,
@@ -64,6 +84,10 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QDialogButtonBox,
     QFormLayout,
+    QSlider,
+    QSpinBox,
+    QListWidget,
+    QListWidgetItem,
 )
 
 # =============================================================================
@@ -71,7 +95,7 @@ from PyQt6.QtWidgets import (
 # =============================================================================
 
 APP_NAME = "EcoBrowser"
-APP_VERSION = "1.8"
+APP_VERSION = "1.9"
 HOME_URL = "https://www.google.com"
 
 # Built-in Search Engines
@@ -222,12 +246,47 @@ DEFAULT_SETTINGS = {
         "reader": True,
         "userscript": True,
         "downloads": True,
-        "vpn": True,
+        "proxy": True,
         "blockers": True,
         "bookmarks": True,
         "passwords": True,
+        "customize": True,
     },
     "reader_hide_chrome": True,
+    # === NEW CUSTOMIZATION SETTINGS ===
+    "ui_density": "comfortable",  # compact, comfortable, spacious
+    "ui_animations": True,
+    "ui_blur": True,
+    "ui_corner_radius": 12,
+    "ui_tab_shape": "rounded",  # rounded, square, pill
+    "ui_font_size": 9.5,
+    "ui_show_home_button": False,
+    "newtab_enabled": True,
+    "newtab_background_type": "gradient",  # solid, gradient, image, custom
+    "newtab_background_color": "#121418",
+    "newtab_background_image": "",
+    "newtab_show_search": True,
+    "newtab_show_quicklinks": True,
+    "newtab_show_clock": True,
+    "newtab_show_weather": False,
+    "adblock_enabled": True,
+    "adult_filter_enabled": True,
+    "custom_ad_domains": [],
+    "custom_adult_keywords": [],
+    "adult_allowlist": ["wikipedia.org", "google.com", "bing.com", "duckduckgo.com", "youtube.com"],
+    "startup_behavior": "newtab",  # newtab, restore, custom
+    "startup_urls": [],
+    "homepage_url": "eco://newtab",
+    "download_dir": "",
+    "download_ask_location": False,
+    "default_zoom": 100,
+    "hardware_acceleration": True,
+    "custom_user_agent": "",
+    "custom_css": "",
+    "custom_js": "",
+    "clear_cache_on_exit": False,
+    "do_not_track": False,
+    "custom_search_engines": [],
 }
 
 
@@ -301,18 +360,58 @@ ADULT_DOMAINS = [
 ]
 
 ADULT_KEYWORDS = [
+    # Core porn terms
     "porn",
     "xxx",
+    "pornography",
+    "porno",
     "hentai",
     "nsfw",
     "erotic",
+    "erotica",
     "nudity",
     "nude",
+    "naked",
     "sexvideo",
+    "sexvideos",
     "adult-zone",
     "camgirl",
+    "camgirls",
     "onlyfans",
+    "fansly",
     "fetish",
+    "bondage",
+    "bdsm",
+    "blowjob",
+    "handjob",
+    "cumshot",
+    "creampie",
+    "orgy",
+    "orgasm",
+    "masturbate",
+    "masturbation",
+    "escort",
+    "brothel",
+    "sextape",
+    "sexcam",
+    "hardcore",
+    "softcore",
+    "incest",
+    "bestiality",
+    # Common adult sites as keywords too
+    "pornhub",
+    "xvideos",
+    "xnxx",
+    "redtube",
+    "youporn",
+    "xhamster",
+    "chaturbate",
+    "stripchat",
+    "bongacams",
+    "livejasmin",
+    "brazzers",
+    "playboy",
+    "rule34",
 ]
 
 # =============================================================================
@@ -397,7 +496,7 @@ SVG_ICONS = {
     "code": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>',
     "script": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 14H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
     "text_size": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M2.5 4v3h5v12h3V7h5V4h-13zm19 5v3h-5v12h-3V9h-5V6.5h13z"/></svg>',
-    "vpn": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4c1.86 0 3.41 1.28 3.86 3H21v2c0 4.29-2.91 8.29-9 9.87-6.09-1.58-9-5.58-9-9.87v-2h5.14C8.59 6.28 10.14 5 12 5zm0 2a2 2 0 100 4 2 2 0 000-4z"/></svg>',
+    "proxy": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4c1.86 0 3.41 1.28 3.86 3H21v2c0 4.29-2.91 8.29-9 9.87-6.09-1.58-9-5.58-9-9.87v-2h5.14C8.59 6.28 10.14 5 12 5zm0 2a2 2 0 100 4 2 2 0 000-4z"/></svg>',
     "shield": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-4-4 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z"/></svg>',
     "pin": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M16 9V4L8 4v5l-4 4v2h5v5h2v-5h5v-2l-4-4z"/></svg>',
     "close_small": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
@@ -1060,6 +1159,96 @@ AI_SAFEGUARD_SCRIPT = r"""
         childList: true,
         subtree: true
     });
+})();
+"""
+
+# =============================================================================
+# Adult Page Content Blocker: Blocks pages containing 18+ keywords in text
+# =============================================================================
+
+ADULT_PAGE_BLOCKER_JS = r"""
+(function() {
+    if (window.__ecoAdultTextBlocker) return;
+    window.__ecoAdultTextBlocker = true;
+
+    const ADULT_KEYWORDS = [
+        "porn", "xxx", "pornography", "porno", "hentai", "nsfw", "erotic", "erotica",
+        "nudity", "nude", "naked", "sexvideo", "sexvideos", "adult-zone",
+        "camgirl", "camgirls", "onlyfans", "fansly", "fetish", "bondage", "bdsm",
+        "blowjob", "handjob", "cumshot", "creampie", "orgy", "orgasm",
+        "masturbate", "masturbation", "escort", "brothel", "sextape", "sexcam",
+        "hardcore", "softcore", "incest", "bestiality", "pornhub", "xvideos",
+        "xnxx", "redtube", "youporn", "xhamster", "chaturbate", "stripchat",
+        "bongacams", "livejasmin", "brazzers", "playboy", "rule34",
+        "pussy", "dick", "cock", "boobs", "tits", "anal"
+    ];
+    const ALLOWLIST = ["wikipedia.org", "youtube.com", "github.com", "stackoverflow.com"];
+    const BLOCKED_HOST = "blocked.ecobrowser";
+
+    function isAllowlisted(host) {
+        const h = host.toLowerCase();
+        return ALLOWLIST.some(a => h === a || h.endsWith("." + a));
+    }
+    function shouldSkip() {
+        try {
+            const host = location.hostname.toLowerCase();
+            const href = location.href.toLowerCase();
+            if (href.includes(BLOCKED_HOST) || href.includes("eco://newtab") || href.startsWith("about:") || href.startsWith("data:") || href.startsWith("blob:")) return true;
+            if (isAllowlisted(host)) return true;
+            // Do NOT skip google/bing/duckduckgo for keyword search blocking - allow those to be scanned
+            // google.com will be blocked at URL level if keyword in URL, but we still scan content for extra safety
+            if (document.title === "New Tab" && (href === "about:blank" || href.startsWith("eco:"))) return true;
+            return false;
+        } catch(e) { return true; }
+    }
+    function containsAdultKeyword(text) {
+        const lower = text.toLowerCase();
+        for (const kw of ADULT_KEYWORDS) {
+            if (!kw) continue;
+            const k = kw.toLowerCase();
+            if (k.length <= 3) {
+                const re = new RegExp("\\\\b" + k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + "\\\\b", "i");
+                if (re.test(lower)) return kw;
+            } else {
+                if (lower.includes(k)) return kw;
+            }
+        }
+        return null;
+    }
+    function blockPage(keyword) {
+        try {
+            if (window.__ecoPageBlocked) return;
+            window.__ecoPageBlocked = true;
+            const host = location.hostname || location.href.slice(0,80);
+            const safeKw = keyword.replace(/</g, "&lt;");
+            document.documentElement.innerHTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{background:#121418;color:#f0f6fc;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}.warning-card{background:#1e2229;padding:36px 44px;border-radius:16px;border:1px solid #30363d;text-align:center;max-width:440px;box-shadow:0 16px 36px rgba(0,0,0,0.6)}.block-icon{font-size:40px;margin-bottom:12px}.warning-title{color:#f85149;font-size:22px;margin:0 0 12px 0;font-weight:600}.warning-text{color:#8b949e;font-size:14px;margin-bottom:24px;line-height:1.6}.warning-btn{background:#238636;color:#fff;text-decoration:none;padding:10px 24px;border-radius:24px;font-size:13.5px;font-weight:600;display:inline-block}</style></head><body><div class='warning-card'><div class='block-icon'>🔞</div><h1 class='warning-title'>Adult Content Blocked</h1><p class='warning-text'>This page was blocked by EcoBrowser SafeShield because it contains explicit content:<br><b>${safeKw}</b> detected on <b>${host}</b></p><a class='warning-btn' href='https://www.google.com'>Return to Safe Browsing</a></div></body></html>`;
+            window.stop();
+        } catch(e) {}
+    }
+    function scan() {
+        if (shouldSkip()) return;
+        try {
+            const text = document.body ? (document.body.innerText || "") : "";
+            if (!text || text.length < 100) return;
+            const sample = text.slice(0, 25000);
+            const found = containsAdultKeyword(sample);
+            if (found) {
+                console.log("[EcoBrowser] Adult keyword blocked in page text:", found);
+                blockPage(found);
+            }
+        } catch(e) {}
+    }
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => setTimeout(scan, 1000));
+    } else {
+        setTimeout(scan, 1000);
+    }
+    let scanTimeout = null;
+    const observer = new MutationObserver(() => {
+        if (scanTimeout) return;
+        scanTimeout = setTimeout(() => { scanTimeout = null; scan(); }, 2000);
+    });
+    try { observer.observe(document.documentElement, {childList: true, subtree: true}); } catch(e) {}
 })();
 """
 
@@ -1922,31 +2111,89 @@ class ContentBlocker(QWebEngineUrlRequestInterceptor):
         self.nude_block_enabled = True
         self.blocked_ad_count = 0
         self.blocked_nude_count = 0
+        self.custom_ad_domains = []
+        self.custom_adult_keywords = []
+        self.allowlist = []
 
     def interceptRequest(self, info):
-        url = info.requestUrl()
-        url_string = url.toString()
+        try:
+            url = info.requestUrl()
+            url_string = url.toString()
 
-        if not (url_string.startswith("http://") or url_string.startswith("https://")):
-            return
-
-        host = url.host().lower()
-        full_url = url_string.lower()
-
-        # Check Ad network
-        if self.ad_block_enabled and any(ad in host for ad in AD_DOMAINS):
-            info.block(True)
-            self.blocked_ad_count += 1
-            return
-
-        # Check Explicit domains or keywords
-        if self.nude_block_enabled:
-            is_adult_host = any(domain in host for domain in ADULT_DOMAINS)
-            is_adult_path = any(kw in full_url for kw in ADULT_KEYWORDS)
-            if is_adult_host or is_adult_path:
-                info.block(True)
-                self.blocked_nude_count += 1
+            if not (url_string.startswith("http://") or url_string.startswith("https://")):
                 return
+
+            host = url.host().lower()
+            if not host:
+                return
+
+            # Never block our own blocked page
+            if "blocked.ecobrowser" in host:
+                return
+
+            # Check allowlist first - never block allowlisted domains
+            if self.allowlist:
+                for allowed in self.allowlist:
+                    al = allowed.lower()
+                    if host == al or host.endswith("." + al):
+                        return
+
+            if self.ad_block_enabled:
+                all_ad = AD_DOMAINS + self.custom_ad_domains
+                for ad in all_ad:
+                    ad_low = ad.lower()
+                    if not ad_low:
+                        continue
+                    if host == ad_low or host.endswith("." + ad_low) or ad_low in host:
+                        try:
+                            info.block(True)
+                            self.blocked_ad_count += 1
+                        except Exception:
+                            pass
+                        return
+
+            if self.nude_block_enabled:
+                # Precise adult domain blocking
+                for d in ADULT_DOMAINS:
+                    d_low = d.lower()
+                    if host == d_low or host.endswith("." + d_low):
+                        try:
+                            info.block(True)
+                            self.blocked_nude_count += 1
+                        except Exception:
+                            pass
+                        return
+
+                # Keyword blocking: block ANY URL containing porn/nude/etc - even google searches
+                # User wants searching "porn" to be blocked, so NO safe domain whitelist
+                # Only check main frame to avoid breaking subresources and causing crashes
+                try:
+                    is_main = True
+                    try:
+                        rt = info.resourceType()
+                        is_main = (rt == 0 or rt == 1)  # MainFrame or SubFrame
+                    except Exception:
+                        is_main = True
+
+                    if is_main:
+                        lower = url_string.lower()
+                        all_keywords = ADULT_KEYWORDS + self.custom_adult_keywords
+                        for kw in all_keywords:
+                            if not kw:
+                                continue
+                            if kw.lower() in lower:
+                                if "blocked.ecobrowser" not in lower and "eco://newtab" not in lower:
+                                    try:
+                                        info.block(True)
+                                        self.blocked_nude_count += 1
+                                    except Exception:
+                                        pass
+                                    return
+                except Exception:
+                    pass
+        except Exception as e:
+            print(f"[Blocker] intercept error (safe): {e}")
+            return
 
 
 # =============================================================================
@@ -2339,7 +2586,7 @@ class PasswordManager:
         try:
             # Try to use cryptography Fernet if available for strong encryption
             try:
-                from cryptography.fernet import Fernet
+                from cryptography.fernet import Fernet  # type: ignore
                 self._has_fernet = True
             except ImportError:
                 self._has_fernet = False
@@ -2352,7 +2599,7 @@ class PasswordManager:
                         return
             # Generate new key
             if self._has_fernet:
-                from cryptography.fernet import Fernet
+                from cryptography.fernet import Fernet  # type: ignore
                 new_key = Fernet.generate_key().decode()
             else:
                 # fallback: random 32 bytes base64
@@ -2380,7 +2627,7 @@ class PasswordManager:
             return ""
         try:
             if getattr(self, "_has_fernet", False) and self._key:
-                from cryptography.fernet import Fernet
+                from cryptography.fernet import Fernet  # type: ignore
                 f = Fernet(self._key.encode() if isinstance(self._key, str) else self._key)
                 return f.encrypt(plaintext.encode()).decode()
         except Exception:
@@ -2399,7 +2646,7 @@ class PasswordManager:
             return ""
         try:
             if getattr(self, "_has_fernet", False) and self._key:
-                from cryptography.fernet import Fernet
+                from cryptography.fernet import Fernet  # type: ignore
                 f = Fernet(self._key.encode() if isinstance(self._key, str) else self._key)
                 return f.decrypt(ciphertext.encode()).decode()
         except Exception:
@@ -2736,6 +2983,8 @@ class EcoWebEnginePage(QWebEnginePage):
     def __init__(self, profile, browser_window, parent=None):
         super().__init__(profile, parent)
         self.browser_window = browser_window
+        self._is_showing_blocked_page = False
+        self._last_blocked_url = ""
 
     def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
         # Intercept password manager messages
@@ -2766,28 +3015,96 @@ class EcoWebEnginePage(QWebEnginePage):
         return new_view.page()
 
     def acceptNavigationRequest(self, url, nav_type, is_main_frame):
-        url_str = url.toString()
-        lower = url_str.lower()
-        host = url.host().lower()
+        try:
+            url_str = url.toString()
+            lower = url_str.lower()
+            host = url.host().lower()
 
-        # Intercept explicit adult content & pornography
-        if getattr(self.browser_window.interceptor, "nude_block_enabled", True):
-            is_adult_host = any(domain in host for domain in ADULT_DOMAINS)
-            is_adult_keyword = any(kw in lower for kw in ADULT_KEYWORDS)
-            if is_adult_host or is_adult_keyword:
-                blocked_html = build_blocked_page_html(
-                    host or url_str,
-                    "HaramBlur SafeShield: Adult / Pornography Intercepted",
-                )
-                self.setHtml(blocked_html, url)
-                return False
+            # Never block internal schemes
+            if url_str.startswith("data:") or url_str.startswith("about:") or url_str.startswith("eco://") or url_str.startswith("qrc:") or url_str.startswith("file:") or url_str.startswith("blob:"):
+                return super().acceptNavigationRequest(url, nav_type, is_main_frame)
 
-        # Intercept ad networks
-        if getattr(self.browser_window.interceptor, "ad_block_enabled", True):
-            if any(ad in host for ad in AD_DOMAINS):
-                return False
+            # Prevent recursion loop - this was causing crashes
+            if self._is_showing_blocked_page:
+                if url_str == self._last_blocked_url:
+                    return False
+                self._is_showing_blocked_page = False
 
-        return super().acceptNavigationRequest(url, nav_type, is_main_frame)
+            if not (url_str.startswith("http://") or url_str.startswith("https://")):
+                return super().acceptNavigationRequest(url, nav_type, is_main_frame)
+
+            # Use allowlist and custom keywords from settings
+            interceptor = getattr(self.browser_window, 'interceptor', None)
+            allowlist = getattr(interceptor, 'allowlist', []) if interceptor else []
+            custom_keywords = getattr(interceptor, 'custom_adult_keywords', []) if interceptor else []
+            is_allowlisted = False
+            if allowlist:
+                for al in allowlist:
+                    al_low = al.lower().strip()
+                    if not al_low:
+                        continue
+                    if host == al_low or host.endswith("." + al_low):
+                        is_allowlisted = True
+                        break
+            
+            if getattr(self.browser_window.interceptor, "nude_block_enabled", True):
+                if "blocked.ecobrowser" not in host and not is_allowlisted and "eco://newtab" not in lower:
+                    # --- Proper adult checks (fixed undefined vars) ---
+                    is_adult_host = any(
+                        host == d.lower() or host.endswith("." + d.lower()) or d.lower() in host
+                        for d in ADULT_DOMAINS
+                    )
+                    all_keywords = ADULT_KEYWORDS + (custom_keywords if custom_keywords else [])
+                    is_adult_keyword = False
+                    matched_kw = ""
+                    for kw in all_keywords:
+                        if kw and kw.lower() in lower:
+                            is_adult_keyword = True
+                            matched_kw = kw
+                            break
+
+                    if is_adult_host or is_adult_keyword:
+                        matched = matched_kw
+                        if not matched:
+                            for kw in ADULT_KEYWORDS:
+                                if kw.lower() in lower:
+                                    matched = kw
+                                    break
+                        reason = f"Adult Domain" if is_adult_host else f"Keyword '{matched}'"
+                        blocked_html = build_blocked_page_html(
+                            host or url_str[:80],
+                            f"HaramBlur SafeShield: {reason} Blocked",
+                        )
+                        self._last_blocked_url = url_str
+                        QTimer.singleShot(0, lambda h=blocked_html, u=url: self._safe_set_blocked_html(h, u))
+                        return False
+
+            if getattr(self.browser_window.interceptor, "ad_block_enabled", True):
+                if any(host == ad or host.endswith("." + ad) for ad in AD_DOMAINS):
+                    return False
+
+            return super().acceptNavigationRequest(url, nav_type, is_main_frame)
+        except Exception as e:
+            print(f"[Navigation] error in acceptNavigationRequest (safe): {e}")
+            try:
+                return super().acceptNavigationRequest(url, nav_type, is_main_frame)
+            except Exception:
+                return True
+
+    def _safe_set_blocked_html(self, html, base_url):
+        try:
+            if is_view_deleted(self):
+                return
+            if self._is_showing_blocked_page and base_url.toString() == self._last_blocked_url:
+                return
+            self._is_showing_blocked_page = True
+            # Use safe base to avoid re-triggering filter (this caused crashes before)
+            safe_base = QUrl("https://blocked.ecobrowser/")
+            self.setHtml(html, safe_base)
+            QTimer.singleShot(2000, lambda: setattr(self, '_is_showing_blocked_page', False))
+        except Exception as e:
+            print(f"[Navigation] failed to set blocked html (safe): {e}")
+            self._is_showing_blocked_page = False
 
 
 # =============================================================================
@@ -2815,6 +3132,569 @@ class BookmarkButton(QPushButton):
         action = menu.exec(self.mapToGlobal(pos))
         if action == delete_action:
             self.browser_window.delete_bookmark_by_url(self.bookmark_url)
+
+
+
+# =============================================================================
+# Crash-Proof Manager (no vertical tabs)
+# =============================================================================
+
+class CrashProofManager:
+    """Monitors renderer crashes and prevents full app crash"""
+    def __init__(self, browser_window):
+        self.browser_window = browser_window
+        self.crash_count = {}
+        self.last_crash_time = {}
+    
+    def handle_crash(self, view, status, code):
+        try:
+            if is_view_deleted(view):
+                return
+            vid = id(view)
+            now = time.time()
+            self.crash_count[vid] = self.crash_count.get(vid, 0) + 1
+            self.last_crash_time[vid] = now
+            
+            print(f"[CrashProof] Renderer crashed: status={status} code={code} count={self.crash_count[vid]}")
+            
+            # If 3 crashes in 30s, show safe page
+            if self.crash_count[vid] >= 3:
+                last = self.last_crash_time.get(vid, 0)
+                if now - last < 30:
+                    print(f"[CrashProof] Too many crashes, showing safe page")
+                    self.show_crash_recovery_page(view)
+                    return
+            
+            QTimer.singleShot(1500, lambda v=view: self.safe_reload(v))
+        except Exception as e:
+            print(f"[CrashProof] handle error: {e}")
+    
+    def safe_reload(self, view):
+        try:
+            if is_view_deleted(view):
+                return
+            found = False
+            for i in range(self.browser_window.stack.count()):
+                if self.browser_window.stack.widget(i) == view:
+                    found = True
+                    break
+            if found:
+                view.reload()
+        except Exception:
+            pass
+    
+    def show_crash_recovery_page(self, view):
+        try:
+            if is_view_deleted(view):
+                return
+            html = """
+            <!DOCTYPE html><html><head><meta charset="utf-8"><style>
+            body { background: #0e1116; color: #e6edf3; font-family: Inter, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+            .card { background: #1c212b; padding: 40px; border-radius: 16px; border: 1px solid #21262d; text-align: center; max-width: 400px; }
+            h1 { color: #f85149; }
+            button { background: #238636; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin: 6px; }
+            </style></head><body><div class="card">
+            <h1>⚠️ Tab Crashed</h1>
+            <p>This tab crashed multiple times.</p>
+            <button onclick="location.reload()">Try Again</button>
+            <button onclick="window.location.href='https://www.google.com'">Go to Google</button>
+            </div></body></html>
+            """
+            view.setHtml(html, QUrl("https://crashed.ecobrowser/"))
+        except Exception:
+            pass
+
+
+
+
+
+
+def build_new_tab_page_html(settings, search_engine_name="Google"):
+    """Infinity Ultra Clean - clock, search, quicklinks with auto favicons + wallpaper customizer - NO greeting"""
+    import json
+    bg_type = settings.get("newtab_background_type", "gradient")
+    bg_image = settings.get("newtab_background_image", "")
+    quicklinks = settings.get("newtab_quicklinks", [])
+    accent = settings.get("custom_accent", "#58a6ff")
+    
+    if bg_type == "image" and bg_image:
+        bg_style = f"url('file:///{bg_image.replace(chr(92), '/')}')"
+        bg_css = f"background-image: {bg_style}; background-size: cover; background-position: center; background-attachment: fixed;"
+    else:
+        bg_css = f"""
+        background: radial-gradient(1200px 600px at 10% -10%, {accent}30, transparent),
+                    radial-gradient(1000px 500px at 90% 110%, #8b5cf626, transparent),
+                    linear-gradient(135deg, #0f1117 0%, #1a1d29 25%, #121418 50%, #1e2028 100%);
+        background-attachment: fixed;
+        """
+    
+    quicklinks_data = []
+    for ql in quicklinks[:16]:
+        title = ql.get("title","Link")[:18]
+        url = ql.get("url","#")
+        quicklinks_data.append({"title": title, "url": url})
+    
+    quicklinks_json = json.dumps(quicklinks_data)
+    
+    return f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>New Tab</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+* {{ box-sizing: border-box; margin: 0; padding: 0; }}
+html,body {{ height: 100%; overflow: hidden; }}
+body {{
+  {bg_css}
+  color: #e6edf3;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}}
+body::before {{
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  pointer-events: none;
+  z-index: 0;
+}}
+#wallpaper {{
+  position: fixed;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  z-index: -1;
+  opacity: 0.9;
+  background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1920&q=80');
+  transition: background-image 0.5s ease;
+}}
+.center {{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 20px;
+  position: relative;
+  z-index: 10;
+}}
+.time {{
+  font-size: 82px;
+  font-weight: 300;
+  letter-spacing: -3px;
+  line-height: 1;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}}
+.date {{
+  font-size: 15px;
+  opacity: 0.75;
+  margin-top: 2px;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}}
+.search-wrap {{ width: 100%; max-width: 560px; position: relative; margin-top: 8px; }}
+.search-box {{
+  width: 100%;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  padding: 6px 8px 6px 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  transition: all 0.3s;
+}}
+.search-box:focus-within {{
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.3);
+  transform: translateY(-1px);
+}}
+.engine-icon {{
+  width: 32px; height: 32px; border-radius: 50%; background: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; margin-right: 12px; cursor: pointer;
+  font-weight: 700; color: #111;
+}}
+.engine-dropdown {{
+  position: absolute; top: 44px; left: 0;
+  background: rgba(30,33,42,0.95); backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
+  padding: 8px; display: none; flex-direction: column; gap: 4px;
+  min-width: 180px; box-shadow: 0 16px 40px rgba(0,0,0,0.4); z-index: 20;
+}}
+.engine-dropdown.show {{ display: flex; }}
+.engine-option {{
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+  border-radius: 10px; cursor: pointer; color: rgba(255,255,255,0.8); font-size: 13px;
+}}
+.engine-option:hover {{ background: rgba(255,255,255,0.1); color: white; }}
+.search-box input {{
+  flex: 1; background: transparent; border: none; outline: none;
+  color: white; font-size: 16px; padding: 12px 0;
+}}
+.search-box input::placeholder {{ color: rgba(255,255,255,0.6); }}
+.search-btn {{
+  background: {accent}; color: white; border: none; border-radius: 20px;
+  padding: 10px 22px; font-weight: 600; font-size: 13px; cursor: pointer;
+}}
+.search-btn:hover {{ transform: scale(1.03); }}
+.quicklinks {{
+  display: grid; grid-template-columns: repeat(auto-fill, 88px);
+  gap: 16px; max-width: 600px; width: 100%; justify-content: center; margin-top: 12px;
+}}
+.ql {{
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  cursor: pointer; position: relative;
+}}
+.ql-icon {{
+  width: 56px; height: 56px; border-radius: 16px;
+  background: rgba(255,255,255,0.12); backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: white; transition: all 0.25s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  overflow: hidden;
+}}
+.ql-icon-img {{
+  width: 32px; height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+}}
+.ql-icon-fallback {{
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 20px;
+  background: rgba(255,255,255,0.08);
+}}
+.ql:hover .ql-icon {{ transform: translateY(-2px) scale(1.05); background: rgba(255,255,255,0.18); }}
+.ql-title {{
+  font-size: 11px; color: rgba(255,255,255,0.75); max-width: 80px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}}
+.ql:hover .ql-title {{ color: white; }}
+.ql-remove {{
+  position: absolute; top: -4px; right: 8px; width: 18px; height: 18px;
+  background: rgba(0,0,0,0.7); border-radius: 50%; display: none;
+  align-items: center; justify-content: center; font-size: 10px; color: white; cursor: pointer; z-index: 5;
+}}
+.ql:hover .ql-remove {{ display: flex; }}
+
+/* Wallpaper Customize Button */
+#wallpaperBtn {{
+  position: fixed;
+  bottom: 20px; right: 20px;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 24px;
+  padding: 10px 16px;
+  color: white;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  z-index: 50;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}}
+#wallpaperBtn:hover {{ background: rgba(255,255,255,0.18); transform: translateY(-1px); }}
+
+/* Wallpaper Panel */
+#wallpaperPanel {{
+  position: fixed;
+  bottom: 70px; right: 20px;
+  width: 340px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: rgba(18,20,28,0.96);
+  backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 20px;
+  z-index: 60;
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+}}
+#wallpaperPanel.show {{ display: flex; }}
+.wp-header {{
+  display: flex; justify-content: space-between; align-items: center;
+}}
+.wp-header h3 {{ font-size: 15px; font-weight: 600; }}
+.wp-close {{
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,0.1); border: none; color: white;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}}
+.wp-section {{ display: flex; flex-direction: column; gap: 8px; }}
+.wp-label {{ font-size: 12px; opacity: 0.7; font-weight: 500; }}
+.wp-input {{
+  width: 100%; background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px; padding: 10px 12px;
+  color: white; font-size: 13px; outline: none;
+}}
+.wp-input:focus {{ border-color: {accent}; }}
+.wp-btn {{
+  background: {accent}; color: white; border: none; border-radius: 10px;
+  padding: 8px 14px; font-weight: 600; font-size: 13px; cursor: pointer;
+}}
+.wp-btn.secondary {{ background: rgba(255,255,255,0.12); }}
+.wp-presets {{
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}}
+.wp-preset {{
+  height: 64px; border-radius: 10px; background-size: cover; background-position: center;
+  cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
+  position: relative; overflow: hidden;
+}}
+.wp-preset:hover {{ transform: scale(1.04); border-color: rgba(255,255,255,0.4); }}
+.wp-preset.active {{ border-color: {accent}; box-shadow: 0 0 0 2px {accent}40; }}
+.wp-row {{ display: flex; gap: 8px; }}
+</style>
+</head>
+<body>
+<div id="wallpaper"></div>
+<div class="center">
+  <div class="time" id="clock">--:--</div>
+  <div class="date" id="date"></div>
+  <div class="search-wrap">
+    <div class="search-box">
+      <div class="engine-icon" id="engineIcon" onclick="toggleEngineDropdown()">G</div>
+      <div class="engine-dropdown" id="engineDropdown">
+        <div class="engine-option" data-engine="google" data-icon="G" data-url="https://www.google.com/search?q=">Google</div>
+        <div class="engine-option" data-engine="bing" data-icon="B" data-url="https://www.bing.com/search?q=">Bing</div>
+        <div class="engine-option" data-engine="duckduckgo" data-icon="D" data-url="https://duckduckgo.com/?q=">DuckDuckGo</div>
+        <div class="engine-option" data-engine="youtube" data-icon="Y" data-url="https://www.youtube.com/results?search_query=">YouTube</div>
+        <div class="engine-option" data-engine="github" data-icon="GH" data-url="https://github.com/search?q=">GitHub</div>
+      </div>
+      <input id="searchInput" type="text" placeholder="Search Google or type a URL" autofocus autocomplete="off">
+      <button class="search-btn" id="searchBtn">Search</button>
+    </div>
+  </div>
+  <div class="quicklinks" id="quicklinks"></div>
+</div>
+
+<button id="wallpaperBtn" onclick="toggleWallpaperPanel()">🎨 Wallpaper</button>
+
+<div id="wallpaperPanel">
+  <div class="wp-header">
+    <h3>Customize Wallpaper</h3>
+    <button class="wp-close" onclick="toggleWallpaperPanel()">✕</button>
+  </div>
+  
+  <div class="wp-section">
+    <div class="wp-label">Upload Image</div>
+    <input type="file" id="wallpaperUpload" accept="image/*" class="wp-input" style="padding: 8px;">
+  </div>
+
+  <div class="wp-section">
+    <div class="wp-label">Image URL</div>
+    <div class="wp-row">
+      <input id="wallpaperUrlInput" class="wp-input" placeholder="https://example.com/wallpaper.jpg" style="flex:1;">
+      <button class="wp-btn" onclick="applyUrlWallpaper()">Apply</button>
+    </div>
+  </div>
+
+  <div class="wp-section">
+    <div class="wp-label">Presets</div>
+    <div class="wp-presets" id="wpPresets"></div>
+  </div>
+
+  <div class="wp-row">
+    <button class="wp-btn secondary" onclick="resetWallpaper()" style="flex:1;">Reset to Default</button>
+    <button class="wp-btn secondary" onclick="clearWallpaper()" style="flex:1;">Clear (Gradient Only)</button>
+  </div>
+</div>
+
+<script>
+let currentEngine = {{name: "Google", icon: "G", url: "https://www.google.com/search?q="}};
+let quicklinksData = {quicklinks_json};
+
+function updateClock() {{
+  const now = new Date();
+  let h = now.getHours();
+  const m = now.getMinutes().toString().padStart(2,'0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12;
+  h = h ? h : 12;
+  const hh = h.toString();
+  document.getElementById('clock').textContent = hh + ':' + m + ' ' + ampm;
+  document.getElementById('date').textContent = now.toLocaleDateString([], {{weekday:'long', month:'long', day:'numeric'}});
+}}
+updateClock(); setInterval(updateClock, 1000);
+
+const wallpaperPresets = [
+  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1920&q=80',
+  'https://images.unsplash.com/photo-1531306728370-e2ebd9d7bb99?w=1920&q=80',
+  'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80',
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
+  'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=80',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80',
+  'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=1920&q=80',
+  'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=1920&q=80'
+];
+
+function initWallpaperPresets() {{
+  const container = document.getElementById('wpPresets');
+  wallpaperPresets.forEach(url => {{
+    const div = document.createElement('div');
+    div.className = 'wp-preset';
+    div.style.backgroundImage = `url('${{url}}')`;
+    div.onclick = () => setWallpaper(url);
+    container.appendChild(div);
+  }});
+}}
+
+function setWallpaper(url) {{
+  if (!url) return;
+  document.getElementById('wallpaper').style.backgroundImage = `url('${{url}}')`;
+  document.getElementById('wallpaper').style.opacity = '1';
+  try {{ localStorage.setItem('eco_wallpaper', url); }} catch(e){{}}
+  // highlight active preset
+  document.querySelectorAll('.wp-preset').forEach(el => {{
+    el.classList.toggle('active', el.style.backgroundImage.includes(url.substring(0,50)));
+  }});
+}}
+
+function toggleWallpaperPanel() {{
+  document.getElementById('wallpaperPanel').classList.toggle('show');
+}}
+
+function applyUrlWallpaper() {{
+  const url = document.getElementById('wallpaperUrlInput').value.trim();
+  if (url) setWallpaper(url);
+}}
+
+function resetWallpaper() {{
+  const def = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1920&q=80';
+  setWallpaper(def);
+}}
+
+function clearWallpaper() {{
+  document.getElementById('wallpaper').style.backgroundImage = 'none';
+  document.getElementById('wallpaper').style.opacity = '0';
+  try {{ localStorage.removeItem('eco_wallpaper'); }} catch(e){{}}
+}}
+
+(function(){{
+  try {{
+    const saved = localStorage.getItem('eco_wallpaper');
+    if (saved) {{
+      document.getElementById('wallpaper').style.backgroundImage = `url('${{saved}}')`;
+    }}
+  }} catch(e){{}}
+  initWallpaperPresets();
+}})();
+
+document.getElementById('wallpaperUpload').addEventListener('change', function(e){{
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 8 * 1024 * 1024) {{ alert('Image too large (max 8MB). Try a smaller image or use URL.'); return; }}
+  const reader = new FileReader();
+  reader.onload = function(ev) {{
+    setWallpaper(ev.target.result);
+  }};
+  reader.readAsDataURL(file);
+}});
+
+function toggleEngineDropdown() {{
+  document.getElementById('engineDropdown').classList.toggle('show');
+}}
+document.querySelectorAll('.engine-option').forEach(opt => {{
+  opt.addEventListener('click', () => {{
+    currentEngine = {{name: opt.dataset.engine, icon: opt.dataset.icon, url: opt.dataset.url}};
+    document.getElementById('engineIcon').textContent = currentEngine.icon;
+    document.getElementById('searchInput').placeholder = 'Search ' + currentEngine.name + ' or type a URL';
+    document.getElementById('engineDropdown').classList.remove('show');
+  }});
+}});
+document.addEventListener('click', (e) => {{
+  if (!e.target.closest('.engine-icon') && !e.target.closest('.engine-dropdown')) {{
+    document.getElementById('engineDropdown').classList.remove('show');
+  }}
+  if (!e.target.closest('#wallpaperBtn') && !e.target.closest('#wallpaperPanel')) {{
+    document.getElementById('wallpaperPanel').classList.remove('show');
+  }}
+}});
+
+function doSearch() {{
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+  if (q.startsWith('http://') || q.startsWith('https://') || (q.includes('.') && !q.includes(' ') && q.length > 3)) {{
+    const url = q.startsWith('http') ? q : 'https://' + q;
+    window.location.href = url;
+  }} else {{
+    window.location.href = currentEngine.url + encodeURIComponent(q);
+  }}
+}}
+document.getElementById('searchInput').addEventListener('keydown', e => {{ if (e.key === 'Enter') doSearch(); }});
+document.getElementById('searchBtn').addEventListener('click', doSearch);
+
+function getFaviconUrl(linkUrl, size=64) {{
+  try {{
+    const u = new URL(linkUrl);
+    const domain = u.hostname;
+    // DuckDuckGo icon service has proper CORS headers (fixes eco:// blocked by CORS)
+    // Fallback chain handled in onerror
+    return `https://icons.duckduckgo.com/ip3/${{domain}}.ico`;
+  }} catch(e) {{
+    return '';
+  }}
+}}
+
+function renderQuicklinks() {{
+  const container = document.getElementById('quicklinks');
+  container.innerHTML = '';
+  let links = JSON.parse(localStorage.getItem('eco_quicklinks') || 'null') || quicklinksData;
+  links.forEach((link, idx) => {{
+    const el = document.createElement('div');
+    el.className = 'ql';
+    const favUrl = getFaviconUrl(link.url, 64);
+    const letter = (link.title || link.url || '?').charAt(0).toUpperCase();
+    el.innerHTML = `<div class="ql-remove" onclick="event.stopPropagation(); removeQuicklink(${{idx}})">✕</div><div class="ql-icon"><img class="ql-icon-img" src="${{favUrl}}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"><div class="ql-icon-fallback" style="display:none;">${{letter}}</div></div><div class="ql-title">${{link.title}}</div>`;
+    el.onclick = (e) => {{ if (e.target.classList.contains('ql-remove')) return; window.location.href = link.url; }};
+    container.appendChild(el);
+  }});
+  const addEl = document.createElement('div');
+  addEl.className = 'ql';
+  addEl.innerHTML = `<div class="ql-icon" style="border:1px dashed rgba(255,255,255,0.3);background:rgba(255,255,255,0.05)"><span style="font-size:22px;">+</span></div><div class="ql-title">Add</div>`;
+  addEl.onclick = () => addQuicklink();
+  container.appendChild(addEl);
+}}
+function addQuicklink() {{
+  let url = prompt('URL (e.g. https://youtube.com):'); 
+  if (!url) return;
+  if (!url.startsWith('http')) url = 'https://' + url;
+  let title = prompt('Title (leave empty to use domain):');
+  if (!title) {{
+    try {{ title = new URL(url).hostname.replace('www.','').split('.')[0]; title = title.charAt(0).toUpperCase() + title.slice(1); }} catch(e) {{ title = 'Link'; }}
+  }}
+  let links = JSON.parse(localStorage.getItem('eco_quicklinks') || 'null') || quicklinksData;
+  links.push({{title: title.slice(0,18), url}});
+  localStorage.setItem('eco_quicklinks', JSON.stringify(links));
+  renderQuicklinks();
+}}
+function removeQuicklink(idx) {{
+  let links = JSON.parse(localStorage.getItem('eco_quicklinks') || 'null') || quicklinksData;
+  links.splice(idx,1);
+  localStorage.setItem('eco_quicklinks', JSON.stringify(links));
+  renderQuicklinks();
+}}
+renderQuicklinks();
+</script>
+</body></html>"""
+
+
+
 
 
 class BlockManagerDialog(QDialog):
@@ -3448,7 +4328,7 @@ class HistoryDialog(QDialog):
 class NetworkSettingsDialog(QDialog):
     def __init__(self, settings, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Network, VPN and DNS — EcoBrowser")
+        self.setWindowTitle("Network, proxy and DNS — EcoBrowser")
         self.setMinimumWidth(480)
         self.values = None
 
@@ -3458,7 +4338,7 @@ class NetworkSettingsDialog(QDialog):
 
         intro = QLabel(
             "Configure secure DNS and a proxy for EcoBrowser. Proxy routing applies "
-            "to this browser only; it is not a device-wide VPN service."
+            "to this browser only; it is not a device-wide proxy service."
         )
         intro.setWordWrap(True)
         layout.addWidget(intro)
@@ -3494,7 +4374,7 @@ class NetworkSettingsDialog(QDialog):
         dns_layout.addWidget(dns_note)
         layout.addWidget(dns_group)
 
-        proxy_group = QGroupBox("VPN / Proxy")
+        proxy_group = QGroupBox("Proxy")
         proxy_layout = QVBoxLayout(proxy_group)
         self.proxy_enabled_checkbox = QCheckBox(
             "Route EcoBrowser traffic through my proxy"
@@ -4082,7 +4962,7 @@ class UserscriptManagerDialog(QDialog):
 
 
 class ToolbarCustomizerDialog(QDialog):
-    """Customize what to pin in toolbar - download, vpn, blockers, etc."""
+    """Customize what to pin in toolbar - download, proxy, blockers, etc."""
 
     def __init__(self, browser_window, parent=None):
         super().__init__(parent or browser_window)
@@ -4123,10 +5003,11 @@ class ToolbarCustomizerDialog(QDialog):
             ("reader", "Reader Mode", "Distraction-free reading (Ctrl+Shift+R)"),
             ("userscript", "Userscripts (.user.js)", "Custom JS enhancements"),
             ("downloads", "Downloads", "Downloads bubble (Ctrl+J)"),
-            ("vpn", "VPN / DNS & Proxy", "Network, DNS, Proxy settings"),
+            ("proxy", "proxy / DNS & Proxy", "Network, DNS, Proxy settings"),
             ("blockers", "Blockers & Filters", "Ad & NSFW blocker settings"),
             ("bookmarks", "Bookmark Star", "Star to bookmark current page"),
             ("passwords", "Password Manager", "Saved logins & autofill"),
+            ("customize", "Customize", "Appearance & New Tab & Privacy"),
         ]
 
         from PyQt6.QtWidgets import QCheckBox, QScrollArea
@@ -4252,6 +5133,11 @@ class EcoBrowserWindow(QMainWindow):
         self.reader_check_timer.start(700)
 
         self.add_new_tab(self.initial_url or self.home_url)
+        
+        # Extra crash-proof timer (no tab limit)
+        self.memory_timer = QTimer(self)
+        self.memory_timer.timeout.connect(self._periodic_memory_cleanup)
+        self.memory_timer.start(30000)  # every 30s
 
     def _check_reader_js_state(self):
         """If JS reader overlay exited via its own button, sync Python chrome."""
@@ -4289,6 +5175,17 @@ class EcoBrowserWindow(QMainWindow):
         self.profile.setPersistentCookiesPolicy(
             QWebEngineProfile.PersistentCookiesPolicy.ForcePersistentCookies
         )
+        # Harden profile to prevent crashes
+        try:
+            self.profile.setHttpCacheType(QWebEngineProfile.HttpCacheType.DiskHttpCache)
+            self.profile.setHttpCacheMaximumSize(200 * 1024 * 1024)  # 200MB
+        except Exception:
+            pass
+        try:
+            # Disable spellcheck to avoid crash on some systems
+            self.profile.settings().setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, False)
+        except Exception:
+            pass
 
         # Injected Script for AI Media Filter (NSFW blur + AI-generated watermark)
         script = QWebEngineScript()
@@ -4298,6 +5195,18 @@ class EcoBrowserWindow(QMainWindow):
         script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
         script.setRunsOnSubFrames(True)
         self.profile.scripts().insert(script)
+
+        # Adult Page Text Blocker - blocks pages containing 18+ keywords in content
+        try:
+            adult_block_script = QWebEngineScript()
+            adult_block_script.setName("EcoBrowserAdultTextBlocker")
+            adult_block_script.setSourceCode(ADULT_PAGE_BLOCKER_JS)
+            adult_block_script.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentReady)
+            adult_block_script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
+            adult_block_script.setRunsOnSubFrames(False)
+            self.profile.scripts().insert(adult_block_script)
+        except Exception as e:
+            print(f"[AdultBlocker] injection failed: {e}")
 
         # Reader Mode Script
         reader_script = QWebEngineScript()
@@ -4334,6 +5243,7 @@ class EcoBrowserWindow(QMainWindow):
         self.interceptor = ContentBlocker()
         self.profile.setUrlRequestInterceptor(self.interceptor)
         self.profile.downloadRequested.connect(self.handle_download_request)
+        self.crash_manager = CrashProofManager(self)
 
     def _setup_ui(self):
         central_widget = QWidget()
@@ -4474,16 +5384,17 @@ class EcoBrowserWindow(QMainWindow):
         self.userscript_button.clicked.connect(self.open_userscript_manager_dialog)
         toolbar_layout.addWidget(self.userscript_button)
 
-        # VPN / DNS Button
-        self.vpn_button = self._make_toolbar_button("VPN / DNS & Proxy (Network)")
-        self.vpn_button.clicked.connect(self.open_network_settings_dialog)
-        toolbar_layout.addWidget(self.vpn_button)
+        # proxy / DNS Button
+        self.proxy_button = self._make_toolbar_button("proxy / DNS & Proxy (Network)")
+        self.proxy_button.clicked.connect(self.open_network_settings_dialog)
+        toolbar_layout.addWidget(self.proxy_button)
 
         # Blockers Button
         self.blockers_button = self._make_toolbar_button("Blockers and Filters")
         self.blockers_button.clicked.connect(self.open_block_manager_dialog)
         toolbar_layout.addWidget(self.blockers_button)
-
+        
+        # Customize Button
         # Password Manager Button
         self.passwords_button = self._make_toolbar_button("Password Manager (Saved logins)")
         self.passwords_button.clicked.connect(self.open_password_manager_dialog)
@@ -4509,7 +5420,7 @@ class EcoBrowserWindow(QMainWindow):
         self.menu = QMenu(self)
         self.menu.addAction("Blockers and filters", self.open_block_manager_dialog)
         self.menu.addAction(
-            "Network / VPN and DNS...", self.open_network_settings_dialog
+            "Network / proxy and DNS...", self.open_network_settings_dialog
         )
         self.menu.addSeparator()
 
@@ -4527,21 +5438,8 @@ class EcoBrowserWindow(QMainWindow):
         )
         self.menu.addSeparator()
 
-        # 1. Search Engine selection submenu
-        self.search_menu = QMenu("Search Engine", self.menu)
-        self.search_menu.setIcon(
-            render_svg_icon(SVG_ICONS["search"], theme["icon_color"], 14)
-        )
+        # Search engine selection removed from 3-dot menu (now handled in New Tab page dropdown)
         self.search_engine_actions = {}
-        for engine_key in SEARCH_ENGINES.keys():
-            act = self.search_menu.addAction(engine_key)
-            act.setCheckable(True)
-            act.setChecked(engine_key == self.search_engine)
-            act.triggered.connect(
-                lambda checked, k=engine_key: self.set_search_engine(k)
-            )
-            self.search_engine_actions[engine_key] = act
-        self.menu.addMenu(self.search_menu)
 
         # 2. Color customization action
         self.color_action = self.menu.addAction(
@@ -4592,6 +5490,18 @@ class EcoBrowserWindow(QMainWindow):
         dialog = ColorCustomizerDialog(self)
         dialog.exec()
 
+
+    def get_new_tab_url(self):
+        """Return custom new tab URL or html"""
+        try:
+            if self.settings.get("newtab_enabled", True):
+                # If homepage is eco://newtab, build custom page
+                if self.settings.get("homepage_url", "eco://newtab") == "eco://newtab" or self.home_url == "eco://newtab":
+                    return "eco://newtab"
+            return self.home_url
+        except Exception:
+            return self.home_url
+
     def open_network_settings_dialog(self):
         dialog = NetworkSettingsDialog(self.settings, self)
         if dialog.exec() != QDialog.DialogCode.Accepted or dialog.values is None:
@@ -4604,7 +5514,7 @@ class EcoBrowserWindow(QMainWindow):
             self,
             "Network settings saved",
             "Your DNS and proxy settings have been saved. Restart EcoBrowser to apply them.\n\n"
-            "The proxy affects EcoBrowser only; it does not create a device-wide VPN.",
+            "The proxy affects EcoBrowser only; it does not create a device-wide proxy.",
         )
 
     def toggle_or_view_registry_status(self):
@@ -4644,8 +5554,7 @@ class EcoBrowserWindow(QMainWindow):
 
     def show_main_menu(self):
         self.dark_mode_action.setChecked(self.is_dark_mode)
-        for k, act in getattr(self, "search_engine_actions", {}).items():
-            act.setChecked(k == self.search_engine)
+        # Search engine check removed - handled in New Tab
         if hasattr(self, "reg_action"):
             self.reg_action.setText(
                 "Windows Registry: Registered (Protected)"
@@ -4786,7 +5695,7 @@ class EcoBrowserWindow(QMainWindow):
         self.security_icon_btn.setIcon(
             render_svg_icon(SVG_ICONS[sec_icon], sec_color, 14)
         )
-        # Reader & Userscript & VPN & Blockers buttons
+        # Reader & Userscript & proxy & Blockers buttons
         try:
             if hasattr(self, "reader_button"):
                 self._refresh_reader_button_ui()
@@ -4794,9 +5703,9 @@ class EcoBrowserWindow(QMainWindow):
                 self.userscript_button.setIcon(
                     render_svg_icon(SVG_ICONS["code"], icon_color, 18)
                 )
-            if hasattr(self, "vpn_button"):
-                self.vpn_button.setIcon(
-                    render_svg_icon(SVG_ICONS["vpn"], icon_color, 18)
+            if hasattr(self, "proxy_button"):
+                self.proxy_button.setIcon(
+                    render_svg_icon(SVG_ICONS["proxy"], icon_color, 18)
                 )
             if hasattr(self, "blockers_button"):
                 self.blockers_button.setIcon(
@@ -4969,43 +5878,128 @@ class EcoBrowserWindow(QMainWindow):
         return self.stack.currentWidget()
 
     def add_new_tab(self, url):
-        web_view = QWebEngineView()
-        page = EcoWebEnginePage(self.profile, self, web_view)
-        web_view.setPage(page)
+        try:
+            # Crash-proof: validate URL, no tab limit as requested
+            if not url or not isinstance(url, str):
+                url = self.home_url
+            if len(url) > 2000:
+                url = self.home_url
+            
+            web_view = QWebEngineView()
+            try:
+                web_view.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)
+            except Exception:
+                pass
+            page = EcoWebEnginePage(self.profile, self, web_view)
+            web_view.setPage(page)
 
-        if self.is_dark_mode:
-            web_view.page().settings().setAttribute(
-                QWebEngineSettings.WebAttribute.ForceDarkMode, True
+            # Handle renderer crash - prevents full app crash
+            try:
+                page.renderProcessTerminated.connect(
+                    lambda terminationStatus, exitCode, view=web_view: self.handle_render_crash(view, terminationStatus, exitCode)
+                )
+            except Exception:
+                pass
+
+            if self.is_dark_mode:
+                try:
+                    web_view.page().settings().setAttribute(
+                        QWebEngineSettings.WebAttribute.ForceDarkMode, True
+                    )
+                except Exception:
+                    pass
+
+            # Use weak references in lambdas to avoid crash if view deleted
+            web_view.urlChanged.connect(
+                lambda _url, v=web_view: self.sync_address_bar(v) if not is_view_deleted(v) else None
             )
+            web_view.titleChanged.connect(
+                lambda title, v=web_view: self.update_tab_title(title, v) if not is_view_deleted(v) else None
+            )
+            web_view.iconChanged.connect(
+                lambda icon, v=web_view: self.sync_tab_icon(v, icon) if not is_view_deleted(v) else None
+            )
+            web_view.loadStarted.connect(
+                lambda v=web_view: self.handle_load_started(v) if not is_view_deleted(v) else None
+            )
+            web_view.loadFinished.connect(
+                lambda ok, v=web_view: self.handle_load_finished(v, ok) if not is_view_deleted(v) else None
+            )
+            stack_index = self.stack.addWidget(web_view)
 
-        web_view.urlChanged.connect(
-            lambda _url, view=web_view: self.sync_address_bar(view)
-        )
-        web_view.titleChanged.connect(
-            lambda title, view=web_view: self.update_tab_title(title, view)
-        )
-        web_view.iconChanged.connect(
-            lambda icon, view=web_view: self.sync_tab_icon(view, icon)
-        )
-        web_view.loadStarted.connect(
-            lambda view=web_view: self.handle_load_started(view)
-        )
-        web_view.loadFinished.connect(
-            lambda ok, view=web_view: self.handle_load_finished(view, ok)
-        )
-        stack_index = self.stack.addWidget(web_view)
+            theme = DARK_THEME if self.is_dark_mode else LIGHT_THEME
+            initial_tab_icon = render_svg_icon(
+                SVG_ICONS["globe"], theme["text_secondary"], 16
+            )
+            tab_index = self.tab_bar.addTab(initial_tab_icon, "New Tab")
+            self._setup_tab_close_button(tab_index)
 
-        theme = DARK_THEME if self.is_dark_mode else LIGHT_THEME
-        initial_tab_icon = render_svg_icon(
-            SVG_ICONS["globe"], theme["text_secondary"], 16
-        )
-        tab_index = self.tab_bar.addTab(initial_tab_icon, "New Tab")
-        self._setup_tab_close_button(tab_index)
+            self.tab_bar.setCurrentIndex(tab_index)
+            self.stack.setCurrentIndex(stack_index)
+            try:
+                # Handle eco://newtab
+                if url == "eco://newtab" or (url == self.home_url and self.settings.get("newtab_enabled", True) and self.settings.get("homepage_url", "eco://newtab") == "eco://newtab"):
+                    html = build_new_tab_page_html(self.settings, self.search_engine)
+                    web_view.setHtml(html, QUrl("eco://newtab"))
+                else:
+                    qurl = QUrl(url)
+                    if not qurl.isValid():
+                        qurl = QUrl(self.home_url)
+                    web_view.setUrl(qurl)
+            except Exception as e:
+                print(f"[Tabs] setUrl error: {e}")
+                try:
+                    web_view.setUrl(QUrl(self.home_url))
+                except Exception:
+                    pass
+            return web_view
+        except Exception as e:
+            print(f"[Tabs] add_new_tab error: {e}")
+            # Fallback: return None or existing view
+            try:
+                return self.get_current_view()
+            except Exception:
+                return None
 
-        self.tab_bar.setCurrentIndex(tab_index)
-        self.stack.setCurrentIndex(stack_index)
-        web_view.setUrl(QUrl(url))
-        return web_view
+    def handle_render_crash(self, web_view, terminationStatus, exitCode):
+        try:
+            if is_view_deleted(web_view):
+                return
+            if hasattr(self, 'crash_manager') and self.crash_manager:
+                self.crash_manager.handle_crash(web_view, terminationStatus, exitCode)
+            else:
+                print(f"[Renderer] crashed status={terminationStatus} code={exitCode}")
+                QTimer.singleShot(1000, lambda v=web_view: self._safe_reload_after_crash(v))
+        except Exception as e:
+            print(f"[Renderer] handle crash error: {e}")
+
+    def _safe_reload_after_crash(self, web_view):
+        try:
+            if is_view_deleted(web_view):
+                return
+            # Check if view still in stack
+            found = False
+            for i in range(self.stack.count()):
+                if self.stack.widget(i) == web_view:
+                    found = True
+                    break
+            if not found:
+                return
+            web_view.reload()
+        except Exception:
+            pass
+
+    def _periodic_memory_cleanup(self):
+        try:
+            import gc
+            gc.collect()
+            if self.stack.count() > 15:
+                try:
+                    self.profile.clearHttpCache()
+                except Exception:
+                    pass
+        except Exception as e:
+            print(f"[Memory] cleanup error: {e}")
 
     def on_tab_moved(self, from_idx, to_idx):
         if from_idx == to_idx:
@@ -5050,7 +6044,7 @@ class EcoBrowserWindow(QMainWindow):
             return
         view = self.stack.widget(index)
         url = view.url().toString() if view else self.home_url
-        new_win = EcoBrowser(initial_url=url)
+        new_win = EcoBrowserWindow(initial_url=url)
         new_win.show()
         if not hasattr(self, "_detached_windows"):
             self._detached_windows = []
@@ -5061,12 +6055,60 @@ class EcoBrowserWindow(QMainWindow):
     def close_tab(self, index):
         if self.tab_bar.count() <= 1:
             return
+        try:
+            web_view = self.stack.widget(index)
+            if not web_view or is_view_deleted(web_view):
+                self.tab_bar.removeTab(index)
+                return
+            # Stop any loading to prevent callbacks after deletion
+            try:
+                web_view.stop()
+                # Disconnect signals to prevent crash from late signals
+                try:
+                    web_view.urlChanged.disconnect()
+                except Exception:
+                    pass
+                try:
+                    web_view.titleChanged.disconnect()
+                except Exception:
+                    pass
+                try:
+                    web_view.iconChanged.disconnect()
+                except Exception:
+                    pass
+                try:
+                    web_view.loadStarted.disconnect()
+                except Exception:
+                    pass
+                try:
+                    web_view.loadFinished.disconnect()
+                except Exception:
+                    pass
+            except Exception:
+                pass
 
-        web_view = self.stack.widget(index)
-        self.tab_bar.removeTab(index)
-        self.stack.removeWidget(web_view)
-        web_view.deleteLater()
-        gc.collect()
+            self.tab_bar.removeTab(index)
+            self.stack.removeWidget(web_view)
+
+            # Safely delete page first
+            try:
+                page = web_view.page()
+                if page:
+                    # Break reference cycle
+                    web_view.setPage(None)
+                    page.deleteLater()
+            except Exception:
+                pass
+
+            web_view.deleteLater()
+            # Delay gc to avoid immediate collection crash
+            QTimer.singleShot(100, lambda: gc.collect())
+        except Exception as e:
+            print(f"[Tabs] close_tab error: {e}")
+            try:
+                self.tab_bar.removeTab(index)
+            except Exception:
+                pass
 
         for i in range(self.tab_bar.count()):
             self._setup_tab_close_button(i)
@@ -5086,6 +6128,8 @@ class EcoBrowserWindow(QMainWindow):
             pass
 
     def update_tab_title(self, title, web_view):
+        if is_view_deleted(web_view):
+            return
         display_title = title or "New Tab"
         if len(display_title) > 22:
             display_title = display_title[:20] + "..."
@@ -5095,12 +6139,18 @@ class EcoBrowserWindow(QMainWindow):
                 break
 
     def sync_tab_icon(self, web_view, icon):
+        if is_view_deleted(web_view):
+            return
+        if icon.isNull():
+            return
         for i in range(self.stack.count()):
             if self.stack.widget(i) == web_view and not icon.isNull():
                 self.tab_bar.setTabIcon(i, icon)
                 break
 
     def handle_load_started(self, web_view):
+        if is_view_deleted(web_view):
+            return
         if web_view == self.get_current_view():
             self.is_loading = True
             theme = DARK_THEME if self.is_dark_mode else LIGHT_THEME
@@ -5109,14 +6159,21 @@ class EcoBrowserWindow(QMainWindow):
             )
 
     def handle_load_finished(self, web_view, ok):
+        if is_view_deleted(web_view):
+            return
         if web_view == self.get_current_view():
             self.is_loading = False
-            theme = DARK_THEME if self.is_dark_mode else LIGHT_THEME
-            self.refresh_button.setIcon(
-                render_svg_icon(SVG_ICONS["reload"], theme["icon_color"], 18)
-            )
-            self.back_button.setEnabled(web_view.history().canGoBack())
-            self.forward_button.setEnabled(web_view.history().canGoForward())
+            try:
+                theme = DARK_THEME if self.is_dark_mode else LIGHT_THEME
+                self.refresh_button.setIcon(
+                    render_svg_icon(SVG_ICONS["reload"], theme["icon_color"], 18)
+                )
+                self.back_button.setEnabled(web_view.history().canGoBack())
+                self.forward_button.setEnabled(web_view.history().canGoForward())
+            except RuntimeError:
+                pass
+            except Exception as e:
+                print(f"[Load] handle_load_finished UI error: {e}")
 
         # Inject userscripts if enabled and page loaded ok
         if ok and self.settings.get("userscripts_enabled", True):
@@ -5338,7 +6395,7 @@ class EcoBrowserWindow(QMainWindow):
         dlg.exec()
 
     def apply_toolbar_config(self):
-        """Adjust what to pin in toolbar like download, vpn, etc."""
+        """Adjust what to pin in toolbar like download, proxy, etc."""
         try:
             pinned = self.settings.get(
                 "toolbar_pinned", DEFAULT_SETTINGS["toolbar_pinned"]
@@ -5355,7 +6412,7 @@ class EcoBrowserWindow(QMainWindow):
             set_vis(getattr(self, "reader_button", None), "reader")
             set_vis(getattr(self, "userscript_button", None), "userscript")
             set_vis(getattr(self, "downloads_button", None), "downloads")
-            set_vis(getattr(self, "vpn_button", None), "vpn")
+            set_vis(getattr(self, "proxy_button", None), "proxy")
             set_vis(getattr(self, "blockers_button", None), "blockers")
             set_vis(getattr(self, "bookmark_button", None), "bookmarks")
             set_vis(getattr(self, "passwords_button", None), "passwords")
@@ -5393,6 +6450,17 @@ class EcoBrowserWindow(QMainWindow):
         if view:
             view.forward()
 
+    def handle_new_tab_request(self, view):
+        """Show custom new tab page if enabled"""
+        try:
+            if self.settings.get("newtab_enabled", True):
+                html = build_new_tab_page_html(self.settings, self.search_engine)
+                view.setHtml(html, QUrl("eco://newtab"))
+                return True
+        except Exception as e:
+            print(f"[NewTab] error: {e}")
+        return False
+
     def navigate_to_url(self):
         text = self.url_input.text().strip()
         view = self.get_current_view()
@@ -5415,28 +6483,40 @@ class EcoBrowserWindow(QMainWindow):
         view.setUrl(QUrl(url))
 
     def sync_address_bar(self, web_view):
-        if not web_view or web_view != self.get_current_view():
+        try:
+            if not web_view or is_view_deleted(web_view):
+                return
+            if web_view != self.get_current_view():
+                return
+            try:
+                current_url = web_view.url().toString()
+            except RuntimeError:
+                return
+            self.url_input.setText("" if current_url == "about:blank" else current_url)
+        except Exception as e:
+            print(f"[UI] sync_address_bar error: {e}")
             return
-        current_url = web_view.url().toString()
-        self.url_input.setText("" if current_url == "about:blank" else current_url)
+        # rest continues, but we patched only first part, need to keep rest safe
+        try:
+            theme = DARK_THEME if self.is_dark_mode else LIGHT_THEME
+            is_https = current_url.startswith("https://")
+            sec_icon = "lock" if is_https else "unlock"
+            sec_color = theme["text_secondary"] if is_https else "#f85149"
+            self.security_icon_btn.setIcon(
+                render_svg_icon(SVG_ICONS[sec_icon], sec_color, 14)
+            )
 
-        theme = DARK_THEME if self.is_dark_mode else LIGHT_THEME
-        is_https = current_url.startswith("https://")
-        sec_icon = "lock" if is_https else "unlock"
-        sec_color = theme["text_secondary"] if is_https else "#f85149"
-        self.security_icon_btn.setIcon(
-            render_svg_icon(SVG_ICONS[sec_icon], sec_color, 14)
-        )
+            bookmarks = self.load_bookmarks()
+            is_bm = any(b["url"] == current_url for b in bookmarks)
+            star_icon = "star_filled" if is_bm else "star_outline"
+            star_color = theme["star_active"] if is_bm else theme["icon_color"]
+            self.bookmark_button.setIcon(
+                render_svg_icon(SVG_ICONS[star_icon], star_color, 16)
+            )
 
-        bookmarks = self.load_bookmarks()
-        is_bm = any(b["url"] == current_url for b in bookmarks)
-        star_icon = "star_filled" if is_bm else "star_outline"
-        star_color = theme["star_active"] if is_bm else theme["icon_color"]
-        self.bookmark_button.setIcon(
-            render_svg_icon(SVG_ICONS[star_icon], star_color, 16)
-        )
-
-        self.log_to_history(current_url)
+            self.log_to_history(current_url)
+        except Exception as e:
+            print(f"[UI] sync_address_bar part2 error: {e}")
 
     def handle_navigation(self, request, web_view):
         url = request.url()
@@ -5669,6 +6749,8 @@ class EcoBrowserWindow(QMainWindow):
     # =========================================================================
 
     def _try_autofill_passwords(self, web_view):
+        if is_view_deleted(web_view):
+            return
         if not getattr(self, "password_manager", None):
             return
         if not self.settings.get("password_manager_enabled", True):
@@ -5676,34 +6758,57 @@ class EcoBrowserWindow(QMainWindow):
         if not self.settings.get("password_autofill_enabled", True):
             return
         try:
-            url = web_view.url()
-            host = url.host()
+            try:
+                url = web_view.url()
+                host = url.host()
+            except RuntimeError:
+                return
             if not host:
                 return
             # Skip internal pages
-            if host in ("", "newtab", "about"):
+            if host in ("", "newtab", "about", "blank"):
                 return
+            # Skip if host is IP or too short? No, allow
             cred = self.password_manager.get_credential(host)
             if not cred:
                 return
-            # Don't autofill if already filled? We still try - JS will handle
             email = cred.get("email", "")
             password = cred.get("password", "")
             if not email or not password:
                 return
             js = build_password_autofill_js(email, password)
-            # Small delay to let page DOM settle + SPA
-            QTimer.singleShot(700, lambda v=web_view, j=js: self._inject_autofill(v, j))
-            QTimer.singleShot(2000, lambda v=web_view, j=js: self._inject_autofill(v, j))
+            # Use weak capture with id check
+            QTimer.singleShot(700, lambda v=web_view, j=js: self._inject_autofill(v, j) if not is_view_deleted(v) else None)
+            QTimer.singleShot(2000, lambda v=web_view, j=js: self._inject_autofill(v, j) if not is_view_deleted(v) else None)
         except Exception as e:
             print(f"[PasswordManager] _try_autofill error: {e}")
 
     def _inject_autofill(self, web_view, js_code):
         try:
-            if web_view and js_code:
-                web_view.page().runJavaScript(js_code)
-        except Exception:
-            pass
+            if not web_view or not js_code:
+                return
+            if is_view_deleted(web_view):
+                return
+            # Check if view still exists in stack
+            found = False
+            try:
+                for i in range(self.stack.count()):
+                    if self.stack.widget(i) == web_view:
+                        found = True
+                        break
+            except Exception:
+                return
+            if not found:
+                return
+            page = web_view.page()
+            if not page or is_view_deleted(page):
+                return
+            page.runJavaScript(js_code)
+        except RuntimeError as e:
+            # Wrapped C++ object deleted - safe to ignore
+            print(f"[PasswordManager] view deleted during autofill: {e}")
+        except Exception as e:
+            print(f"[PasswordManager] _inject_autofill error: {e}")
 
     def handle_password_save_request(self, data):
         try:
@@ -5806,11 +6911,35 @@ class EcoBrowserWindow(QMainWindow):
         dialog.exec()
 
     def closeEvent(self, event):
-        for i in range(self.stack.count()):
-            w = self.stack.widget(i)
-            if isinstance(w, QWebEngineView):
-                w.setPage(None)
-                w.deleteLater()
+        try:
+            # Stop all views first
+            for i in range(self.stack.count()):
+                try:
+                    w = self.stack.widget(i)
+                    if isinstance(w, QWebEngineView) and not is_view_deleted(w):
+                        try:
+                            w.stop()
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+            # Then delete
+            for i in range(self.stack.count()):
+                try:
+                    w = self.stack.widget(i)
+                    if isinstance(w, QWebEngineView) and not is_view_deleted(w):
+                        try:
+                            page = w.page()
+                            w.setPage(None)
+                            if page and not is_view_deleted(page):
+                                page.deleteLater()
+                        except Exception:
+                            pass
+                        w.deleteLater()
+                except Exception:
+                    pass
+        except Exception as e:
+            print(f"[Close] error: {e}")
         event.accept()
 
 
