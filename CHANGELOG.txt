@@ -1,55 +1,6 @@
 EcoBrowser - Changelog
 =======================
 
-v1.9
+v2.0
 ------------------------------------------
-FIXED: Removed old Search Engine setting from 3-dot menu
-- Deleted Search Engine submenu from EcoBrowser Menu (was clutter)
-- Search engine switching is now only in New Tab page - click the G/B/D icon dropdown
-- Cleaned show_main_menu() loop that was updating deleted actions
-
-FIXED: Time in 12-hour format
-- New Tab clock was 24h (14:05)
-- Now shows 12h with AM/PM: 2:05 PM
-- Changed updateClock() to:
-  let h = now.getHours();
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  h = h % 12; h = h ? h : 12;
-- Interval changed from 60000ms to 1000ms for correct noon/midnight flip
-
-FIXED: 18+ adult content blocker crash and enhanced blocking
-- Crash: [Navigation] error in acceptNavigationRequest (safe): name 'is_adult_host' is not defined
-- Crash: name 'is_adult_keyword' is not defined
-- Crash: name 'time' is not defined (CrashProofManager using time.time())
-- Crash: name 'EcoBrowser' is not defined in detach_tab_to_window (was EcoBrowser, now EcoBrowserWindow)
-- Now properly defines:
-  is_adult_host = any(host == d or host.endswith("."+d) or d in host for d in ADULT_DOMAINS)
-  is_adult_keyword = any(kw.lower() in lower for kw in ADULT_KEYWORDS + custom_keywords)
-- Expanded ADULT_KEYWORDS from 12 to 50+ terms: porn, xxx, pornography, porno, hentai, nsfw, erotic, erotica, nudity, nude, naked, sexvideo, camgirl, onlyfans, fansly, fetish, bondage, bdsm, blowjob, cumshot, escort, hardcore, pornhub, xvideos, xnxx, redtube, youporn, xhamster, chaturbate, etc.
-- NEW: ADULT_PAGE_BLOCKER_JS - client-side script injected via QWebEngineScript
-  - Scans document.body.innerText (first 25k chars) for adult keywords
-  - If found, replaces page with SafeShield block screen: Adult Content Blocked - keyword detected
-  - MutationObserver for SPA sites, skips blocked.ecobrowser and eco://newtab
-  - Allowlist: wikipedia.org, youtube.com, github.com, stackoverflow.com bypass text scan (URL blocking still active)
-
-FIXED: Favicon CORS blocked by eco:// origin
-- Error: Access to image at 'https://www.google.com/s2/favicons?domain=...' from origin 'eco://' has been blocked by CORS policy
-- Root cause: Google S2 favicon service does not send Access-Control-Allow-Origin header
-- Fixed: Changed getFaviconUrl() from google s2 to https://icons.duckduckgo.com/ip3/${domain}.ico which has proper CORS headers
-- Quicklinks now load without console errors, fallback to letter still works
-
-FIXED: Import warnings (Pylance)
-- sip: from PyQt6 import sip could fail - now robust fallback:
-  try: from PyQt6 import sip as _sip_module
-  except: import sip as _sip_module
-  except: _sip = None
-  def is_view_deleted(view): return _sip.isdeleted(view) if _sip else False
-- cryptography.fernet: Import could not be resolved - added # type: ignore, code already had try/except fallback to XOR+Base64
-
-Other logs that are NOT bugs (from external sites):
-- Permissions-Policy header: Unrecognized feature: 'otp-credentials' / 'payment' / 'usb' - websites sending unsupported headers
-- Minified React error #418 - meta.ai hydration mismatch
-- Invalid total_dict_size detected - Chromium shared dictionary bug
-
-Version: 1.9
-Files changed: main.py
+1. Optimizations and bugfixes
