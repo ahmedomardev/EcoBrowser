@@ -58,6 +58,8 @@ except ImportError:
     HAS_WEBCHANNEL = False
 
 from PyQt6.QtWidgets import (
+    QSpinBox,
+
     QApplication,
     QHBoxLayout,
     QLabel,
@@ -90,7 +92,7 @@ from PyQt6.QtWidgets import (
 # =============================================================================
 
 APP_NAME = "EcoBrowser"
-APP_VERSION = "2.0"
+APP_VERSION = "2.1"
 HOME_URL = "https://www.google.com"
 
 # Built-in Search Engines
@@ -525,35 +527,25 @@ def format_file_size(size_bytes):
 # =============================================================================
 
 ECO_GUARD_JS = r'''
-(function(){if(window.__ecoGuard)return;window.__ecoGuard=window.__ecoBrowserGuardInitialized=window.__ecoAdultTextBlocker=1;
-const R1=/\b(porn|xxx|pornography|hentai|nsfw|onlyfans|fansly|erotic|fetish|bdsm|bondage|blowjob|handjob|cumshot|creampie|orgy|masturbat|escort|brothel|sextape|sexcam|hardcore|softcore|incest|bestiality|pornhub|xvideos|xnxx|redtube|youporn|xhamster|chaturbate|stripchat|bongacams|livejasmin|brazzers|playboy|rule34)\b/i;
-const R2=/[🔞🍑🍆💋👙👅💦🤤👄🍒].*(bio|pfp|avatar|channel|video|telegram|dating|link)/i;
-const R3=/(bio|pfp|avatar|channel|video|telegram|dating|link).*[🔞🍑🍆💋👙👅💦🤤👄🍒]/i;
-const Y1=/onlyfans|fansly|telegram|tg\.me|linktr\.ee|bio\.link|check.*bio|18\+|nsfw|nude|naked|horny/i;
-const S1=/\b(slop|ai[_\-]?slop|brainrot|shrimp[_\-]?jesus|mutant|extra[_\-]?fingers|plastic[_\-]?skin|melting|prompt[_\-]?spam|chatgpt[_\-]?slop)\b/i;
-const G1=/\b(sora|runway|midjourney|dall[_\-]?e|stable[_\-]?diffusion|flux|genai|ai[_\-]?generated|deepfake)\b/i;
-const KW=["porn","xxx","hentai","nsfw","erotic","nude","naked","sexvideo","onlyfans","fetish","bdsm","blowjob","handjob","cumshot","orgy","masturbate","escort","hardcore","incest","pornhub","xvideos","xnxx","youporn","xhamster","chaturbate","stripchat","bongacams","brazzers","rule34","pussy","dick","cock","boobs","anal"];
-const AL=["wikipedia.org","youtube.com","github.com","stackoverflow.com"];
-const CSS=".eco-b{filter:blur(32px)!important;transition:.3s!important;pointer-events:auto!important}.eco-u{filter:none!important}.eco-av{filter:blur(24px)!important;opacity:.65!important}.eco-au{filter:none!important;opacity:1!important}.eco-s{position:absolute!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:rgba(18,20,24,.82)!important;border-radius:9999px!important;cursor:pointer!important;z-index:100!important;color:#f87171!important;border:1.5px solid rgba(239,68,68,.7)!important}.eco-bn{font-size:11px!important;font-weight:600!important;color:#fca5a5!important;background:rgba(153,27,27,.25)!important;border:1px solid rgba(239,68,68,.4)!important;border-radius:6px!important;padding:3px 8px!important;margin:4px 0!important;display:inline-flex!important;gap:6px!important;cursor:pointer!important}.eco-bc{opacity:.3!important;filter:blur(4px)!important}.eco-rc{opacity:1!important;filter:none!important}.eco-w{position:relative!important;display:inline-block!important;overflow:hidden!important}.eco-bd{position:absolute!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;background:rgba(18,20,24,.92)!important;border:1px solid rgba(245,158,11,.4)!important;color:#fff!important;padding:8px 16px!important;border-radius:9999px!important;font-size:11.5px!important;font-weight:600!important;z-index:99999!important;cursor:pointer!important;display:flex!important;gap:6px!important}.eco-wm{position:absolute!important;top:10px!important;right:10px!important;padding:4px 10px!important;border-radius:6px!important;font-size:10px!important;font-weight:700!important;z-index:99990!important;pointer-events:none!important;display:flex!important;gap:4px!important;background:rgba(13,17,23,.85)!important;border:1px solid rgba(56,189,248,.5)!important;color:#38bdf8!important}";
-try{let s=document.createElement('style');s.id='__eg';s.textContent=CSS;(document.head||document.documentElement).appendChild(s);}catch(e){}
-function m(t,a){if(!t)return null;for(let r of a){let x=t.match(r);if(x)return x[0];}return null;}
-function sk(r,g,b){let y=0.299*r+0.587*g+0.114*b;let cb=128-0.168736*r-0.331264*g+0.5*b;let cr=128+0.5*r-0.418688*g-0.081312*b;return cb>=77&&cb<=127&&cr>=133&&cr<=175&&y>50&&r>95&&g>40&&b>20&&(r-g)>15&&r>b;}
-function av(e){try{if(e.closest&&e.closest('#author-thumbnail,yt-avatar-shape,ytd-comment-view-model,ytd-comment-renderer,#avatar'))return 1;}catch(e){}let c=(e.className||'')+' '+(e.parentElement?e.parentElement.className:'');return /avatar|profile-pic|pfp|author-thumb/i.test(c);}
-function blur(el,sl){
- if(!el||el.__b)return;el.__b=1;el.classList.add('eco-b');let p=el.parentElement;if(!p)return;
- if(getComputedStyle(p).position==='static')p.style.position='relative';
- let b=p.querySelector('.eco-bd');if(!b){b=document.createElement('div');b.className='eco-bd';b.textContent=sl?'⚠️ AI Slop':'🔞 Blocked';
- b.onclick=(e)=>{e.stopPropagation();let isB=el.classList.contains('eco-b');if(isB){el.classList.remove('eco-b');el.classList.add('eco-u');b.style.display='none';}else{el.classList.remove('eco-u');el.classList.add('eco-b');b.style.display='flex';}};p.appendChild(b);}
-}
-function wm(el,lb){let p=el.parentElement;if(!p)return;if(getComputedStyle(p).position==='static')p.style.position='relative';let w=document.createElement('div');w.className='eco-wm';w.textContent=lb;try{if(p.contains(el))p.insertBefore(w,el.nextSibling);}catch(e){}}
-function ab(el){el.classList.add('eco-av');let p=el.parentElement;if(!p)return;if(getComputedStyle(p).position==='static')p.style.position='relative';let sh=p.querySelector('.eco-s');if(!sh){sh=document.createElement('div');sh.className='eco-s';sh.textContent='🔞';sh.onclick=(e)=>{e.stopPropagation();e.preventDefault();let b=el.classList.contains('eco-av');if(b){el.classList.remove('eco-av');el.classList.add('eco-au');sh.textContent='👁️';}else{el.classList.remove('eco-au');el.classList.add('eco-av');sh.textContent='🔞';}};p.appendChild(sh);}}
-function sb(box,r){if(!box||box.__sh)return;let c=box.querySelector('#content-text,yt-formatted-string#content-text,.comment-text');if(!c||c.__sh)return;c.__sh=box.__sh=1;c.classList.add('eco-bc');let bn=document.createElement('div');bn.className='eco-bn';bn.textContent='🛡️ Blocked bot • Show';let rev=0;bn.onclick=(e)=>{e.stopPropagation();rev=!rev;if(rev){c.classList.remove('eco-bc');c.classList.add('eco-rc');bn.textContent='🔒 Hide';}else{c.classList.remove('eco-rc');c.classList.add('eco-bc');bn.textContent='🛡️ Blocked bot • Show';}};try{c.parentElement.insertBefore(bn,c);}catch(e){}}
-function px(img){try{if(!img.complete||(img.naturalWidth||0)<32){img.addEventListener('load',()=>px(img),{once:true});return;}let off=new Image();off.crossOrigin='anonymous';off.onload=()=>{try{let ca=document.createElement('canvas');ca.width=ca.height=32;let ctx=ca.getContext('2d');if(!ctx)return;ctx.drawImage(off,0,0,32,32);let d=ctx.getImageData(0,0,32,32).data,tot=0,skc=0;for(let i=0;i<d.length;i+=24){if(d[i+3]<40)continue;tot++;if(sk(d[i],d[i+1],d[i+2]))skc++;}if(tot>0&&skc/tot>=(av(img)?0.2:0.25))blur(img);}catch(e){}};off.src=img.src;}catch(e){}}
-function chk(el){if(!el||el.__c)return;el.__c=1;try{let alt=(el.alt||'')+' '+(el.title||'');let x=m(alt,[R1,R2,R3]);if(x){blur(el);return;}x=m(alt,[S1]);if(x){blur(el,1);wm(el,'AI Slop');return;}x=m(alt,[G1]);if(x){wm(el,'AI');return;}if(el.tagName==='IMG'||el.tagName==='VIDEO'){if(av(el)){let ctx=el.closest?el.closest('ytd-comment-view-model,ytd-comment-renderer'):null;if(ctx&&m(ctx.textContent,[Y1])){ab(el);sb(ctx,'bot');}}if(el.tagName==='IMG'&&el.naturalWidth>=32)px(el);}}catch(e){}}
-function scanPage(){try{let h=location.hostname.toLowerCase(),hr=location.href.toLowerCase();if(hr.includes('blocked.ecobrowser')||hr.includes('eco://newtab')||hr.startsWith('about:')||hr.startsWith('data:'))return;if(AL.some(a=>h===a||h.endsWith('.'+a)))return;let txt=document.body?document.body.innerText||'':'';if(!txt||txt.length<100)return;let s=txt.slice(0,20000).toLowerCase();for(let k of KW){if(!k)continue;let f=k.length<=3?new RegExp('\\b'+k.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\$&')+'\\b','i').test(s):s.includes(k);if(f){if(window.__ecoPageBlocked)return;window.__ecoPageBlocked=1;document.documentElement.innerHTML=`<html><head><meta charset=utf-8><style>body{background:#121418;color:#f0f6fc;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}.c{background:#1e2229;padding:36px 44px;border-radius:16px;border:1px solid #30363d;text-align:center;max-width:440px}.t{color:#f85149;font-size:22px;font-weight:600}.x{color:#8b949e;font-size:14px;margin-bottom:24px}.b{background:#238636;color:#fff;text-decoration:none;padding:10px 24px;border-radius:24px;font-weight:600;display:inline-block}</style></head><body><div class=c><div style=font-size:40px>🔞</div><h1 class=t>Blocked</h1><p class=x>SafeShield: <b>${k}</b> on <b>${h}</b></p><a class=b href=https://www.google.com>Return</a></div></body></html>`;window.stop();return;}}}catch(e){}}
-function all(){try{document.querySelectorAll('img,video').forEach(chk);}catch(e){}scanPage();}
-let db=null;const ob=new MutationObserver(ms=>{for(let mu of ms){for(let n of mu.addedNodes){if(n.nodeType===1){if(n.matches&&n.matches('img,video'))chk(n);else if(n.querySelectorAll)try{n.querySelectorAll('img,video').forEach(chk);}catch(e){}}}}if(db)return;db=setTimeout(()=>{db=null;scanPage();},1500);});
-try{all();ob.observe(document.body||document.documentElement,{childList:true,subtree:true});}catch(e){}setTimeout(scanPage,1200);
+(function(){if(window.__ecoGuard)return;window.__ecoGuard=window.__ecoBrowserGuardInitialized=window.__ecoAdultTextBlocker=window._eg=1;
+let R=[/\b(porn|xxx|pornography|hentai|nsfw|onlyfans|fansly|erotic|fetish|bdsm|bondage|blowjob|handjob|cumshot|creampie|orgy|masturbat|escort|brothel|sextape|sexcam|hardcore|softcore|incest|bestiality|pornhub|xvideos|xnxx|redtube|youporn|xhamster|chaturbate|stripchat|bongacams|livejasmin|brazzers|playboy|rule34)\b/i,/[🔞🍑🍆💋👙👅💦].*(bio|pfp|avatar|channel|telegram|onlyfans)/i,/(bio|pfp|avatar|channel|telegram|onlyfans).*[🔞🍑🍆💋👙👅💦]/i];
+let Y=[/onlyfans|fansly|telegram|tg\.me|linktr\.ee|bio\.link|check.*bio|18\+|nsfw|nude|naked|horny/i];
+let S=[/\b(slop|ai[_\-]?slop|brainrot|shrimp[_\-]?jesus|mutant|extra[_\-]?fingers|plastic[_\-]?skin|melting|prompt[_\-]?spam)\b/i];
+let G=[/\b(sora|runway|midjourney|dall[_\-]?e|stable[_\-]?diffusion|flux|genai|ai[_\-]?generated|deepfake)\b/i];
+let C=".b{filter:blur(32px)!important;transition:.3s!important}.u{filter:none!important}.v{filter:blur(24px)!important;opacity:.65!important}.w{filter:none!important;opacity:1!important}.s{position:absolute!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:rgba(18,20,24,.82)!important;border-radius:9999px!important;cursor:pointer!important;z-index:100!important;color:#f87171!important;border:1.5px solid rgba(239,68,68,.7)!important}.n{font-size:11px!important;font-weight:600!important;color:#fca5a5!important;background:rgba(153,27,27,.25)!important;border:1px solid rgba(239,68,68,.4)!important;border-radius:6px!important;padding:3px 8px!important;margin:4px 0!important;display:inline-flex!important;gap:6px!important;cursor:pointer!important}.c2{opacity:.3!important;filter:blur(4px)!important}.c3{opacity:1!important;filter:none!important}.d{position:absolute!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;background:rgba(18,20,24,.92)!important;border:1px solid rgba(245,158,11,.4)!important;color:#fff!important;padding:8px 16px!important;border-radius:9999px!important;font-size:11.5px!important;font-weight:600!important;z-index:99999!important;cursor:pointer!important;display:flex!important;gap:6px!important}.e{position:absolute!important;top:10px!important;right:10px!important;padding:4px 10px!important;border-radius:6px!important;font-size:10px!important;font-weight:700!important;z-index:99990!important;pointer-events:none!important;display:flex!important;gap:4px!important;background:rgba(13,17,23,.85)!important;border:1px solid rgba(56,189,248,.5)!important;color:#38bdf8!important}";
+try{let s=document.createElement('style');s.textContent=C;(document.head||document.documentElement).appendChild(s);}catch(e){}
+function q(t,a){if(!t)return null;for(let r of a){let x=t.match(r);if(x)return x[0];}return null;}
+function f(e){try{if(e.closest&&e.closest('#author-thumbnail,yt-avatar-shape,ytd-comment-view-model,#avatar'))return 1;}catch(e){}let c=(e.className||'')+' '+(e.parentElement?e.parentElement.className:'');return /avatar|profile-pic|pfp|author-thumb/i.test(c);}
+function h(el,l){if(!el||el._b)return;el._b=1;el.classList.add('b');let p=el.parentElement;if(!p)return;if(getComputedStyle(p).position==='static')p.style.position='relative';let b=p.querySelector('.d');if(!b){b=document.createElement('div');b.className='d';b.textContent=l?'⚠️ Slop':'🔞 Blocked';b.onclick=e=>{e.stopPropagation();let x=el.classList.contains('b');if(x){el.classList.remove('b');el.classList.add('u');b.style.display='none';}else{el.classList.remove('u');el.classList.add('b');b.style.display='flex';}};p.appendChild(b);}}
+function j(el,t){let p=el.parentElement;if(!p)return;if(getComputedStyle(p).position==='static')p.style.position='relative';let w=document.createElement('div');w.className='e';w.textContent=t;try{if(p.contains(el))p.insertBefore(w,el.nextSibling);}catch(e){}}
+function k(el){el.classList.add('v');let p=el.parentElement;if(!p)return;if(getComputedStyle(p).position==='static')p.style.position='relative';let s=p.querySelector('.s');if(!s){s=document.createElement('div');s.className='s';s.textContent='🔞';s.onclick=e=>{e.stopPropagation();e.preventDefault();let b=el.classList.contains('v');if(b){el.classList.remove('v');el.classList.add('w');s.textContent='👁️';}else{el.classList.remove('w');el.classList.add('v');s.textContent='🔞';}};p.appendChild(s);}}
+function l(b){if(!b||b._h)return;let c=b.querySelector('#content-text,.comment-text');if(!c||c._h)return;c._h=b._h=1;c.classList.add('c2');let d=document.createElement('div');d.className='n';d.textContent='🛡️ Bot • Show';let r=0;d.onclick=e=>{e.stopPropagation();r=!r;if(r){c.classList.remove('c2');c.classList.add('c3');d.textContent='🔒 Hide';}else{c.classList.remove('c3');c.classList.add('c2');d.textContent='🛡️ Bot • Show';}};try{c.parentElement.insertBefore(d,c);}catch(e){}}
+function m(i){try{if(!i.complete||i.naturalWidth<32){i.addEventListener('load',()=>m(i),{once:true});return;}let o=new Image();o.crossOrigin='anonymous';o.onload=()=>{try{let c=document.createElement('canvas');c.width=c.height=32;let x=c.getContext('2d');if(!x)return;x.drawImage(o,0,0,32,32);let d=x.getImageData(0,0,32,32).data,t=0,u=0;for(let p=0;p<d.length;p+=24){if(d[p+3]<40)continue;t++;if(o2(d[p],d[p+1],d[p+2]))u++;}if(t>0&&u/t>=(f(i)?0.2:0.25))h(i);}catch(e){}};o.src=i.src;}catch(e){}}
+function o2(r,g,b){let y=0.299*r+0.587*g+0.114*b,cb=128-0.168736*r-0.331264*g+0.5*b,cr=128+0.5*r-0.418688*g-0.081312*b;return cb>=77&&cb<=127&&cr>=133&&cr<=175&&y>50&&r>95&&g>40&&b>20&&(r-g)>15&&r>b;}
+function n(e){if(!e||e._c)return;e._c=1;try{let t=(e.alt||'')+' '+(e.title||'');let a=q(t,R);if(a){h(e);return;}a=q(t,S);if(a){h(e,1);j(e,'AI Slop');return;}a=q(t,G);if(a){j(e,'AI');return;}if(e.tagName==='IMG'||e.tagName==='VIDEO'){if(f(e)){let c=e.closest?e.closest('ytd-comment-view-model,ytd-comment-renderer'):null;if(c&&q(c.textContent,Y)){k(e);l(c);}}if(e.tagName==='IMG'&&e.naturalWidth>=32)m(e);}}catch(e){}}
+function r(){try{document.querySelectorAll('img,video').forEach(n);}catch(e){}}
+let o3=new MutationObserver(e=>{for(let t of e){for(let a of t.addedNodes){if(a.nodeType===1){if(a.matches&&a.matches('img,video'))n(a);else if(a.querySelectorAll)try{a.querySelectorAll('img,video').forEach(n);}catch(e){}}}}});
+try{r();o3.observe(document.body||document.documentElement,{childList:true,subtree:true});}catch(e){}
 })();
 '''
 
@@ -586,24 +578,16 @@ READER_MODE_JS = ECO_READER_JS
 # =============================================================================
 
 ECO_AUTH_JS = r'''
-(function(){if(window.__ecoUserscriptPolyfill&&window.__ecoPasswordManagerInjected)return;window.__ecoUserscriptPolyfill=window.__ecoPasswordManagerInjected=1;
-window.GM=window.GM||{};window.GM_info={scriptHandler:'EcoBrowser',version:'1.6'};
-window.GM_addStyle=window.GM_addStyle||function(c){let s=document.createElement('style');s.textContent=c;(document.head||document.documentElement).appendChild(s);return s;};
-window.GM_getValue=window.GM_getValue||function(k,d){try{let v=localStorage.getItem('eco_gm_'+k);return v!==null?JSON.parse(v):d;}catch(e){return d;}};
-window.GM_setValue=window.GM_setValue||function(k,v){try{localStorage.setItem('eco_gm_'+k,JSON.stringify(v));}catch(e){}};
-window.GM_deleteValue=window.GM_deleteValue||function(k){localStorage.removeItem('eco_gm_'+k);};
-window.GM_listValues=window.GM_listValues||function(){let ks=[];for(let i=0;i<localStorage.length;i++){let kk=localStorage.key(i);if(kk&&kk.startsWith('eco_gm_'))ks.push(kk.slice(7));}return ks;};
-window.GM_log=window.GM_log||function(...a){console.log('[GM]',...a);};
-window.GM_openInTab=window.GM_openInTab||function(u){window.open(u,'_blank');return{close:()=>{}};};
+(function(){if(window._gm)return;window._gm=window.__ecoUserscriptPolyfill=1;
+window.GM=window.GM||{};window.GM_info={scriptHandler:'EcoBrowser'};
+window.GM_addStyle=c=>{let s=document.createElement('style');s.textContent=c;(document.head||document.documentElement).appendChild(s);return s;};
+window.GM_getValue=(k,d)=>{try{let v=localStorage.getItem('eco_gm_'+k);return v!==null?JSON.parse(v):d;}catch(e){return d;}};
+window.GM_setValue=(k,v)=>{try{localStorage.setItem('eco_gm_'+k,JSON.stringify(v));}catch(e){}};
+window.GM_deleteValue=k=>localStorage.removeItem('eco_gm_'+k);
+window.GM_listValues=()=>{let a=[];for(let i=0;i<localStorage.length;i++){let k=localStorage.key(i);if(k&&k.startsWith('eco_gm_'))a.push(k.slice(7));}return a;};
+window.GM_log=(...a)=>console.log('[GM]',...a);
+window.GM_openInTab=u=>{window.open(u,'_blank');return{close:()=>{}};};
 window.unsafeWindow=window;
-function log(d){try{console.log('ECO_PASS_SAVE::'+JSON.stringify(d));}catch(e){}}
-function fe(){let sels=['input[type="email"]','input[autocomplete="email"]','input[autocomplete="username"]','input[name*="email" i]','input[name*="login" i]'];for(let sel of sels){try{let el=document.querySelector(sel);if(el&&el.offsetParent!==null)return el;}catch(e){}}try{let p=document.querySelector('input[type="password"]');if(p){let f=p.closest('form');if(f){let t=f.querySelector('input[type="text"]');if(t)return t;}}}catch(e){}return null;}
-function fp(){try{return document.querySelector('input[type="password"]');}catch(e){return null;}}
-function sv(){try{let e=fe(),p=fp();if(!e||!p)return;let ev=e.value?.trim(),pv=p.value;if(!ev||!pv||pv.length<3)return;if(ev.includes('@')&&ev.length>4)log({email:ev,password:pv,host:location.hostname});}catch(e){}}
-function att(){try{document.querySelectorAll('form').forEach(f=>{if(f.__p)return;f.__p=1;f.addEventListener('submit',()=>{setTimeout(sv,200);});});let p=fp();if(p&&!p.__p){p.__p=1;p.addEventListener('change',sv);p.addEventListener('blur',sv);}}catch(e){}}
-function af(){try{if(!window.__ecoSavedCredentials)return;let {email,password}=window.__ecoSavedCredentials;let e=fe(),p=fp();if(e&&email){e.value=email;e.dispatchEvent(new Event('input',{bubbles:1}));}if(p&&password){p.value=password;p.dispatchEvent(new Event('input',{bubbles:1}));}}catch(e){}}
-try{att();}catch(e){}let ob=new MutationObserver(()=>{att();});try{ob.observe(document.documentElement,{childList:true,subtree:true});}catch(e){}setTimeout(()=>{att();af();},800);
-window.__ecoTrySave=sv;window.__ecoAutoFill=af;
 })();
 '''
 
@@ -3225,6 +3209,58 @@ class NetworkSettingsDialog(QDialog):
         self.accept()
 
 
+
+class HibernationSettingsDialog(QDialog):
+    def __init__(self, settings, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Hibernation Settings - EcoBrowser")
+        self.setMinimumWidth(420)
+        self.values = None
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(12)
+
+        intro = QLabel("Configure Eco Sleep to save RAM. Inactive tabs will show 💤 and wake when you click them.")
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
+
+        self.enabled_checkbox = QCheckBox("Enable Tab Hibernation (Eco Sleep)")
+        self.enabled_checkbox.setChecked(settings.get("hibernation_enabled", True))
+        layout.addWidget(self.enabled_checkbox)
+
+        form = QFormLayout()
+        form.setSpacing(10)
+
+        self.timeout_spin = QSpinBox()
+        self.timeout_spin.setRange(1, 120)
+        self.timeout_spin.setSuffix(" minutes")
+        self.timeout_spin.setValue(int(settings.get("hibernation_timeout", 15)))
+        self.timeout_spin.setToolTip("Inactive tabs will hibernate after this time")
+        form.addRow("Hibernate after:", self.timeout_spin)
+
+        layout.addLayout(form)
+
+        # Info label
+        info = QLabel("💡 Tip: Right-click tab bar → Hibernate Tab to manually sleep a tab. Hibernated tabs save ~120MB each.")
+        info.setWordWrap(True)
+        info.setStyleSheet("color: #8b949e; font-size: 11px;")
+        layout.addWidget(info)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def accept(self):
+        self.values = {
+            "hibernation_enabled": self.enabled_checkbox.isChecked(),
+            "hibernation_timeout": int(self.timeout_spin.value()),
+        }
+        super().accept()
+
+
+
 class ReaderSettingsDialog(QDialog):
     """Reader Mode customization: fonts, margins, paper themes - pairs with content blocker."""
 
@@ -4099,6 +4135,7 @@ class EcoBrowserWindow(QMainWindow):
         # Reader Mode actions
         self.menu.addAction("Toggle Reader Mode\tCtrl+Shift+R", self.toggle_reader_mode)
         self.menu.addAction("Reader Mode Settings...", self.open_reader_settings_dialog)
+        self.menu.addAction("Hibernation Settings 💤...", self.open_hibernation_settings_dialog)
         self.menu.addSeparator()
 
         # Userscript manager
@@ -4673,6 +4710,186 @@ class EcoBrowserWindow(QMainWindow):
         except Exception as e:
             print(f"[Memory] cleanup error: {e}")
 
+    # === SIMPLE HIBERNATION - Minimal code ===
+    def _update_tab_activity(self, view):
+        if not view or is_view_deleted(view):
+            return
+        try:
+            import time
+            self.tab_last_active[id(view)] = time.time()
+            if getattr(view, '_is_hibernated', False):
+                self.wake_tab(view)
+        except Exception:
+            pass
+
+    def _check_hibernation(self):
+        try:
+            import time
+            timeout = self.settings.get("hibernation_timeout", 15) * 60
+            now = time.time()
+            current = self.get_current_view()
+            cur_id = id(current) if current else None
+            for i in range(self.stack.count()):
+                v = self.stack.widget(i)
+                if not v or is_view_deleted(v): continue
+                if id(v) == cur_id: continue
+                if getattr(v, '_is_hibernated', False): continue
+                last = self.tab_last_active.get(id(v), now)
+                if now - last > timeout:
+                    self.hibernate_tab(v)
+        except Exception:
+            pass
+
+    def hibernate_tab(self, view):
+        try:
+            if not view or is_view_deleted(view): return
+            if getattr(view, '_is_hibernated', False): return
+            if self.stack.count() <= 1: return
+            url = view.url().toString()
+            if not url or url.startswith("eco://") or url.startswith("about:"): return
+            view._hibernated_url = url
+            view._is_hibernated = True
+            self.hibernated_tabs[id(view)] = url
+            html = f"<html><body style='background:#121418;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif'><div style='text-align:center'><div style='font-size:48px'>💤</div><h2>Tab Slept</h2><p>{view.title()[:40]}</p><p style='color:#8b949e;font-size:12px'>{url[:60]}</p><p style='margin-top:12px;color:#8b949e'>Click tab to wake</p></div></body></html>"
+            view.setHtml(html, QUrl("eco://hibernated"))
+            self.update_tab_title("💤 " + (view.title() or "Sleeping"), view)
+        except Exception:
+            pass
+
+    def wake_tab(self, view):
+        try:
+            if not getattr(view, '_is_hibernated', False): return
+            url = getattr(view, '_hibernated_url', None)
+            if not url: return
+            view._is_hibernated = False
+            view.setUrl(QUrl(url))
+            self.tab_last_active[id(view)] = __import__("time").time()
+        except Exception:
+            pass
+
+
+
+
+    # === PYTHON REPLACEMENT FOR JS ADULT BLOCKER (reduces JS amount) ===
+    PYTHON_ADULT_KEYWORDS = ["porn","xxx","hentai","nsfw","erotic","nude","naked","sexvideo","onlyfans","fetish","bdsm","blowjob","handjob","cumshot","orgy","masturbate","escort","hardcore","incest","pornhub","xvideos","xnxx","youporn","xhamster","chaturbate","stripchat","bongacams","brazzers","rule34","pussy","dick","cock","boobs","anal"]
+    PYTHON_ADULT_ALLOW_HOSTS = ["wikipedia.org","youtube.com","github.com","stackoverflow.com"]
+
+    def _python_check_adult_block(self, view, plain_text, url, host):
+        """Python replacement for JS adult page blocker - runs on toPlainText callback"""
+        try:
+            if not view or is_view_deleted(view):
+                return
+            if not plain_text or len(plain_text) < 100:
+                return
+            # Skip allowed hosts
+            if host and any(host == a or host.endswith('.'+a) for a in self.PYTHON_ADULT_ALLOW_HOSTS):
+                return
+            # Skip internal pages
+            if url.startswith("eco://") or url.startswith("about:") or url.startswith("data:"):
+                return
+            sample = plain_text[:20000].lower()
+            for kw in self.PYTHON_ADULT_KEYWORDS:
+                if not kw:
+                    continue
+                found = False
+                if len(kw) <= 3:
+                    import re as _re
+                    found = bool(_re.search(r'\b' + _re.escape(kw) + r'\b', sample, _re.I))
+                else:
+                    found = kw in sample
+                if found:
+                    if getattr(view, '_python_blocked', False):
+                        return
+                    view._python_blocked = True
+                    # Block via Python - replace page content (same UI as JS blocker)
+                    blocked_html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{{background:#121418;color:#f0f6fc;font-family:-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}}.card{{background:#1e2229;padding:36px 44px;border-radius:16px;border:1px solid #30363d;text-align:center;max-width:440px;box-shadow:0 16px 36px rgba(0,0,0,.6)}}.t{{color:#f85149;font-size:22px;margin:0 0 12px;font-weight:600}}.x{{color:#8b949e;font-size:14px;margin-bottom:24px;line-height:1.6}}.b{{background:#238636;color:#fff;text-decoration:none;padding:10px 24px;border-radius:24px;font-size:13.5px;font-weight:600;display:inline-block}}</style></head><body><div class=card><div style=font-size:40px;margin-bottom:12px>🔞</div><h1 class=t>Adult Content Blocked</h1><p class=x>Blocked by EcoBrowser SafeShield (Python):<br><b>{kw}</b> on <b>{host}</b></p><a class=b href=https://www.google.com>Return to Safe Browsing</a></div></body></html>"""
+                    try:
+                        view.setHtml(blocked_html, QUrl("eco://blocked"))
+                    except Exception:
+                        pass
+                    print(f"[AdultBlocker-Python] Blocked {host} for keyword {kw}")
+                    return
+        except Exception as e:
+            print(f"[AdultBlocker-Python] error: {e}")
+
+    def _python_adult_block_check(self, view):
+        """Trigger Python adult check via toPlainText - replaces JS text scanning"""
+        try:
+            if not view or is_view_deleted(view):
+                return
+            if not self.settings.get("nude_block_enabled", True):
+                return
+            try:
+                url = view.url().toString()
+                host = view.url().host().lower()
+            except Exception:
+                return
+            # Skip internal
+            if not url or url.startswith("eco://") or url.startswith("about:"):
+                return
+            # Async get plain text
+            def callback(text):
+                try:
+                    self._python_check_adult_block(view, text, url, host)
+                except Exception:
+                    pass
+            try:
+                view.page().toPlainText(callback)
+            except Exception:
+                pass
+        except Exception as e:
+            print(f"[AdultBlocker-Python] check error: {e}")
+
+    def _python_password_manager_check(self, view):
+        """Python replacement for JS password manager - on-demand JS, not persistent"""
+        try:
+            if not view or is_view_deleted(view):
+                return
+            if not getattr(self, "password_manager", None):
+                return
+            if not self.settings.get("password_manager_enabled", True):
+                return
+            # 1. Try autofill via Python (already exists as _try_autofill_passwords)
+            try:
+                self._try_autofill_passwords(view)
+            except Exception:
+                pass
+            # 2. Setup detection for save via Python-injected JS (one-time, not persistent observer)
+            js_detect = """
+            (function(){
+                try{
+                    if(window._ecoPassPython) return;
+                    window._ecoPassPython=true;
+                    function findEmail(){
+                        let sels=['input[type="email"]','input[autocomplete="email"]','input[name*="email" i]'];
+                        for(let sel of sels){try{let el=document.querySelector(sel);if(el&&el.offsetParent!==null)return el;}catch(e){}}
+                        try{let p=document.querySelector('input[type="password"]');if(p){let f=p.closest('form');if(f){let t=f.querySelector('input[type="text"]');if(t)return t;}}}catch(e){}return null;
+                    }
+                    function findPass(){try{return document.querySelector('input[type="password"]');}catch(e){return null;}}
+                    function save(){
+                        try{
+                            let e=findEmail(),p=findPass();
+                            if(!e||!p)return;
+                            let ev=e.value?.trim(),pv=p.value;
+                            if(!ev||!pv||pv.length<3)return;
+                            if(ev.includes('@')&&ev.length>4) console.log('ECO_PASS_SAVE::'+JSON.stringify({email:ev,password:pv,host:location.hostname}));
+                        }catch(e){}
+                    }
+                    document.addEventListener('submit',()=>setTimeout(save,300), true);
+                    let p=findPass();
+                    if(p){p.addEventListener('change', save); p.addEventListener('blur', save);}
+                }catch(e){}
+            })();
+            """
+            try:
+                view.page().runJavaScript(js_detect)
+            except Exception:
+                pass
+        except Exception as e:
+            print(f"[PasswordManager-Python] error: {e}")
+
+
+
     def on_tab_moved(self, from_idx, to_idx):
         if from_idx == to_idx:
             return
@@ -4861,6 +5078,20 @@ class EcoBrowserWindow(QMainWindow):
                     )
             except Exception as e:
                 print(f"[Userscript] injection error: {e}")
+
+        # === PYTHON REPLACEMENT: Adult block via Python (reduces JS) ===
+        if ok:
+            try:
+                self._python_adult_block_check(web_view)
+            except Exception as e:
+                print(f"[AdultBlocker-Python] error in load finished: {e}")
+
+        # === PYTHON REPLACEMENT: Password Manager via Python on-demand (not persistent JS) ===
+        if ok:
+            try:
+                self._python_password_manager_check(web_view)
+            except Exception as e:
+                print(f"[PasswordManager-Python] error: {e}")
 
         # Password Manager autofill
         if ok:
@@ -5082,6 +5313,23 @@ class EcoBrowserWindow(QMainWindow):
         view = self.get_current_view()
         if view:
             self.apply_reader_settings_to_view(view)
+
+
+    def open_hibernation_settings_dialog(self):
+        dialog = HibernationSettingsDialog(self.settings, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted and dialog.values:
+            self.settings.update(dialog.values)
+            self.save_settings()
+            # Restart hibernation timer with new setting
+            try:
+                if self.settings.get("hibernation_enabled", True):
+                    self.hibernation_timer.start(60000)
+                else:
+                    self.hibernation_timer.stop()
+            except Exception:
+                pass
+            QMessageBox.information(self, "Hibernation Settings", f"Eco Sleep {'enabled' if self.settings.get('hibernation_enabled') else 'disabled'} - Timeout: {self.settings.get('hibernation_timeout')} min")
+
 
     def open_userscript_manager_dialog(self):
         dlg = UserscriptManagerDialog(self)
