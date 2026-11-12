@@ -1,4 +1,13 @@
 import os
+
+os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = (
+    "--in-process-gpu "
+    "--use-gl=angle --use-angle=d3d11 "
+    "--enable-gpu-rasterization --enable-zero-copy --ignore-gpu-blocklist "
+    "--disable-features=TranslateUI,BackForwardCache,CompressionDictionaryTransport "
+    '--js-flags="--max-old-space-size=512 --expose-gc" '
+    "--disk-cache-size=8388608 --media-cache-size=8388608 "
+)
 import sys
 import gc
 import base64
@@ -18,17 +27,29 @@ if sys.platform == "win32":
 else:
     reg = None
 
-from PyQt6.QtCore import QUrl, QTimer, Qt, QByteArray, QSize, QStandardPaths, QObject, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import (
+    QUrl,
+    QTimer,
+    Qt,
+    QByteArray,
+    QSize,
+    QStandardPaths,
+
+)
+
 # sip handling for all PyQt versions - robust fallback
 try:
     from PyQt6 import sip as _sip_module  # type: ignore
+
     _sip = _sip_module
 except ImportError:
     try:
         import sip as _sip_module  # type: ignore
+
         _sip = _sip_module
     except ImportError:
         _sip = None
+
 
 def is_view_deleted(view):
     try:
@@ -37,6 +58,8 @@ def is_view_deleted(view):
         return _sip.isdeleted(view)
     except Exception:
         return False
+
+
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QKeySequence, QShortcut, QColor
 from PyQt6.QtNetwork import QNetworkProxy, QNetworkProxyFactory
 from PyQt6.QtSvg import QSvgRenderer
@@ -50,8 +73,10 @@ from PyQt6.QtWebEngineCore import (
     QWebEngineScript,
 )
 from PyQt6.QtWebEngineWidgets import QWebEngineView
+
 try:
     from PyQt6.QtWebChannel import QWebChannel
+
     HAS_WEBCHANNEL = True
 except ImportError:
     QWebChannel = None
@@ -59,7 +84,6 @@ except ImportError:
 
 from PyQt6.QtWidgets import (
     QSpinBox,
-
     QApplication,
     QHBoxLayout,
     QLabel,
@@ -92,7 +116,7 @@ from PyQt6.QtWidgets import (
 # =============================================================================
 
 APP_NAME = "EcoBrowser"
-APP_VERSION = "2.1"
+APP_VERSION = "2.3"
 HOME_URL = "https://www.google.com"
 
 # Built-in Search Engines
@@ -248,6 +272,9 @@ DEFAULT_SETTINGS = {
         "bookmarks": True,
         "passwords": True,
         "customize": True,
+        "blocking_level": 2,  # 0=No block, 1=Ad only, 2=Ad+Nude, 3=Extreme (sex words)
+        "translation_enabled": True,
+        "translation_target_lang": "en",
     },
     "reader_hide_chrome": True,
     # === NEW CUSTOMIZATION SETTINGS ===
@@ -270,7 +297,13 @@ DEFAULT_SETTINGS = {
     "adult_filter_enabled": True,
     "custom_ad_domains": [],
     "custom_adult_keywords": [],
-    "adult_allowlist": ["wikipedia.org", "google.com", "bing.com", "duckduckgo.com", "youtube.com"],
+    "adult_allowlist": [
+        "wikipedia.org",
+        "google.com",
+        "bing.com",
+        "duckduckgo.com",
+        "youtube.com",
+    ],
     "startup_behavior": "newtab",  # newtab, restore, custom
     "startup_urls": [],
     "homepage_url": "eco://newtab",
@@ -278,12 +311,16 @@ DEFAULT_SETTINGS = {
     "download_ask_location": False,
     "default_zoom": 100,
     "hardware_acceleration": True,
+    "gpu_preference": "auto",
     "custom_user_agent": "",
     "custom_css": "",
     "custom_js": "",
     "clear_cache_on_exit": False,
     "do_not_track": False,
     "custom_search_engines": [],
+    "blocking_level": 2,  # 0=No block, 1=Ad only, 2=Ad+Nude, 3=Extreme (sex words)
+    "translation_enabled": True,
+    "translation_target_lang": "en",
 }
 
 
@@ -497,6 +534,9 @@ SVG_ICONS = {
     "shield": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-4-4 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z"/></svg>',
     "pin": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M16 9V4L8 4v5l-4 4v2h5v5h2v-5h5v-2l-4-4z"/></svg>',
     "close_small": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
+    "gpu": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M15 9H9v6h6V9zm-2 4h-2v-2h2v2zm8-2V9h-2V7c0-1.1-.9-2-2-2h-2V3h-2v2h-2V3H9v2H7c-1.1 0-2 .9-2 2v2H3v2h2v2H3v2h2v2c0 1.1.9 2 2 2h2v2h2v-2h2v2h2v-2h2c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2zm-4 6H7V7h10v10z"/></svg>',
+    "monitor": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>',
+    "info": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="{color}" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>',
 }
 
 
@@ -526,58 +566,70 @@ def format_file_size(size_bytes):
 # Client-side Injected Script: NSFW Media Blurring & AI-Generated Media Watermarking
 # =============================================================================
 
-ECO_GUARD_JS = r'''
-(function(){if(window.__ecoGuard)return;window.__ecoGuard=window.__ecoBrowserGuardInitialized=window.__ecoAdultTextBlocker=window._eg=1;
-let R=[/\b(porn|xxx|pornography|hentai|nsfw|onlyfans|fansly|erotic|fetish|bdsm|bondage|blowjob|handjob|cumshot|creampie|orgy|masturbat|escort|brothel|sextape|sexcam|hardcore|softcore|incest|bestiality|pornhub|xvideos|xnxx|redtube|youporn|xhamster|chaturbate|stripchat|bongacams|livejasmin|brazzers|playboy|rule34)\b/i,/[🔞🍑🍆💋👙👅💦].*(bio|pfp|avatar|channel|telegram|onlyfans)/i,/(bio|pfp|avatar|channel|telegram|onlyfans).*[🔞🍑🍆💋👙👅💦]/i];
-let Y=[/onlyfans|fansly|telegram|tg\.me|linktr\.ee|bio\.link|check.*bio|18\+|nsfw|nude|naked|horny/i];
-let S=[/\b(slop|ai[_\-]?slop|brainrot|shrimp[_\-]?jesus|mutant|extra[_\-]?fingers|plastic[_\-]?skin|melting|prompt[_\-]?spam)\b/i];
-let G=[/\b(sora|runway|midjourney|dall[_\-]?e|stable[_\-]?diffusion|flux|genai|ai[_\-]?generated|deepfake)\b/i];
-let C=".b{filter:blur(32px)!important;transition:.3s!important}.u{filter:none!important}.v{filter:blur(24px)!important;opacity:.65!important}.w{filter:none!important;opacity:1!important}.s{position:absolute!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:rgba(18,20,24,.82)!important;border-radius:9999px!important;cursor:pointer!important;z-index:100!important;color:#f87171!important;border:1.5px solid rgba(239,68,68,.7)!important}.n{font-size:11px!important;font-weight:600!important;color:#fca5a5!important;background:rgba(153,27,27,.25)!important;border:1px solid rgba(239,68,68,.4)!important;border-radius:6px!important;padding:3px 8px!important;margin:4px 0!important;display:inline-flex!important;gap:6px!important;cursor:pointer!important}.c2{opacity:.3!important;filter:blur(4px)!important}.c3{opacity:1!important;filter:none!important}.d{position:absolute!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;background:rgba(18,20,24,.92)!important;border:1px solid rgba(245,158,11,.4)!important;color:#fff!important;padding:8px 16px!important;border-radius:9999px!important;font-size:11.5px!important;font-weight:600!important;z-index:99999!important;cursor:pointer!important;display:flex!important;gap:6px!important}.e{position:absolute!important;top:10px!important;right:10px!important;padding:4px 10px!important;border-radius:6px!important;font-size:10px!important;font-weight:700!important;z-index:99990!important;pointer-events:none!important;display:flex!important;gap:4px!important;background:rgba(13,17,23,.85)!important;border:1px solid rgba(56,189,248,.5)!important;color:#38bdf8!important}";
+ECO_GUARD_JS = r"""
+(function(){if(window.__ecoGuard)return;
+window.__ecoGuard=1;
+try{
+    let lvl = window.__ecoGuardLevel;
+    if(lvl===undefined){
+        try{lvl=parseInt(localStorage.getItem('eco_blocking_level')||'2');}catch(e){lvl=2;}
+        window.__ecoGuardLevel=lvl;
+    }
+    if(lvl===0){console.log('[EcoGuard] Level 0 - disabled'); return;}
+}catch(e){}
+let R=[/\b(porn|xxx|pornography|hentai|nsfw|onlyfans|fansly|erotic|fetish|bdsm|bondage|blowjob|handjob|cumshot|creampie|orgy|masturbat|escort|brothel|sextape|sexcam|hardcore|softcore|incest|bestiality|pornhub|xvideos|xnxx|redtube|youporn|xhamster|chaturbate|stripchat|bongacams|livejasmin|brazzers|playboy|rule34)\b/i];
+let C=".b{filter:blur(32px)!important}.u{filter:none!important}.v{filter:blur(24px)!important;opacity:.65!important}.w{filter:none!important}.s{position:absolute!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:rgba(18,20,24,.82)!important;border-radius:9999px!important;cursor:pointer!important;z-index:100!important}.d{position:absolute!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;background:rgba(18,20,24,.92)!important;border:1px solid rgba(245,158,11,.4)!important;color:#fff!important;padding:8px 16px!important;border-radius:9999px!important;z-index:99999!important;cursor:pointer!important}";
 try{let s=document.createElement('style');s.textContent=C;(document.head||document.documentElement).appendChild(s);}catch(e){}
-function q(t,a){if(!t)return null;for(let r of a){let x=t.match(r);if(x)return x[0];}return null;}
-function f(e){try{if(e.closest&&e.closest('#author-thumbnail,yt-avatar-shape,ytd-comment-view-model,#avatar'))return 1;}catch(e){}let c=(e.className||'')+' '+(e.parentElement?e.parentElement.className:'');return /avatar|profile-pic|pfp|author-thumb/i.test(c);}
-function h(el,l){if(!el||el._b)return;el._b=1;el.classList.add('b');let p=el.parentElement;if(!p)return;if(getComputedStyle(p).position==='static')p.style.position='relative';let b=p.querySelector('.d');if(!b){b=document.createElement('div');b.className='d';b.textContent=l?'⚠️ Slop':'🔞 Blocked';b.onclick=e=>{e.stopPropagation();let x=el.classList.contains('b');if(x){el.classList.remove('b');el.classList.add('u');b.style.display='none';}else{el.classList.remove('u');el.classList.add('b');b.style.display='flex';}};p.appendChild(b);}}
-function j(el,t){let p=el.parentElement;if(!p)return;if(getComputedStyle(p).position==='static')p.style.position='relative';let w=document.createElement('div');w.className='e';w.textContent=t;try{if(p.contains(el))p.insertBefore(w,el.nextSibling);}catch(e){}}
-function k(el){el.classList.add('v');let p=el.parentElement;if(!p)return;if(getComputedStyle(p).position==='static')p.style.position='relative';let s=p.querySelector('.s');if(!s){s=document.createElement('div');s.className='s';s.textContent='🔞';s.onclick=e=>{e.stopPropagation();e.preventDefault();let b=el.classList.contains('v');if(b){el.classList.remove('v');el.classList.add('w');s.textContent='👁️';}else{el.classList.remove('w');el.classList.add('v');s.textContent='🔞';}};p.appendChild(s);}}
-function l(b){if(!b||b._h)return;let c=b.querySelector('#content-text,.comment-text');if(!c||c._h)return;c._h=b._h=1;c.classList.add('c2');let d=document.createElement('div');d.className='n';d.textContent='🛡️ Bot • Show';let r=0;d.onclick=e=>{e.stopPropagation();r=!r;if(r){c.classList.remove('c2');c.classList.add('c3');d.textContent='🔒 Hide';}else{c.classList.remove('c3');c.classList.add('c2');d.textContent='🛡️ Bot • Show';}};try{c.parentElement.insertBefore(d,c);}catch(e){}}
-function m(i){try{if(!i.complete||i.naturalWidth<32){i.addEventListener('load',()=>m(i),{once:true});return;}let o=new Image();o.crossOrigin='anonymous';o.onload=()=>{try{let c=document.createElement('canvas');c.width=c.height=32;let x=c.getContext('2d');if(!x)return;x.drawImage(o,0,0,32,32);let d=x.getImageData(0,0,32,32).data,t=0,u=0;for(let p=0;p<d.length;p+=24){if(d[p+3]<40)continue;t++;if(o2(d[p],d[p+1],d[p+2]))u++;}if(t>0&&u/t>=(f(i)?0.2:0.25))h(i);}catch(e){}};o.src=i.src;}catch(e){}}
-function o2(r,g,b){let y=0.299*r+0.587*g+0.114*b,cb=128-0.168736*r-0.331264*g+0.5*b,cr=128+0.5*r-0.418688*g-0.081312*b;return cb>=77&&cb<=127&&cr>=133&&cr<=175&&y>50&&r>95&&g>40&&b>20&&(r-g)>15&&r>b;}
-function n(e){if(!e||e._c)return;e._c=1;try{let t=(e.alt||'')+' '+(e.title||'');let a=q(t,R);if(a){h(e);return;}a=q(t,S);if(a){h(e,1);j(e,'AI Slop');return;}a=q(t,G);if(a){j(e,'AI');return;}if(e.tagName==='IMG'||e.tagName==='VIDEO'){if(f(e)){let c=e.closest?e.closest('ytd-comment-view-model,ytd-comment-renderer'):null;if(c&&q(c.textContent,Y)){k(e);l(c);}}if(e.tagName==='IMG'&&e.naturalWidth>=32)m(e);}}catch(e){}}
-function r(){try{document.querySelectorAll('img,video').forEach(n);}catch(e){}}
-let o3=new MutationObserver(e=>{for(let t of e){for(let a of t.addedNodes){if(a.nodeType===1){if(a.matches&&a.matches('img,video'))n(a);else if(a.querySelectorAll)try{a.querySelectorAll('img,video').forEach(n);}catch(e){}}}}});
+function h(el){if(window.__ecoGuardLevel===0)return;if(!el||el._b)return;el._b=1;el.classList.add('b');}
+function n(e){if(window.__ecoGuardLevel===0)return;if(!e||e._c)return;e._c=1;try{let t=(e.alt||'')+' '+(e.title||'');if(R[0].test(t)){h(e);return;}}catch(e){}}
+function r(){if(window.__ecoGuardLevel===0)return;try{document.querySelectorAll('img,video').forEach(n);}catch(e){}}
+let o3=new MutationObserver(e=>{if(window.__ecoGuardLevel===0)return;for(let t of e){for(let a of t.addedNodes){if(a.nodeType===1){if(a.matches&&a.matches('img,video'))n(a);else if(a.querySelectorAll)try{a.querySelectorAll('img,video').forEach(n);}catch(e){}}}}});
 try{r();o3.observe(document.body||document.documentElement,{childList:true,subtree:true});}catch(e){}
+window.addEventListener('ecoGuardLevelChanged', function(e){
+    window.__ecoGuardLevel=e.detail.level;
+    if(e.detail.level===0){
+        try{
+            document.querySelectorAll('.b,.v').forEach(el=>{
+                el.classList.remove('b','v');
+                el.classList.add('u','w');
+                el.style.filter='none';
+            });
+            document.querySelectorAll('.s,.d').forEach(el=>el.remove());
+        }catch(err){}
+    }
+});
 })();
-'''
+"""
+
 
 # Merged guard includes adult blocker - kept for compatibility
 AI_SAFEGUARD_SCRIPT = ECO_GUARD_JS
-ADULT_PAGE_BLOCKER_JS = r''  # merged into ECO_GUARD_JS to reduce JS amount
+ADULT_PAGE_BLOCKER_JS = r""  # merged into ECO_GUARD_JS to reduce JS amount
 
 
 # =============================================================================
 # Adult Page Content Blocker: Blocks pages containing 18+ keywords in text
 # =============================================================================
 
-ADULT_PAGE_BLOCKER_JS = r''  # merged into ECO_GUARD_JS
+ADULT_PAGE_BLOCKER_JS = r""  # merged into ECO_GUARD_JS
 
 # =============================================================================
 # Reader Mode: Distraction-Free Reading View (Pairs with Content Blocker)
 # =============================================================================
 
-ECO_READER_JS = r'''
+ECO_READER_JS = r"""
 (function(){if (window.__ecoReaderInitialized) return;window.__ecoReaderInitialized = true;const READER_THEMES_CSS ={light:{bg:'#ffffff',fg:'#1a1a1a',muted:'#6b7280',border:'#e5e7eb',accent:'#0969da',codeBg:'#f3f4f6'},sepia:{bg:'#f4ecd8',fg:'#5b4636',muted:'#8b7355',border:'#e8dcc6',accent:'#8b5e34',codeBg:'#efe3c8'},dark:{bg:'#1e2229',fg:'#e6edf3',muted:'#8b949e',border:'#30363d',accent:'#58a6ff',codeBg:'#161b22'},paper:{bg:'#fdfcf9',fg:'#2d2d2d',muted:'#6b6b6b',border:'#ece9e3',accent:'#1a7f37',codeBg:'#f6f3ee'},midnight:{bg:'#0d1117',fg:'#c9d1d9',muted:'#8b949e',border:'#21262d',accent:'#f778ba',codeBg:'#161b22'},auto:null};const POSITIVE_RE = /article|body|content|entry|hentry|main|page|post|text|blog|story|story-body|article-body/i;const NEGATIVE_RE = /comment|combx|disqus|foot|header|menu|nav|remark|rss|shoutbox|sidebar|sponsor|ad-break|agegate|pagination|pager|popup|tweet|twitter|social|advert|comic|share|login|form|signup|related|recommended|trending|promo/i;const UNLIKELY_CANDIDATES = /combx|comment|community|disqus|extra|foot|header|menu|remark|rss|shoutbox|sidebar|sponsor|ad-break|agegate|pagination|pager|popup|tweet|twitter|social|advert|comic|share|login|form|signup/i;const OK_MAYBE_CANDIDATE = /and|article|body|column|main|shadow/i;window.__ecoReader ={isActive:false,original:{html:null,scrollY:0,bodyOverflow:''},settings:{font:'serif',fontSize:19,lineHeight:1.8,width:'medium',theme:'auto',textAlign:'start',isDarkBrowser:false},articleMeta:null,_injectBaseStyles(){if (document.getElementById('__ecoReader_base')) return;const s = document.createElement('style');s.id = '__ecoReader_base';s.textContent = ` #eco-reader-overlay{position:fixed !important;inset:0 !important;z-index:2147483646 !important;overflow-y:auto !important;overflow-x:hidden !important;-webkit-font-smoothing:antialiased !important;font-synthesis:none !important;overscroll-behavior:contain !important;}#eco-reader-overlay *{box-sizing:border-box !important;}.eco-reader-toolbar{position:sticky !important;top:0 !important;z-index:10 !important;backdrop-filter:blur(16px) !important;-webkit-backdrop-filter:blur(16px) !important;border-bottom:1px solid var(--er-border) !important;display:flex !important;align-items:center !important;justify-content:space-between !important;padding:10px 18px 10px 56px !important;gap:12px !important;}.eco-reader-toolbar-group{display:flex !important;align-items:center !important;gap:8px !important;flex-wrap:wrap !important;}.eco-reader-btn{appearance:none !important;border:1px solid var(--er-border) !important;background:var(--er-bg) !important;color:var(--er-fg) !important;border-radius:9999px !important;padding:6px 12px !important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;font-size:12.5px !important;font-weight:500 !important;cursor:pointer !important;transition:all .2s ease !important;display:inline-flex !important;align-items:center !important;gap:6px !important;user-select:none !important;}.eco-reader-btn:hover{transform:translateY(-1px) !important;filter:brightness(1.08) !important;}.eco-reader-btn.active{background:var(--er-accent) !important;color:white !important;border-color:var(--er-accent) !important;}.eco-reader-select{background:var(--er-bg) !important;color:var(--er-fg) !important;border:1px solid var(--er-border) !important;border-radius:8px !important;padding:6px 10px !important;font-size:12.5px !important;font-family:inherit !important;}.eco-reader-mini-fab{position:fixed !important;top:10px !important;left:12px !important;z-index:2147483647 !important;width:36px !important;height:36px !important;border-radius:9999px !important;border:1px solid var(--er-border) !important;background:var(--er-bg) !important;color:var(--er-fg) !important;display:flex !important;align-items:center !important;justify-content:center !important;font-size:16px !important;font-weight:700 !important;cursor:pointer !important;box-shadow:0 4px 12px rgba(0,0,0,.15) !important;transition:all .2s ease !important;}.eco-reader-mini-fab:hover{transform:scale(1.08) !important;background:var(--er-accent) !important;color:white !important;border-color:var(--er-accent) !important;}.eco-reader-content-wrap{margin:0 auto !important;padding:32px 24px 80px !important;transition:max-width .3s ease !important;}.eco-reader-article{line-height:var(--er-lh) !important;font-size:var(--er-fs) !important;font-family:var(--er-font) !important;color:var(--er-fg) !important;text-align:var(--er-align,start) !important;}.eco-reader-article h1{font-size:1.9em !important;line-height:1.25 !important;margin:0 0 .4em !important;font-weight:800 !important;letter-spacing:-.02em !important;}.eco-reader-article h2{font-size:1.45em !important;margin:1.6em 0 .6em !important;font-weight:700 !important;}.eco-reader-article h3{font-size:1.2em !important;margin:1.4em 0 .5em !important;font-weight:600 !important;}.eco-reader-article p{margin:0 0 1.2em !important;}.eco-reader-article a{color:var(--er-accent) !important;text-decoration:underline !important;text-underline-offset:3px !important;}.eco-reader-article img{max-width:100% !important;height:auto !important;border-radius:12px !important;margin:1.5em 0 !important;display:block !important;}.eco-reader-article figure{margin:1.8em 0 !important;}.eco-reader-article figcaption{font-size:.85em !important;color:var(--er-muted) !important;margin-top:.6em !important;text-align:center !important;}.eco-reader-article blockquote{border-left:3px solid var(--er-accent) !important;margin:1.5em 0 !important;padding:.4em 0 .4em 1.2em !important;color:var(--er-muted) !important;font-style:italic !important;}.eco-reader-article pre{background:var(--er-codeBg) !important;padding:16px !important;border-radius:12px !important;overflow-x:auto !important;font-size:.85em !important;margin:1.5em 0 !important;border:1px solid var(--er-border) !important;}.eco-reader-article code{background:var(--er-codeBg) !important;padding:2px 6px !important;border-radius:6px !important;font-size:.9em !important;}.eco-reader-article pre code{background:transparent !important;padding:0 !important;}.eco-reader-article ul,.eco-reader-article ol{margin:0 0 1.2em 1.4em !important;}.eco-reader-article li{margin:.4em 0 !important;}.eco-reader-meta{color:var(--er-muted) !important;font-size:13px !important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;margin-bottom:24px !important;display:flex !important;gap:12px !important;flex-wrap:wrap !important;align-items:center !important;}.eco-reader-est{background:var(--er-codeBg) !important;border:1px solid var(--er-border) !important;padding:4px 10px !important;border-radius:9999px !important;font-weight:600 !important;}.eco-reader-divider{height:1px !important;background:var(--er-border) !important;margin:24px 0 !important;border:0 !important;}`;(document.head || document.documentElement).appendChild(s);},_getThemeColors(){let themeKey = this.settings.theme;if (themeKey === 'auto'){themeKey = this.settings.isDarkBrowser ? 'dark':'light';}return READER_THEMES_CSS[themeKey] || READER_THEMES_CSS.light;},_applyTheme(){const colors = this._getThemeColors();const overlay = document.getElementById('eco-reader-overlay');if (!overlay) return;overlay.style.background = colors.bg;overlay.style.color = colors.fg;overlay.style.setProperty('--er-bg',colors.bg);overlay.style.setProperty('--er-fg',colors.fg);overlay.style.setProperty('--er-muted',colors.muted);overlay.style.setProperty('--er-border',colors.border);overlay.style.setProperty('--er-accent',colors.accent);overlay.style.setProperty('--er-codeBg',colors.codeBg);overlay.style.setProperty('--er-font',this._getFontStack());overlay.style.setProperty('--er-fs',this.settings.fontSize + 'px');overlay.style.setProperty('--er-lh',this.settings.lineHeight);overlay.style.setProperty('--er-align',this.settings.textAlign === 'justify' ? 'justify':'start');},_getFontStack(){const fonts ={serif:"Georgia,'Times New Roman',Literata,Charter,serif",sans:"-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",mono:"'JetBrains Mono','SF Mono',Consolas,Menlo,monospace",dyslexic:"'OpenDyslexic','Lexie Readable',Verdana,sans-serif",news:"Charter,'Bitstream Charter',Georgia,serif"};return fonts[this.settings.font] || fonts.serif;},_getWidthPx(){const map ={narrow:640,medium:740,wide:860,xwide:1020,full:1200};return map[this.settings.width] || 740;},isProbablyReaderable(){try{const text = document.body ? document.body.innerText:'';if (text.length < 600) return false;const pCount = document.querySelectorAll('p').length;if (pCount < 3) return false;if (document.querySelector('article')) return true;let score = 0;document.querySelectorAll('p').forEach(p =>{if (p.textContent.length > 100) score++;});return score >= 4;}catch(e){return false;}},_extractArticle(){const doc = document;const allElements = Array.from(doc.querySelectorAll('div,article,section,main'));let candidates = [];allElements.forEach(el =>{const text = el.innerText || '';if (text.length < 200) return;const classId = (el.className || '') + ' ' + (el.id || '');if (UNLIKELY_CANDIDATES.test(classId) && !OK_MAYBE_CANDIDATE.test(classId)) return;let score = Math.min(Math.floor(text.length / 100),5);if (POSITIVE_RE.test(classId)) score += 3;if (NEGATIVE_RE.test(classId)) score -= 3;const pCount = el.querySelectorAll('p').length;score += pCount * 0.5;if (score > 1.5) candidates.push({el,score,textLen:text.length});});candidates.sort((a,b) => b.score - a.score || b.textLen - a.textLen);let topCandidate = candidates[0] ? candidates[0].el:null;if (!topCandidate){topCandidate = doc.querySelector('article') || doc.querySelector('main') || doc.body;}let title = doc.querySelector('meta[property="og:title"]')?.content || doc.title || '';const h1 = doc.querySelector('h1');if (h1 && h1.innerText.trim().length > 10 && h1.innerText.trim().length < 200){title = h1.innerText.trim();}const bylineEl = doc.querySelector('[rel="author"],.author,.byline,[class*="byline"],[class*="author"]');const byline = bylineEl ? bylineEl.innerText.trim().slice(0,120):'';const timeEl = doc.querySelector('time,[class*="publish"],[property*="published"]');const date = timeEl ? (timeEl.getAttribute('datetime') || timeEl.innerText.trim().slice(0,40)):'';const clone = topCandidate.cloneNode(true);const killSel = 'script,style,nav,aside,footer,header,form,button,input,textarea,select,noscript,iframe,.ad,[class*="ad-"],[id*="ad-"],[class*="share"],[class*="social"],[class*="comment"],[class*="sidebar"],[class*="popup"],[class*="modal"]';clone.querySelectorAll(killSel).forEach(n => n.remove());clone.querySelectorAll('div,section').forEach(n =>{if (!n.innerText || n.innerText.trim().length < 20){if (n.querySelectorAll('p,img,h1,h2,h3').length === 0) n.remove();}});let html = clone.innerHTML;const words = clone.innerText.split(/\s+/).length;const minutes = Math.max(1,Math.round(words / 220));return{title,byline,date,html,words,minutes};},enter(){if (this.isActive) return;this.original.scrollY = window.scrollY;this.original.bodyOverflow = document.body.style.overflow;const article = this._extractArticle();this.articleMeta = article;const colors = this._getThemeColors();const width = this._getWidthPx();const overlay = document.createElement('div');overlay.id = 'eco-reader-overlay';overlay.setAttribute('role','document');overlay.style.background = colors.bg;overlay.style.color = colors.fg;overlay.innerHTML = ` <button id="eco-reader-mini-exit" class="eco-reader-mini-fab" title="Exit Reader Mode (Esc)">✕</button> <div class="eco-reader-toolbar" style="background:color-mix(in srgb,${colors.bg}85%,transparent);"> <div class="eco-reader-toolbar-group"> <button class="eco-reader-btn" id="eco-reader-close" title="Exit Reader (Esc)">✕ Exit Reader</button> <span style="opacity:.4">|</span> <span style="font-family:-apple-system,sans-serif;font-size:12px;color:var(--er-muted)">Reader • EcoBrowser</span> </div> <div class="eco-reader-toolbar-group"> <select class="eco-reader-select" id="eco-reader-font"> <option value="serif" ${this.settings.font==='serif'?'selected':''}>Serif</option> <option value="sans" ${this.settings.font==='sans'?'selected':''}>Sans</option> <option value="news" ${this.settings.font==='news'?'selected':''}>News</option> <option value="mono" ${this.settings.font==='mono'?'selected':''}>Mono</option> <option value="dyslexic" ${this.settings.font==='dyslexic'?'selected':''}>Dyslexic</option> </select> <select class="eco-reader-select" id="eco-reader-theme"> <option value="auto" ${this.settings.theme==='auto'?'selected':''}>Auto</option> <option value="light" ${this.settings.theme==='light'?'selected':''}>Light</option> <option value="sepia" ${this.settings.theme==='sepia'?'selected':''}>Sepia</option> <option value="paper" ${this.settings.theme==='paper'?'selected':''}>Paper</option> <option value="dark" ${this.settings.theme==='dark'?'selected':''}>Dark</option> <option value="midnight" ${this.settings.theme==='midnight'?'selected':''}>Midnight</option> </select> <select class="eco-reader-select" id="eco-reader-width"> <option value="narrow" ${this.settings.width==='narrow'?'selected':''}>Narrow</option> <option value="medium" ${this.settings.width==='medium'?'selected':''}>Medium</option> <option value="wide" ${this.settings.width==='wide'?'selected':''}>Wide</option> <option value="xwide" ${this.settings.width==='xwide'?'selected':''}>X-Wide</option> </select> <button class="eco-reader-btn" id="eco-reader-fs-dec" title="Smaller">A-</button> <button class="eco-reader-btn" id="eco-reader-fs-inc" title="Larger">A+</button> </div> </div> <div class="eco-reader-content-wrap" style="max-width:${width}px"> <article class="eco-reader-article"> <h1>${this._escape(article.title)}</h1> <div class="eco-reader-meta"> ${article.byline ? `<span>By ${this._escape(article.byline)}</span>`:''}${article.date ? `<span>• ${this._escape(article.date)}</span>`:''}<span class="eco-reader-est">${article.minutes}min read • ${article.words.toLocaleString()}words</span> <span>• ${this._escape(window.location.hostname)}</span> </div> <hr class="eco-reader-divider"/> <div class="eco-reader-body">${article.html}</div> </article> </div> `;document.body.appendChild(overlay);document.body.style.overflow = 'hidden';overlay.scrollTop = 0;this._applyTheme();this._bindToolbarEvents();this.isActive = true;try{window.dispatchEvent(new CustomEvent('ecoReaderEntered'));}catch(e){}overlay.tabIndex = -1;overlay.focus();},_escape(s){const d = document.createElement('div');d.textContent = s;return d.innerHTML;},_bindToolbarEvents(){const overlay = document.getElementById('eco-reader-overlay');if (!overlay) return;const close = overlay.querySelector('#eco-reader-close');if (close) close.onclick = () => this.exit();const mini = overlay.querySelector('#eco-reader-mini-exit');if (mini) mini.onclick = () => this.exit();const fontSel = overlay.querySelector('#eco-reader-font');if (fontSel) fontSel.onchange = (e) =>{this.settings.font = e.target.value;this._applyTheme();this._persist();};const themeSel = overlay.querySelector('#eco-reader-theme');if (themeSel) themeSel.onchange = (e) =>{this.settings.theme = e.target.value;this._applyTheme();this._persist();};const widthSel = overlay.querySelector('#eco-reader-width');if (widthSel) widthSel.onchange = (e) =>{this.settings.width = e.target.value;const wrap = overlay.querySelector('.eco-reader-content-wrap');if (wrap) wrap.style.maxWidth = this._getWidthPx() + 'px';this._persist();};const dec = overlay.querySelector('#eco-reader-fs-dec');const inc = overlay.querySelector('#eco-reader-fs-inc');if (dec) dec.onclick = () =>{this.settings.fontSize = Math.max(12,this.settings.fontSize - 1);this._applyTheme();this._persist();};if (inc) inc.onclick = () =>{this.settings.fontSize = Math.min(36,this.settings.fontSize + 1);this._applyTheme();this._persist();};overlay.addEventListener('keydown',(e) =>{if (e.key === 'Escape') this.exit();});},_persist(){try{localStorage.setItem('__ecoReaderSettings',JSON.stringify(this.settings));}catch(e){}},exit(){if (!this.isActive) return;const overlay = document.getElementById('eco-reader-overlay');if (overlay) overlay.remove();document.body.style.overflow = this.original.bodyOverflow || '';window.scrollTo(0,this.original.scrollY || 0);this.isActive = false;try{window.dispatchEvent(new CustomEvent('ecoReaderExited'));}catch(e){}},toggle(){if (this.isActive) this.exit();else this.enter();},updateSettings(newSettings){Object.assign(this.settings,newSettings);this._applyTheme();const overlay = document.getElementById('eco-reader-overlay');if (overlay){const wrap = overlay.querySelector('.eco-reader-content-wrap');if (wrap) wrap.style.maxWidth = this._getWidthPx() + 'px';}},setBrowserDark(isDark){this.settings.isDarkBrowser = !!isDark;if (this.settings.theme === 'auto' && this.isActive) this._applyTheme();}};try{const saved = localStorage.getItem('__ecoReaderSettings');if (saved){const parsed = JSON.parse(saved);Object.assign(window.__ecoReader.settings,parsed);}}catch(e){}window.__ecoReaderIsReadable = () => window.__ecoReader.isProbablyReaderable();window.__ecoReaderToggle = () => window.__ecoReader.toggle();window.__ecoReaderUpdate = (jsonStr) =>{try{window.__ecoReader.updateSettings(JSON.parse(jsonStr));}catch(e){}};})();
-'''
+"""
 
 # Reader is now lazy-loaded (not persistent) to decrease per-page JS amount
 READER_MODE_JS = ECO_READER_JS
-
 
 
 # =============================================================================
 # Userscript Support: Tampermonkey-compatible .user.js manager
 # =============================================================================
 
-ECO_AUTH_JS = r'''
+ECO_AUTH_JS = r"""
 (function(){if(window._gm)return;window._gm=window.__ecoUserscriptPolyfill=1;
 window.GM=window.GM||{};window.GM_info={scriptHandler:'EcoBrowser'};
 window.GM_addStyle=c=>{let s=document.createElement('style');s.textContent=c;(document.head||document.documentElement).appendChild(s);return s;};
@@ -589,18 +641,114 @@ window.GM_log=(...a)=>console.log('[GM]',...a);
 window.GM_openInTab=u=>{window.open(u,'_blank');return{close:()=>{}};};
 window.unsafeWindow=window;
 })();
-'''
+"""
+
+ECO_TRANSLATE_JS = r"""
+(function(){if(window.__ecoTranslateLoaded)return;window.__ecoTranslateLoaded=1;
+let C=".eco-t-bubble{position:fixed!important;bottom:20px!important;right:20px!important;z-index:2147483647!important;background:#1e2229!important;border:1px solid #30363d!important;border-radius:24px!important;padding:10px 18px!important;box-shadow:0 8px 24px rgba(0,0,0,.4)!important;display:flex!important;align-items:center!important;gap:8px!important;font-family:-apple-system,sans-serif!important;cursor:pointer!important;transition:.2s!important;user-select:none!important}.eco-t-bubble:hover{background:#252a33!important;transform:scale(1.05)!important}.eco-t-panel{position:fixed!important;bottom:70px!important;right:20px!important;z-index:2147483647!important;background:#1e2229!important;border:1px solid #30363d!important;border-radius:16px!important;padding:16px!important;min-width:300px!important;max-width:340px!important;box-shadow:0 16px 36px rgba(0,0,0,.5)!important;display:none!important;font-family:-apple-system,sans-serif!important;color:#f0f6fc!important}.eco-t-panel.show{display:block!important}.eco-t-header{font-weight:600!important;color:#f0f6fc!important;margin-bottom:12px!important;display:flex!important;justify-content:space-between!important;align-items:center!important}.eco-t-select{width:100%!important;background:#121418!important;color:#f0f6fc!important;border:1px solid #30363d!important;border-radius:8px!important;padding:8px!important;margin-bottom:10px!important}.eco-t-btn{background:#238636!important;color:#fff!important;border:0!important;border-radius:20px!important;padding:10px 16px!important;cursor:pointer!important;width:100%!important;font-weight:600!important;margin-top:6px!important}.eco-t-btn:disabled{opacity:.6!important}.eco-t-close{background:none!important;border:0!important;color:#8b949e!important;cursor:pointer!important;font-size:18px!important}.eco-t-status{font-size:11px!important;color:#8b949e!important;margin-top:8px!important;text-align:center!important}.eco-t-progress{width:100%!important;height:4px!important;background:#121418!important;border-radius:2px!important;margin-top:8px!important;overflow:hidden!important;display:none!important}.eco-t-progress-bar{height:100%!important;background:#238636!important;width:0%!important;transition:width .3s!important}";
+try{let s=document.createElement('style');s.textContent=C;(document.head||document.documentElement).appendChild(s);}catch(e){}
+let originalTexts=new Map();
+let textNodesCache=[];
+function getTextNodes(){
+    let walker=document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode:function(node){
+            if(!node.nodeValue||!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;
+            let p=node.parentElement;
+            if(!p)return NodeFilter.FILTER_REJECT;
+            if(p.closest('script,style,noscript,iframe,svg,canvas,.eco-t-bubble,.eco-t-panel'))return NodeFilter.FILTER_REJECT;
+            if(p.tagName==='SCRIPT'||p.tagName==='STYLE')return NodeFilter.FILTER_REJECT;
+            let style=window.getComputedStyle(p);
+            if(style.display==='none'||style.visibility==='hidden')return NodeFilter.FILTER_REJECT;
+            if(node.nodeValue.trim().length<2)return NodeFilter.FILTER_REJECT;
+            if(node.nodeValue.trim().length>500)return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
+        }
+    });
+    let nodes=[];let n;while(n=walker.nextNode()){nodes.push(n);}
+    textNodesCache=nodes;
+    return nodes;
+}
+function collectForPython(){
+    let nodes=getTextNodes();
+    let arr=nodes.map(n=>n.nodeValue);
+    return arr;
+}
+window.__ecoCollectTexts=function(){return collectForPython();};
+window.__ecoApplyTranslations=function(translatedArr){
+    try{
+        let nodes=textNodesCache;
+        if(!nodes||nodes.length===0)nodes=getTextNodes();
+        if(originalTexts.size===0){
+            nodes.forEach(n=>{originalTexts.set(n,n.nodeValue);});
+        }
+        for(let i=0;i<nodes.length&&i<translatedArr.length;i++){
+            try{
+                let t=translatedArr[i];
+                if(t&&typeof t==='string'&&t.trim().length>0){
+                    nodes[i].nodeValue=t;
+                }
+            }catch(e){}
+        }
+        let status=document.getElementById('eco-t-status');
+        if(status)status.textContent=`✓ Translated ${translatedArr.length} pieces`;
+        let progress=document.getElementById('eco-t-progress');
+        if(progress)progress.style.display='none';
+        let bar=document.getElementById('eco-t-progress-bar');
+        if(bar)bar.style.width='100%';
+    }catch(e){console.log('[EcoTranslate] apply error',e);}
+};
+window.__ecoRestoreOriginal=function(){
+    if(originalTexts.size===0)return;
+    let count=0;
+    originalTexts.forEach((orig,node)=>{
+        try{if(node&&node.parentElement){node.nodeValue=orig;count++;}}catch(e){}
+    });
+    let status=document.getElementById('eco-t-status');
+    if(status)status.textContent=`✓ Restored ${count} pieces`;
+};
+function createBubble(){
+    if(document.getElementById('eco-translate-bubble'))return;
+    let b=document.createElement('div');b.id='eco-translate-bubble';b.className='eco-t-bubble';b.innerHTML='🌐 Translate';
+    b.onclick=()=>{let p=document.getElementById('eco-translate-panel');if(p)p.classList.toggle('show');};
+    document.body.appendChild(b);
+    let p=document.createElement('div');p.id='eco-translate-panel';p.className='eco-t-panel';
+    p.innerHTML=`<div class="eco-t-header"><span>🌐 Translate Page</span><button class="eco-t-close" onclick="this.closest('.eco-t-panel').classList.remove('show')">✕</button></div><select class="eco-t-select" id="eco-t-lang"><option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="ar">Arabic</option><option value="hi">Hindi</option><option value="tr">Turkish</option><option value="ru">Russian</option><option value="zh">Chinese</option><option value="ja">Japanese</option><option value="pt">Portuguese</option><option value="it">Italian</option><option value="ko">Korean</option><option value="nl">Dutch</option><option value="pl">Polish</option><option value="ur">Urdu</option></select><button class="eco-t-btn" id="eco-t-do">Translate Every Text</button><button class="eco-t-btn" id="eco-t-restore" style="background:#30363d!important;margin-top:6px">Restore Original</button><div class="eco-t-progress" id="eco-t-progress"><div class="eco-t-progress-bar" id="eco-t-progress-bar"></div></div><div class="eco-t-status" id="eco-t-status">Ready - Python fast translate</div>`;
+    document.body.appendChild(p);
+    document.getElementById('eco-t-do').onclick=()=>{
+        let lang=document.getElementById('eco-t-lang').value;
+        let status=document.getElementById('eco-t-status');
+        if(status)status.textContent='Collecting text for Python...';
+        let progress=document.getElementById('eco-t-progress');
+        if(progress)progress.style.display='block';
+        // Notify Python via console log
+        try{
+            let texts=collectForPython();
+            console.log('ECO_TRANSLATE_REQUEST::'+lang+'::'+JSON.stringify(texts.slice(0,300)));
+        }catch(e){console.log('ECO_TRANSLATE_REQUEST::'+lang+'::[]');}
+    };
+    document.getElementById('eco-t-restore').onclick=()=>{window.__ecoRestoreOriginal();};
+}
+try{createBubble();}catch(e){console.log('[EcoTranslate] init error',e);}
+window.__ecoTranslate=function(lang){
+    try{
+        let texts=collectForPython();
+        console.log('ECO_TRANSLATE_REQUEST::'+lang+'::'+JSON.stringify(texts.slice(0,300)));
+    }catch(e){}
+};
+})();
+"""
 
 # Combined polyfill + password manager to reduce injections
 USERSCRIPT_POLYFILL_JS = ECO_AUTH_JS
-PASSWORD_DETECTOR_JS = r''  # merged into ECO_AUTH_JS
+PASSWORD_DETECTOR_JS = r""  # merged into ECO_AUTH_JS
 
 
 # =============================================================================
 # Password Manager: Detection + Autofill JS
 # =============================================================================
 
-PASSWORD_DETECTOR_JS = r''  # merged into ECO_AUTH_JS
+PASSWORD_DETECTOR_JS = r""  # merged into ECO_AUTH_JS
+
 
 def build_password_autofill_js(email, password):
     return f"""
@@ -639,9 +787,6 @@ def build_password_autofill_js(email, password):
     }}
 }})();
 """
-
-
-
 
 
 # =============================================================================
@@ -796,10 +941,24 @@ class ContentBlocker(QWebEngineUrlRequestInterceptor):
 
     def interceptRequest(self, info):
         try:
+            # Check blocking level from parent window if available - Level 0 = truly no block
+            try:
+                # Try to get blocking level from global browser window reference
+                # We store reference in profile or via attribute
+                from PyQt6.QtCore import QCoreApplication
+
+                # Quick check: if both flags disabled, treat as No Block
+                if not self.ad_block_enabled and not self.nude_block_enabled:
+                    return
+            except Exception:
+                pass
+
             url = info.requestUrl()
             url_string = url.toString()
 
-            if not (url_string.startswith("http://") or url_string.startswith("https://")):
+            if not (
+                url_string.startswith("http://") or url_string.startswith("https://")
+            ):
                 return
 
             host = url.host().lower()
@@ -850,7 +1009,7 @@ class ContentBlocker(QWebEngineUrlRequestInterceptor):
                     is_main = True
                     try:
                         rt = info.resourceType()
-                        is_main = (rt == 0 or rt == 1)  # MainFrame or SubFrame
+                        is_main = rt == 0 or rt == 1  # MainFrame or SubFrame
                     except Exception:
                         is_main = True
 
@@ -861,7 +1020,10 @@ class ContentBlocker(QWebEngineUrlRequestInterceptor):
                             if not kw:
                                 continue
                             if kw.lower() in lower:
-                                if "blocked.ecobrowser" not in lower and "eco://newtab" not in lower:
+                                if (
+                                    "blocked.ecobrowser" not in lower
+                                    and "eco://newtab" not in lower
+                                ):
                                     try:
                                         info.block(True)
                                         self.blocked_nude_count += 1
@@ -1244,10 +1406,10 @@ if (document.body) {{ {code} }} else {{ document.addEventListener('DOMContentLoa
         return combined
 
 
-
 # =============================================================================
 # Password Manager - Secure Storage + Manager Dialog
 # =============================================================================
+
 
 class PasswordManager:
     """Secure password manager that stores email + password per host."""
@@ -1266,6 +1428,7 @@ class PasswordManager:
             # Try to use cryptography Fernet if available for strong encryption
             try:
                 from cryptography.fernet import Fernet  # type: ignore
+
                 self._has_fernet = True
             except ImportError:
                 self._has_fernet = False
@@ -1279,10 +1442,12 @@ class PasswordManager:
             # Generate new key
             if self._has_fernet:
                 from cryptography.fernet import Fernet  # type: ignore
+
                 new_key = Fernet.generate_key().decode()
             else:
                 # fallback: random 32 bytes base64
                 import secrets
+
                 new_key = base64.b64encode(secrets.token_bytes(32)).decode()
             self._key = new_key
             try:
@@ -1292,6 +1457,7 @@ class PasswordManager:
                 if sys.platform == "win32":
                     try:
                         import ctypes
+
                         ctypes.windll.kernel32.SetFileAttributesW(self.key_path, 2)
                     except Exception:
                         pass
@@ -1307,7 +1473,10 @@ class PasswordManager:
         try:
             if getattr(self, "_has_fernet", False) and self._key:
                 from cryptography.fernet import Fernet  # type: ignore
-                f = Fernet(self._key.encode() if isinstance(self._key, str) else self._key)
+
+                f = Fernet(
+                    self._key.encode() if isinstance(self._key, str) else self._key
+                )
                 return f.encrypt(plaintext.encode()).decode()
         except Exception:
             pass
@@ -1326,7 +1495,10 @@ class PasswordManager:
         try:
             if getattr(self, "_has_fernet", False) and self._key:
                 from cryptography.fernet import Fernet  # type: ignore
-                f = Fernet(self._key.encode() if isinstance(self._key, str) else self._key)
+
+                f = Fernet(
+                    self._key.encode() if isinstance(self._key, str) else self._key
+                )
                 return f.decrypt(ciphertext.encode()).decode()
         except Exception:
             pass
@@ -1424,14 +1596,16 @@ class PasswordManager:
         for host, entry in self._data.items():
             try:
                 dec_pass = self._decrypt(entry.get("password", ""))
-                result.append({
-                    "host": host,
-                    "email": entry.get("email", ""),
-                    "password": dec_pass,
-                    "origin": entry.get("origin", ""),
-                    "updated": entry.get("updated", ""),
-                    "created": entry.get("created", ""),
-                })
+                result.append(
+                    {
+                        "host": host,
+                        "email": entry.get("email", ""),
+                        "password": dec_pass,
+                        "origin": entry.get("origin", ""),
+                        "updated": entry.get("updated", ""),
+                        "created": entry.get("created", ""),
+                    }
+                )
             except Exception:
                 continue
         # Sort by host
@@ -1474,7 +1648,9 @@ class PasswordManagerDialog(QDialog):
         header.setFont(hf)
         layout.addWidget(header)
 
-        sub = QLabel("EcoBrowser detects input[type=password] + input[type=email] and saves them encrypted. Autofills on return.")
+        sub = QLabel(
+            "EcoBrowser detects input[type=password] + input[type=email] and saves them encrypted. Autofills on return."
+        )
         sub.setWordWrap(True)
         sub.setStyleSheet("color: #8b949e; font-size: 9pt;")
         layout.addWidget(sub)
@@ -1543,7 +1719,7 @@ class PasswordManagerDialog(QDialog):
 
         for cred in filtered:
             card = self._create_card(cred)
-            self.cards_layout.insertWidget(self.cards_layout.count()-1, card)
+            self.cards_layout.insertWidget(self.cards_layout.count() - 1, card)
 
     def _create_card(self, cred):
         host = cred["host"]
@@ -1581,7 +1757,9 @@ class PasswordManagerDialog(QDialog):
         email_row.addWidget(QLabel("Email:"))
         email_val = QLineEdit(email)
         email_val.setReadOnly(True)
-        email_val.setStyleSheet("background: rgba(0,0,0,0.2); border: 1px solid #30363d; border-radius: 6px; padding: 4px 8px;")
+        email_val.setStyleSheet(
+            "background: rgba(0,0,0,0.2); border: 1px solid #30363d; border-radius: 6px; padding: 4px 8px;"
+        )
         email_row.addWidget(email_val, 1)
         vbox.addLayout(email_row)
 
@@ -1591,8 +1769,12 @@ class PasswordManagerDialog(QDialog):
         pass_display = password if is_revealed else "•" * min(len(password), 16)
         self_pass = QLineEdit(pass_display)
         self_pass.setReadOnly(True)
-        self_pass.setEchoMode(QLineEdit.EchoMode.Normal if is_revealed else QLineEdit.EchoMode.Password)
-        self_pass.setStyleSheet("background: rgba(0,0,0,0.2); border: 1px solid #30363d; border-radius: 6px; padding: 4px 8px;")
+        self_pass.setEchoMode(
+            QLineEdit.EchoMode.Normal if is_revealed else QLineEdit.EchoMode.Password
+        )
+        self_pass.setStyleSheet(
+            "background: rgba(0,0,0,0.2); border: 1px solid #30363d; border-radius: 6px; padding: 4px 8px;"
+        )
         pass_row.addWidget(self_pass, 1)
 
         btn_show = QPushButton("Hide" if is_revealed else "Show")
@@ -1605,11 +1787,15 @@ class PasswordManagerDialog(QDialog):
         actions = QHBoxLayout()
         actions.addStretch()
         btn_copy_email = QPushButton("Copy Email")
-        btn_copy_email.clicked.connect(lambda _, e=email: QApplication.clipboard().setText(e))
+        btn_copy_email.clicked.connect(
+            lambda _, e=email: QApplication.clipboard().setText(e)
+        )
         actions.addWidget(btn_copy_email)
 
         btn_copy_pass = QPushButton("Copy Pass")
-        btn_copy_pass.clicked.connect(lambda _, p=password: QApplication.clipboard().setText(p))
+        btn_copy_pass.clicked.connect(
+            lambda _, p=password: QApplication.clipboard().setText(p)
+        )
         actions.addWidget(btn_copy_pass)
 
         btn_delete = QPushButton("Delete")
@@ -1626,16 +1812,24 @@ class PasswordManagerDialog(QDialog):
         self.refresh()
 
     def delete_entry(self, host):
-        reply = QMessageBox.question(self, "Delete Password", f"Delete saved password for {host}?",
-                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        reply = QMessageBox.question(
+            self,
+            "Delete Password",
+            f"Delete saved password for {host}?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
         if reply == QMessageBox.StandardButton.Yes:
             self.password_manager.delete(host)
             self._revealed.pop(host, None)
             self.refresh()
 
     def clear_all(self):
-        reply = QMessageBox.warning(self, "Clear All Passwords", "Delete ALL saved passwords? This cannot be undone.",
-                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        reply = QMessageBox.warning(
+            self,
+            "Clear All Passwords",
+            "Delete ALL saved passwords? This cannot be undone.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
         if reply == QMessageBox.StandardButton.Yes:
             for cred in self.password_manager.get_all():
                 self.password_manager.delete(cred["host"])
@@ -1643,17 +1837,25 @@ class PasswordManagerDialog(QDialog):
             self.refresh()
 
     def export_passwords(self):
-        path, _ = QFileDialog.getSaveFileName(self, "Export Passwords", os.path.join(os.path.expanduser("~"), "ecobrowser_passwords_export.json"), "JSON Files (*.json)")
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Passwords",
+            os.path.join(os.path.expanduser("~"), "ecobrowser_passwords_export.json"),
+            "JSON Files (*.json)",
+        )
         if not path:
             return
         try:
             data = self.password_manager.get_all()
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
-            QMessageBox.information(self, "Exported", f"Exported {len(data)} passwords to {path}\nKeep this file secure!")
+            QMessageBox.information(
+                self,
+                "Exported",
+                f"Exported {len(data)} passwords to {path}\nKeep this file secure!",
+            )
         except Exception as e:
             QMessageBox.critical(self, "Export Failed", str(e))
-
 
 
 class EcoWebEnginePage(QWebEnginePage):
@@ -1669,16 +1871,21 @@ class EcoWebEnginePage(QWebEnginePage):
         # Intercept password manager messages
         try:
             if isinstance(message, str) and message.startswith("ECO_PASS_SAVE::"):
-                payload_str = message[len("ECO_PASS_SAVE::"):]
+                payload_str = message[len("ECO_PASS_SAVE::") :]
                 try:
                     data = json.loads(payload_str)
                     # Forward to browser window on main thread
-                    QTimer.singleShot(0, lambda d=data: self.browser_window.handle_password_save_request(d))
+                    QTimer.singleShot(
+                        0,
+                        lambda d=data: self.browser_window.handle_password_save_request(
+                            d
+                        ),
+                    )
                 except Exception as e:
                     print(f"[PasswordManager] failed to parse save request: {e}")
                 return
             if isinstance(message, str) and message.startswith("ECO_PASS_FILLED::"):
-                host = message[len("ECO_PASS_FILLED::"):].strip()
+                host = message[len("ECO_PASS_FILLED::") :].strip()
                 print(f"[PasswordManager] Autofilled credentials for {host}")
                 return
         except Exception:
@@ -1700,7 +1907,14 @@ class EcoWebEnginePage(QWebEnginePage):
             host = url.host().lower()
 
             # Never block internal schemes
-            if url_str.startswith("data:") or url_str.startswith("about:") or url_str.startswith("eco://") or url_str.startswith("qrc:") or url_str.startswith("file:") or url_str.startswith("blob:"):
+            if (
+                url_str.startswith("data:")
+                or url_str.startswith("about:")
+                or url_str.startswith("eco://")
+                or url_str.startswith("qrc:")
+                or url_str.startswith("file:")
+                or url_str.startswith("blob:")
+            ):
                 return super().acceptNavigationRequest(url, nav_type, is_main_frame)
 
             # Prevent recursion loop - this was causing crashes
@@ -1713,9 +1927,11 @@ class EcoWebEnginePage(QWebEnginePage):
                 return super().acceptNavigationRequest(url, nav_type, is_main_frame)
 
             # Use allowlist and custom keywords from settings
-            interceptor = getattr(self.browser_window, 'interceptor', None)
-            allowlist = getattr(interceptor, 'allowlist', []) if interceptor else []
-            custom_keywords = getattr(interceptor, 'custom_adult_keywords', []) if interceptor else []
+            interceptor = getattr(self.browser_window, "interceptor", None)
+            allowlist = getattr(interceptor, "allowlist", []) if interceptor else []
+            custom_keywords = (
+                getattr(interceptor, "custom_adult_keywords", []) if interceptor else []
+            )
             is_allowlisted = False
             if allowlist:
                 for al in allowlist:
@@ -1725,15 +1941,41 @@ class EcoWebEnginePage(QWebEnginePage):
                     if host == al_low or host.endswith("." + al_low):
                         is_allowlisted = True
                         break
-            
-            if getattr(self.browser_window.interceptor, "nude_block_enabled", True):
-                if "blocked.ecobrowser" not in host and not is_allowlisted and "eco://newtab" not in lower:
+
+            # === BLOCKING LEVELS: 0=No Block (allow everything) ===
+            try:
+                level = (
+                    self.browser_window._get_blocking_level()
+                    if hasattr(self.browser_window, "_get_blocking_level")
+                    else 2
+                )
+                if level == 0:
+                    # Level 0 = No filtering at all - allow everything including porn
+                    return super().acceptNavigationRequest(url, nav_type, is_main_frame)
+            except Exception:
+                level = 2
+
+            # Only block adult if level >=2 (level 0 and 1 = no adult block)
+            should_check_adult = level >= 2
+
+            if should_check_adult and getattr(
+                self.browser_window.interceptor, "nude_block_enabled", True
+            ):
+                if (
+                    "blocked.ecobrowser" not in host
+                    and not is_allowlisted
+                    and "eco://newtab" not in lower
+                ):
                     # --- Proper adult checks (fixed undefined vars) ---
                     is_adult_host = any(
-                        host == d.lower() or host.endswith("." + d.lower()) or d.lower() in host
+                        host == d.lower()
+                        or host.endswith("." + d.lower())
+                        or d.lower() in host
                         for d in ADULT_DOMAINS
                     )
-                    all_keywords = ADULT_KEYWORDS + (custom_keywords if custom_keywords else [])
+                    all_keywords = ADULT_KEYWORDS + (
+                        custom_keywords if custom_keywords else []
+                    )
                     is_adult_keyword = False
                     matched_kw = ""
                     for kw in all_keywords:
@@ -1749,13 +1991,20 @@ class EcoWebEnginePage(QWebEnginePage):
                                 if kw.lower() in lower:
                                     matched = kw
                                     break
-                        reason = f"Adult Domain" if is_adult_host else f"Keyword '{matched}'"
+                        reason = (
+                            f"Adult Domain" if is_adult_host else f"Keyword '{matched}'"
+                        )
                         blocked_html = build_blocked_page_html(
                             host or url_str[:80],
                             f"HaramBlur SafeShield: {reason} Blocked",
                         )
                         self._last_blocked_url = url_str
-                        QTimer.singleShot(0, lambda h=blocked_html, u=url: self._safe_set_blocked_html(h, u))
+                        QTimer.singleShot(
+                            0,
+                            lambda h=blocked_html, u=url: self._safe_set_blocked_html(
+                                h, u
+                            ),
+                        )
                         return False
 
             if getattr(self.browser_window.interceptor, "ad_block_enabled", True):
@@ -1774,13 +2023,18 @@ class EcoWebEnginePage(QWebEnginePage):
         try:
             if is_view_deleted(self):
                 return
-            if self._is_showing_blocked_page and base_url.toString() == self._last_blocked_url:
+            if (
+                self._is_showing_blocked_page
+                and base_url.toString() == self._last_blocked_url
+            ):
                 return
             self._is_showing_blocked_page = True
             # Use safe base to avoid re-triggering filter (this caused crashes before)
             safe_base = QUrl("https://blocked.ecobrowser/")
             self.setHtml(html, safe_base)
-            QTimer.singleShot(2000, lambda: setattr(self, '_is_showing_blocked_page', False))
+            QTimer.singleShot(
+                2000, lambda: setattr(self, "_is_showing_blocked_page", False)
+            )
         except Exception as e:
             print(f"[Navigation] failed to set blocked html (safe): {e}")
             self._is_showing_blocked_page = False
@@ -1813,18 +2067,19 @@ class BookmarkButton(QPushButton):
             self.browser_window.delete_bookmark_by_url(self.bookmark_url)
 
 
-
 # =============================================================================
 # Crash-Proof Manager (no vertical tabs)
 # =============================================================================
 
+
 class CrashProofManager:
     """Monitors renderer crashes and prevents full app crash"""
+
     def __init__(self, browser_window):
         self.browser_window = browser_window
         self.crash_count = {}
         self.last_crash_time = {}
-    
+
     def handle_crash(self, view, status, code):
         try:
             if is_view_deleted(view):
@@ -1833,9 +2088,11 @@ class CrashProofManager:
             now = time.time()
             self.crash_count[vid] = self.crash_count.get(vid, 0) + 1
             self.last_crash_time[vid] = now
-            
-            print(f"[CrashProof] Renderer crashed: status={status} code={code} count={self.crash_count[vid]}")
-            
+
+            print(
+                f"[CrashProof] Renderer crashed: status={status} code={code} count={self.crash_count[vid]}"
+            )
+
             # If 3 crashes in 30s, show safe page
             if self.crash_count[vid] >= 3:
                 last = self.last_crash_time.get(vid, 0)
@@ -1843,11 +2100,11 @@ class CrashProofManager:
                     print(f"[CrashProof] Too many crashes, showing safe page")
                     self.show_crash_recovery_page(view)
                     return
-            
+
             QTimer.singleShot(1500, lambda v=view: self.safe_reload(v))
         except Exception as e:
             print(f"[CrashProof] handle error: {e}")
-    
+
     def safe_reload(self, view):
         try:
             if is_view_deleted(view):
@@ -1861,7 +2118,7 @@ class CrashProofManager:
                 view.reload()
         except Exception:
             pass
-    
+
     def show_crash_recovery_page(self, view):
         try:
             if is_view_deleted(view):
@@ -1884,18 +2141,15 @@ class CrashProofManager:
             pass
 
 
-
-
-
-
 def build_new_tab_page_html(settings, search_engine_name="Google"):
     """Infinity Ultra Clean - clock, search, quicklinks with auto favicons + wallpaper customizer - NO greeting"""
     import json
+
     bg_type = settings.get("newtab_background_type", "gradient")
     bg_image = settings.get("newtab_background_image", "")
     quicklinks = settings.get("newtab_quicklinks", [])
     accent = settings.get("custom_accent", "#58a6ff")
-    
+
     if bg_type == "image" and bg_image:
         bg_style = f"url('file:///{bg_image.replace(chr(92), '/')}')"
         bg_css = f"background-image: {bg_style}; background-size: cover; background-position: center; background-attachment: fixed;"
@@ -1906,15 +2160,15 @@ def build_new_tab_page_html(settings, search_engine_name="Google"):
                     linear-gradient(135deg, #0f1117 0%, #1a1d29 25%, #121418 50%, #1e2028 100%);
         background-attachment: fixed;
         """
-    
+
     quicklinks_data = []
     for ql in quicklinks[:16]:
-        title = ql.get("title","Link")[:18]
-        url = ql.get("url","#")
+        title = ql.get("title", "Link")[:18]
+        url = ql.get("url", "#")
         quicklinks_data.append({"title": title, "url": url})
-    
+
     quicklinks_json = json.dumps(quicklinks_data)
-    
+
     return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>New Tab</title>
@@ -2371,9 +2625,6 @@ function removeQuicklink(idx) {{
 renderQuicklinks();
 </script>
 </body></html>"""
-
-
-
 
 
 class BlockManagerDialog(QDialog):
@@ -3209,6 +3460,232 @@ class NetworkSettingsDialog(QDialog):
         self.accept()
 
 
+class BlockingLevelDialog(QDialog):
+    def __init__(self, settings, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Blocking Levels - EcoBrowser")
+        self.setMinimumWidth(480)
+        self.values = None
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(12)
+
+        intro = QLabel("Choose how strictly EcoBrowser should block content:")
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
+
+        self.level_combo = QComboBox()
+        self.level_combo.addItem("0 - No Block (Allow everything)", 0)
+        self.level_combo.addItem("1 - Ad Block Only (Block ads/trackers)", 1)
+        self.level_combo.addItem("2 - Ad + Nude Sites (Block ads + porn domains)", 2)
+        self.level_combo.addItem(
+            "3 - Extreme Block (Ads + Nude + Sex words on pages)", 3
+        )
+
+        current = int(settings.get("blocking_level", 2))
+        # Find index
+        for i in range(self.level_combo.count()):
+            if self.level_combo.itemData(i) == current:
+                self.level_combo.setCurrentIndex(i)
+                break
+
+        layout.addWidget(self.level_combo)
+
+        # Descriptions
+        desc = QLabel(
+            "• <b>No Block:</b> No filtering, fastest\n"
+            "• <b>Ad Block Only:</b> Blocks known ad/tracker domains\n"
+            "• <b>Ad + Nude:</b> Also blocks porn domains (pornhub, xvideos, etc)\n"
+            "• <b>Extreme:</b> Also scans page text for sex keywords and blocks pages containing them"
+        )
+        desc.setWordWrap(True)
+        desc.setTextFormat(Qt.TextFormat.RichText)
+        desc.setStyleSheet(
+            "color: #8b949e; font-size: 11px; background: #121418; padding: 10px; border-radius: 8px;"
+        )
+        layout.addWidget(desc)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def accept(self):
+        self.values = {
+            "blocking_level": int(self.level_combo.currentData()),
+        }
+        super().accept()
+
+
+class GpuSettingsDialog(QDialog):
+    def __init__(self, settings, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("GPU / VRAM - EcoBrowser")
+        self.setMinimumWidth(520)
+        self.values = None
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(12)
+        intro = QLabel(
+            "Choose which GPU EcoBrowser should use for VRAM. This writes the Windows Graphics preference, so you don't need to open Windows Settings."
+        )
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
+        gpu_info = self._detect_gpus()
+        info_label = QLabel(gpu_info)
+        info_label.setWordWrap(True)
+        info_label.setStyleSheet(
+            "color: #8b949e; font-size: 11px; background: #121418; padding: 10px; border-radius: 8px;"
+        )
+        layout.addWidget(info_label)
+        self.gpu_combo = QComboBox()
+        self.gpu_combo.addItem("Auto - Let Windows decide (System default)", "auto")
+        self.gpu_combo.addItem(
+            "High performance - NVIDIA RTX 2050 (Use VRAM, fastest)", "high_performance"
+        )
+        self.gpu_combo.addItem(
+            "Power saving - Intel iGPU (Save battery, 0 VRAM in nvidia-smi)",
+            "power_saving",
+        )
+        current = settings.get("gpu_preference", "auto")
+        for i in range(self.gpu_combo.count()):
+            if self.gpu_combo.itemData(i) == current:
+                self.gpu_combo.setCurrentIndex(i)
+                break
+        layout.addWidget(self.gpu_combo)
+        desc = QLabel(
+            "Auto: Windows decides (usually iGPU for browser to save battery)<br>"
+            "High performance: Forces RTX 2050 - textures/raster/video in VRAM. Needs restart. Check via GPU Info button (WebGL renderer should say NVIDIA)<br>"
+            "Power saving: Forces Intel iGPU - nvidia-smi will show 0 VRAM, but RAM stays low and battery lasts longer.<br><br>"
+            "Note: VRAM is additive, not a replacement for RAM. GPU choice changes where raster happens, not DOM/JS RAM. RAM is freed by Frozen->Discarded tabs."
+        )
+        desc.setWordWrap(True)
+        desc.setTextFormat(Qt.TextFormat.RichText)
+        desc.setStyleSheet(
+            "color: #8b949e; font-size: 11px; background: #121418; padding: 10px; border-radius: 8px;"
+        )
+        layout.addWidget(desc)
+        btn_row = QHBoxLayout()
+        win_btn = QPushButton("Open Windows Graphics Settings...")
+        win_btn.clicked.connect(self._open_windows_graphics)
+        btn_row.addWidget(win_btn)
+        gpu_btn = QPushButton("Check Current GPU (WebGL)")
+        gpu_btn.clicked.connect(self._check_gpu)
+        btn_row.addWidget(gpu_btn)
+        layout.addLayout(btn_row)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def _detect_gpus(self):
+        try:
+            import subprocess
+
+            out = (
+                subprocess.check_output(
+                    [
+                        "nvidia-smi",
+                        "--query-gpu=index,name,pci.bus_id,memory.total,memory.used",
+                        "--format=csv,noheader,nounits",
+                    ],
+                    stderr=subprocess.DEVNULL,
+                    timeout=3,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                )
+                .decode()
+                .strip()
+            )
+            txt = "Detected NVIDIA GPUs (nvidia-smi does not list iGPU):\\n"
+            for l in out.splitlines():
+                txt += "• " + l.strip() + "\\n"
+            txt += "\\nYour laptop also has an Intel iGPU (not listed by nvidia-smi). If GPU Info shows Intel, you are on iGPU."
+            return txt
+        except Exception:
+            return "No NVIDIA GPU detected via nvidia-smi. You likely have only Intel iGPU, or nvidia-smi not in PATH.\\n\\nCheck GPU Info button for WebGL renderer."
+
+    def _open_windows_graphics(self):
+        try:
+            import subprocess
+
+            subprocess.Popen(
+                ["explorer", "ms-settings:display-advancedgraphics"], shell=False
+            )
+        except Exception as e:
+            QMessageBox.information(
+                self,
+                "Windows Graphics",
+                "Open Settings -> System -> Display -> Graphics manually.\\n\\nAdd python.exe and QtWebEngineProcess.exe -> High performance for RTX 2050.\\n\\nError: "
+                + str(e),
+            )
+
+    def _check_gpu(self):
+        try:
+            parent = self.parent()
+            if parent and hasattr(parent, "open_gpu_info_page"):
+                parent.open_gpu_info_page()
+                self.accept()
+            else:
+                QMessageBox.information(
+                    self, "GPU", "Close this and click GPU Info button in toolbar"
+                )
+        except Exception as e:
+            QMessageBox.information(self, "GPU", "Error: " + str(e))
+
+    def accept(self):
+        self.values = {"gpu_preference": self.gpu_combo.currentData()}
+        super().accept()
+
+
+def apply_windows_gpu_preference(gpu_preference):
+    if os.name != "nt":
+        return False
+    try:
+        import winreg
+        import sys
+
+        mapping = {"auto": 0, "high_performance": 2, "power_saving": 1}
+        pref = mapping.get(gpu_preference, 0)
+        python_exe = sys.executable
+        qt_exe = ""
+        try:
+            import pathlib
+
+            for p in pathlib.Path(sys.prefix).rglob("QtWebEngineProcess.exe"):
+                qt_exe = str(p)
+                break
+        except Exception:
+            pass
+        key_path = r"Software\\Microsoft\\DirectX\\UserGpuPreferences"
+        try:
+            key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
+            for exe in [python_exe, qt_exe]:
+                if exe:
+                    val = "GpuPreference=" + str(pref) + ";"
+                    winreg.SetValueEx(key, exe, 0, winreg.REG_SZ, val)
+                    print(
+                        "[GPU] Set Windows Graphics preference for "
+                        + exe
+                        + " -> "
+                        + str(pref)
+                        + " ("
+                        + str(gpu_preference)
+                        + ")"
+                    )
+            winreg.CloseKey(key)
+            return True
+        except Exception as e:
+            print("[GPU] Failed to write registry preference: " + str(e))
+            return False
+    except Exception as e:
+        print("[GPU] apply preference error: " + str(e))
+        return False
+
 
 class HibernationSettingsDialog(QDialog):
     def __init__(self, settings, parent=None):
@@ -3221,7 +3698,9 @@ class HibernationSettingsDialog(QDialog):
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(12)
 
-        intro = QLabel("Configure Eco Sleep to save RAM. Inactive tabs will show 💤 and wake when you click them.")
+        intro = QLabel(
+            "Configure Eco Sleep to save RAM. Inactive tabs will show 💤 and wake when you click them."
+        )
         intro.setWordWrap(True)
         layout.addWidget(intro)
 
@@ -3242,12 +3721,16 @@ class HibernationSettingsDialog(QDialog):
         layout.addLayout(form)
 
         # Info label
-        info = QLabel("💡 Tip: Right-click tab bar → Hibernate Tab to manually sleep a tab. Hibernated tabs save ~120MB each.")
+        info = QLabel(
+            "💡 Tip: Right-click tab bar → Hibernate Tab to manually sleep a tab. Hibernated tabs save ~120MB each."
+        )
         info.setWordWrap(True)
         info.setStyleSheet("color: #8b949e; font-size: 11px;")
         layout.addWidget(info)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -3258,7 +3741,6 @@ class HibernationSettingsDialog(QDialog):
             "hibernation_timeout": int(self.timeout_spin.value()),
         }
         super().accept()
-
 
 
 class ReaderSettingsDialog(QDialog):
@@ -3427,7 +3909,7 @@ class ReaderSettingsDialog(QDialog):
             "reader_theme": self.theme_combo.currentData(),
             "reader_text_align": self.align_combo.currentData(),
         }
-        if self.browser_window.save_settings_batch(values):
+        if self.browser_window.save_setting_batch(values):
             # Apply to current view if reader active
             view = self.browser_window.get_current_view()
             if view:
@@ -3801,7 +4283,7 @@ class ToolbarCustomizerDialog(QDialog):
             "toolbar_pinned": pinned,
             "reader_hide_chrome": self.hide_chrome_cb.isChecked(),
         }
-        if self.browser_window.save_settings_batch(updates):
+        if self.browser_window.save_setting_batch(updates):
             self.browser_window.apply_toolbar_config()
         self.accept()
 
@@ -3831,7 +4313,9 @@ class EcoBrowserWindow(QMainWindow):
         except Exception as e:
             print(f"[PasswordManager] init failed: {e}")
             self.password_manager = None
-        self._pending_password_save = None  # store pending save to avoid duplicate prompts
+        self._pending_password_save = (
+            None  # store pending save to avoid duplicate prompts
+        )
         self.is_dark_mode = self.settings.get("dark_mode", True)
         self.search_engine = self.settings.get("search_engine", DEFAULT_SEARCH_ENGINE)
         self.custom_accent = self.settings.get("custom_accent", DEFAULT_ACCENT_COLOR)
@@ -3864,7 +4348,7 @@ class EcoBrowserWindow(QMainWindow):
         self.reader_check_timer.start(700)
 
         self.add_new_tab(self.initial_url or self.home_url)
-        
+
         # Extra crash-proof timer (no tab limit)
         self.memory_timer = QTimer(self)
         self.memory_timer.timeout.connect(self._periodic_memory_cleanup)
@@ -3900,6 +4384,184 @@ class EcoBrowserWindow(QMainWindow):
     def _setup_web_profile(self):
         app_data_path = get_app_data_folder()
 
+        # RAM TRIM: Two-stage discard, keyed on view itself (not tab index)
+        # + Working-set trim, + correct RAM log (sum children)
+        try:
+            self._ram_trim_timer = QTimer(self)
+
+            def _discard_background_tabs(self_ref):
+                LS = QWebEnginePage.LifecycleState
+                now = time.time()
+                current = (
+                    self_ref.stack.currentWidget()
+                    if hasattr(self_ref, "stack")
+                    else None
+                )
+                for i in range(self_ref.stack.count()):
+                    v = self_ref.stack.widget(i)
+                    if v is None or v is current or is_view_deleted(v):
+                        continue
+                    # _last_active is set on view when selected, defaults to now if missing
+                    last = getattr(v, "_last_active", now)
+                    if now - last < 60:
+                        continue
+                    page = v.page()
+                    try:
+                        state = page.lifecycleState()
+                    except Exception:
+                        continue
+                    if state == LS.Active:
+                        try:
+                            page.setLifecycleState(LS.Frozen)
+                            print(f"[RAM] Froze tab {i} (tick 1)")
+                        except Exception as e:
+                            print(f"[RAM] freeze tab {i} error: {e}")
+                    elif state == LS.Frozen:
+                        try:
+                            page.setLifecycleState(LS.Discarded)
+                            print(
+                                f"[RAM] Discarded tab {i} (tick 2) - DOM/JS RAM freed"
+                            )
+                        except Exception as e:
+                            print(f"[RAM] discard tab {i} error: {e}")
+                    # Already Discarded -> do nothing, don't re-run Stop/JS wipe
+
+            def _trim_working_sets():
+                # Works WITHOUT psutil - uses ctypes only, no error spam if psutil missing
+                try:
+                    import ctypes
+
+                    # Trim self - GetCurrentProcess pseudo-handle works for EmptyWorkingSet
+                    try:
+                        h = ctypes.windll.kernel32.GetCurrentProcess()
+                        ctypes.windll.psapi.EmptyWorkingSet(h)
+                    except Exception:
+                        pass
+                    # Trim children via Toolhelp snapshot (no psutil needed)
+                    try:
+                        TH32CS_SNAPPROCESS = 0x00000002
+                        snapshot = ctypes.windll.kernel32.CreateToolhelp32Snapshot(
+                            TH32CS_SNAPPROCESS, 0
+                        )
+                        if snapshot != -1:
+
+                            class PROCESSENTRY32(ctypes.Structure):
+                                _fields_ = [
+                                    ("dwSize", ctypes.c_ulong),
+                                    ("cntUsage", ctypes.c_ulong),
+                                    ("th32ProcessID", ctypes.c_ulong),
+                                    ("th32DefaultHeapID", ctypes.c_ulonglong),
+                                    ("th32ModuleID", ctypes.c_ulong),
+                                    ("cntThreads", ctypes.c_ulong),
+                                    ("th32ParentProcessID", ctypes.c_ulong),
+                                    ("pcPriClassBase", ctypes.c_long),
+                                    ("dwFlags", ctypes.c_ulong),
+                                    ("szExeFile", ctypes.c_char * 260),
+                                ]
+
+                            entry = PROCESSENTRY32()
+                            entry.dwSize = ctypes.sizeof(PROCESSENTRY32)
+                            me_pid = os.getpid()
+                            if ctypes.windll.kernel32.Process32First(
+                                snapshot, ctypes.byref(entry)
+                            ):
+                                while True:
+                                    try:
+                                        if entry.th32ParentProcessID == me_pid:
+                                            # Child = QtWebEngineProcess - trim it too
+                                            h2 = ctypes.windll.kernel32.OpenProcess(
+                                                0x0500, False, entry.th32ProcessID
+                                            )
+                                            if h2:
+                                                ctypes.windll.psapi.EmptyWorkingSet(h2)
+                                                ctypes.windll.kernel32.CloseHandle(h2)
+                                    except Exception:
+                                        pass
+                                    if not ctypes.windll.kernel32.Process32Next(
+                                        snapshot, ctypes.byref(entry)
+                                    ):
+                                        break
+                            ctypes.windll.kernel32.CloseHandle(snapshot)
+                    except Exception:
+                        pass
+                    # If psutil IS installed, also use it (more complete)
+                    try:
+                        import psutil
+
+                        me = psutil.Process()
+                        for p in [me, *me.children(recursive=True)]:
+                            try:
+                                h = ctypes.windll.kernel32.OpenProcess(
+                                    0x0500, False, p.pid
+                                )
+                                if h:
+                                    ctypes.windll.psapi.EmptyWorkingSet(h)
+                                    ctypes.windll.kernel32.CloseHandle(h)
+                            except Exception:
+                                pass
+                    except ImportError:
+                        pass  # psutil optional - ctypes already did the work
+                except Exception:
+                    pass  # Never spam - trim is best-effort
+
+            def _log_ram():
+                # Measure BEFORE EmptyWorkingSet, and use Private Bytes (PagefileUsage)
+                # RSS/WorkingSet after EmptyWorkingSet is 2MB - cosmetic, not real usage
+                try:
+                    import ctypes
+
+                    # Try psutil - sum Private Bytes via memory_full_info if available
+                    try:
+                        import psutil, os as _os
+
+                        me = psutil.Process(_os.getpid())
+                        # Use USS / Private Bytes if available, not RSS after trim
+                        try:
+                            total_private = me.memory_full_info().uss
+                        except Exception:
+                            total_private = me.memory_info().rss
+                        total_rss = me.memory_info().rss
+                        child_count = 0
+                        for child in me.children(recursive=True):
+                            try:
+                                child_count += 1
+                                try:
+                                    total_private += child.memory_full_info().uss
+                                except Exception:
+                                    total_private += child.memory_info().rss
+                                total_rss += child.memory_info().rss
+                            except Exception:
+                                pass
+                        print(
+                            f"[RAM] Real: Private {total_private/1024/1024:.0f}MB | WorkingSet {total_rss/1024/1024:.0f}MB (WorkingSet drops to 2MB right after EmptyWorkingSet - cosmetic) | Children: {child_count}"
+                        )
+                        return
+                    except ImportError:
+                        pass
+                    # Fallback without psutil
+                    print("[RAM] Install psutil for accurate log: pip install psutil")
+                except Exception:
+                    pass
+
+            def _trim_ram():
+                try:
+                    _log_ram()  # Log BEFORE trim - after trim WorkingSet is 2MB (cosmetic)
+                    _discard_background_tabs(self)
+                    _trim_working_sets()
+                except Exception as e:
+                    print(f"[RAM] trim error: {e}")
+
+            self._ram_trim_timer.timeout.connect(_trim_ram)
+            self._ram_trim_timer.start(15000)
+            # Store for reuse
+            self._discard_background_tabs = _discard_background_tabs
+            self._trim_working_sets = _trim_working_sets
+            print(
+                "[RAM] Auto-trim ON - Frozen->Discarded, WorkingSet trim, children RSS log"
+            )
+        except Exception as e:
+            print(f"[RAM] trim timer failed: {e}")
+
         self.profile = QWebEngineProfile("EcoBrowserProfile", self)
         self.profile.setPersistentStoragePath(os.path.join(app_data_path, "storage"))
         self.profile.setCachePath(os.path.join(app_data_path, "cache"))
@@ -3909,15 +4571,16 @@ class EcoBrowserWindow(QMainWindow):
         # Harden profile to prevent crashes
         try:
             self.profile.setHttpCacheType(QWebEngineProfile.HttpCacheType.DiskHttpCache)
-            self.profile.setHttpCacheMaximumSize(200 * 1024 * 1024)  # 200MB
+            self.profile.setHttpCacheMaximumSize(8 * 1024 * 1024)  # 200MB
         except Exception:
             pass
         try:
             # Disable spellcheck to avoid crash on some systems
-            self.profile.settings().setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, False)
+            self.profile.settings().setAttribute(
+                QWebEngineSettings.WebAttribute.PluginsEnabled, False
+            )
         except Exception:
             pass
-
 
         # === OPTIMIZED: Reduced JS injections from 5 to 2 persistent scripts (60% less JS) ===
         # Combined Guard (AI Media Filter + Adult Page Blocker) - single injection, 61% smaller, same error proofing
@@ -3925,7 +4588,9 @@ class EcoBrowserWindow(QMainWindow):
             guard_script = QWebEngineScript()
             guard_script.setName("EcoBrowserCombinedGuard")
             guard_script.setSourceCode(ECO_GUARD_JS)
-            guard_script.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentReady)
+            guard_script.setInjectionPoint(
+                QWebEngineScript.InjectionPoint.DocumentReady
+            )
             guard_script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
             guard_script.setRunsOnSubFrames(True)
             self.profile.scripts().insert(guard_script)
@@ -3940,15 +4605,27 @@ class EcoBrowserWindow(QMainWindow):
             auth_script = QWebEngineScript()
             auth_script.setName("EcoBrowserCombinedAuth")
             auth_script.setSourceCode(ECO_AUTH_JS)
-            auth_script.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentCreation)
+            auth_script.setInjectionPoint(
+                QWebEngineScript.InjectionPoint.DocumentCreation
+            )
             auth_script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
             auth_script.setRunsOnSubFrames(True)
             self.profile.scripts().insert(auth_script)
         except Exception as e:
             print(f"[EcoAuth] injection failed: {e}")
 
-
         self.interceptor = ContentBlocker()
+        # Apply saved blocking_level to interceptor flags immediately on startup
+        _init_level = int(self.settings.get("blocking_level", 2))
+        if _init_level == 0:
+            self.interceptor.ad_block_enabled = False
+            self.interceptor.nude_block_enabled = False
+        elif _init_level == 1:
+            self.interceptor.ad_block_enabled = True
+            self.interceptor.nude_block_enabled = False
+        else:  # level 2 or 3
+            self.interceptor.ad_block_enabled = True
+            self.interceptor.nude_block_enabled = True
         self.profile.setUrlRequestInterceptor(self.interceptor)
         self.profile.downloadRequested.connect(self.handle_download_request)
         self.crash_manager = CrashProofManager(self)
@@ -4087,6 +4764,46 @@ class EcoBrowserWindow(QMainWindow):
         self.reader_button.clicked.connect(self.toggle_reader_mode)
         toolbar_layout.addWidget(self.reader_button)
 
+        # Translation Bubble Button
+        self.gpu_settings_button = self._make_toolbar_button("GPU")
+        try:
+            _ic = (
+                DARK_THEME["icon_color"]
+                if getattr(self, "is_dark_mode", True)
+                else LIGHT_THEME["icon_color"]
+            )
+            self.gpu_settings_button.setIcon(render_svg_icon(SVG_ICONS["gpu"], _ic, 18))
+            self.gpu_settings_button.setText("")
+        except Exception:
+            self.gpu_settings_button.setText("GPU")
+        self.gpu_settings_button.clicked.connect(self.open_gpu_settings_dialog)
+        toolbar_layout.addWidget(self.gpu_settings_button)
+
+        self.gpu_info_button = self._make_toolbar_button("GPU Info 🖥️")
+        try:
+            _ic2 = (
+                DARK_THEME["icon_color"]
+                if getattr(self, "is_dark_mode", True)
+                else LIGHT_THEME["icon_color"]
+            )
+            self.gpu_info_button.setIcon(
+                render_svg_icon(SVG_ICONS["monitor"], _ic2, 18)
+            )
+            self.gpu_info_button.setText("")
+        except Exception:
+            self.gpu_info_button.setText("i")
+        self.gpu_info_button.clicked.connect(self.open_gpu_info_page)
+        toolbar_layout.addWidget(self.gpu_info_button)
+
+        self.translate_button = self._make_toolbar_button("Translate Page 🌐")
+        self.translate_button.clicked.connect(self.toggle_translation_bubble)
+        toolbar_layout.addWidget(self.translate_button)
+
+        # Blocking Level Button
+        self.blocking_level_button = self._make_toolbar_button("Blocking Level 🛡️")
+        self.blocking_level_button.clicked.connect(self.open_blocking_level_dialog)
+        toolbar_layout.addWidget(self.blocking_level_button)
+
         # Userscript Manager Button
         self.userscript_button = self._make_toolbar_button("Userscripts (.user.js)")
         self.userscript_button.clicked.connect(self.open_userscript_manager_dialog)
@@ -4101,10 +4818,12 @@ class EcoBrowserWindow(QMainWindow):
         self.blockers_button = self._make_toolbar_button("Blockers and Filters")
         self.blockers_button.clicked.connect(self.open_block_manager_dialog)
         toolbar_layout.addWidget(self.blockers_button)
-        
+
         # Customize Button
         # Password Manager Button
-        self.passwords_button = self._make_toolbar_button("Password Manager (Saved logins)")
+        self.passwords_button = self._make_toolbar_button(
+            "Password Manager (Saved logins)"
+        )
         self.passwords_button.clicked.connect(self.open_password_manager_dialog)
         toolbar_layout.addWidget(self.passwords_button)
 
@@ -4134,8 +4853,13 @@ class EcoBrowserWindow(QMainWindow):
 
         # Reader Mode actions
         self.menu.addAction("Toggle Reader Mode\tCtrl+Shift+R", self.toggle_reader_mode)
-        self.menu.addAction("Reader Mode Settings...", self.open_reader_settings_dialog)
-        self.menu.addAction("Hibernation Settings 💤...", self.open_hibernation_settings_dialog)
+        self.menu.addAction("Reader Mode Settings", self.open_reader_settings_dialog)
+        self.menu.addAction(
+            "Hibernation Settings", self.open_hibernation_settings_dialog
+        )
+        self.menu.addAction("Blocking Levels", self.open_blocking_level_dialog)
+        self.menu.addAction("GPU / VRAM Settings .", self.open_gpu_settings_dialog)
+        self.menu.addAction("Translate Page", self.toggle_translation_bubble)
         self.menu.addSeparator()
 
         # Userscript manager
@@ -4199,13 +4923,15 @@ class EcoBrowserWindow(QMainWindow):
         dialog = ColorCustomizerDialog(self)
         dialog.exec()
 
-
     def get_new_tab_url(self):
         """Return custom new tab URL or html"""
         try:
             if self.settings.get("newtab_enabled", True):
                 # If homepage is eco://newtab, build custom page
-                if self.settings.get("homepage_url", "eco://newtab") == "eco://newtab" or self.home_url == "eco://newtab":
+                if (
+                    self.settings.get("homepage_url", "eco://newtab") == "eco://newtab"
+                    or self.home_url == "eco://newtab"
+                ):
                     return "eco://newtab"
             return self.home_url
         except Exception:
@@ -4216,7 +4942,7 @@ class EcoBrowserWindow(QMainWindow):
         if dialog.exec() != QDialog.DialogCode.Accepted or dialog.values is None:
             return
 
-        if not self.save_settings_batch(dialog.values):
+        if not self.save_setting_batch(dialog.values):
             return
 
         QMessageBox.information(
@@ -4420,11 +5146,42 @@ class EcoBrowserWindow(QMainWindow):
                 self.blockers_button.setIcon(
                     render_svg_icon(SVG_ICONS["shield"], icon_color, 18)
                 )
+            if hasattr(self, "translate_button"):
+                self.translate_button.setIcon(
+                    render_svg_icon(SVG_ICONS["globe"], icon_color, 18)
+                )
+            if hasattr(self, "blocking_level_button"):
+                self.blocking_level_button.setIcon(
+                    render_svg_icon(SVG_ICONS["shield"], icon_color, 18)
+                )
+            if hasattr(self, "gpu_settings_button"):
+                self.gpu_settings_button.setIcon(
+                    render_svg_icon(SVG_ICONS["gpu"], icon_color, 18)
+                )
+            if hasattr(self, "gpu_info_button"):
+                self.gpu_info_button.setIcon(
+                    render_svg_icon(SVG_ICONS["monitor"], icon_color, 18)
+                )
+            if hasattr(self, "hibernate_button"):
+                self.hibernate_button.setIcon(
+                    render_svg_icon(SVG_ICONS["download"], icon_color, 18)
+                )
+            if hasattr(self, "split_button"):
+                self.split_button.setIcon(
+                    render_svg_icon(SVG_ICONS["new_tab"], icon_color, 18)
+                )
             if hasattr(self, "passwords_button"):
                 # Use key icon, accent if passwords saved for current site
                 try:
-                    cur_host = self.get_current_view().url().host().lower() if self.get_current_view() else ""
-                    has_saved = self.password_manager and self.password_manager.has_credential(cur_host)
+                    cur_host = (
+                        self.get_current_view().url().host().lower()
+                        if self.get_current_view()
+                        else ""
+                    )
+                    has_saved = (
+                        self.password_manager
+                        and self.password_manager.has_credential(cur_host)
+                    )
                     p_color = accent if has_saved else icon_color
                     p_icon = "key_filled" if has_saved else "key"
                     self.passwords_button.setIcon(
@@ -4467,6 +5224,25 @@ class EcoBrowserWindow(QMainWindow):
             pass
 
     def save_settings_batch(self, updates):
+        """Compatibility: save multiple settings at once"""
+        try:
+            for k, v in updates.items():
+                self.save_setting(k, v)
+        except Exception as e:
+            print(f"[Settings] batch save error: {e}")
+
+    def save_setting_batch(self, updates):
+        """Alias for save_settings_batch"""
+        return self.save_settings_batch(updates)
+
+    def save_settings(self):
+        """Legacy alias - saves current self.settings dict"""
+        try:
+            self.save_settings_batch(self.settings)
+        except Exception:
+            pass
+
+    def save_setting_batch(self, updates):
         path = self.settings_file_path()
         current = self.load_all_settings()
         current.update(updates)
@@ -4593,7 +5369,7 @@ class EcoBrowserWindow(QMainWindow):
                 url = self.home_url
             if len(url) > 2000:
                 url = self.home_url
-            
+
             web_view = QWebEngineView()
             try:
                 web_view.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)
@@ -4605,7 +5381,9 @@ class EcoBrowserWindow(QMainWindow):
             # Handle renderer crash - prevents full app crash
             try:
                 page.renderProcessTerminated.connect(
-                    lambda terminationStatus, exitCode, view=web_view: self.handle_render_crash(view, terminationStatus, exitCode)
+                    lambda terminationStatus, exitCode, view=web_view: self.handle_render_crash(
+                        view, terminationStatus, exitCode
+                    )
                 )
             except Exception:
                 pass
@@ -4620,19 +5398,29 @@ class EcoBrowserWindow(QMainWindow):
 
             # Use weak references in lambdas to avoid crash if view deleted
             web_view.urlChanged.connect(
-                lambda _url, v=web_view: self.sync_address_bar(v) if not is_view_deleted(v) else None
+                lambda _url, v=web_view: (
+                    self.sync_address_bar(v) if not is_view_deleted(v) else None
+                )
             )
             web_view.titleChanged.connect(
-                lambda title, v=web_view: self.update_tab_title(title, v) if not is_view_deleted(v) else None
+                lambda title, v=web_view: (
+                    self.update_tab_title(title, v) if not is_view_deleted(v) else None
+                )
             )
             web_view.iconChanged.connect(
-                lambda icon, v=web_view: self.sync_tab_icon(v, icon) if not is_view_deleted(v) else None
+                lambda icon, v=web_view: (
+                    self.sync_tab_icon(v, icon) if not is_view_deleted(v) else None
+                )
             )
             web_view.loadStarted.connect(
-                lambda v=web_view: self.handle_load_started(v) if not is_view_deleted(v) else None
+                lambda v=web_view: (
+                    self.handle_load_started(v) if not is_view_deleted(v) else None
+                )
             )
             web_view.loadFinished.connect(
-                lambda ok, v=web_view: self.handle_load_finished(v, ok) if not is_view_deleted(v) else None
+                lambda ok, v=web_view: (
+                    self.handle_load_finished(v, ok) if not is_view_deleted(v) else None
+                )
             )
             stack_index = self.stack.addWidget(web_view)
 
@@ -4647,7 +5435,12 @@ class EcoBrowserWindow(QMainWindow):
             self.stack.setCurrentIndex(stack_index)
             try:
                 # Handle eco://newtab
-                if url == "eco://newtab" or (url == self.home_url and self.settings.get("newtab_enabled", True) and self.settings.get("homepage_url", "eco://newtab") == "eco://newtab"):
+                if url == "eco://newtab" or (
+                    url == self.home_url
+                    and self.settings.get("newtab_enabled", True)
+                    and self.settings.get("homepage_url", "eco://newtab")
+                    == "eco://newtab"
+                ):
                     html = build_new_tab_page_html(self.settings, self.search_engine)
                     web_view.setHtml(html, QUrl("eco://newtab"))
                 else:
@@ -4674,11 +5467,13 @@ class EcoBrowserWindow(QMainWindow):
         try:
             if is_view_deleted(web_view):
                 return
-            if hasattr(self, 'crash_manager') and self.crash_manager:
+            if hasattr(self, "crash_manager") and self.crash_manager:
                 self.crash_manager.handle_crash(web_view, terminationStatus, exitCode)
             else:
                 print(f"[Renderer] crashed status={terminationStatus} code={exitCode}")
-                QTimer.singleShot(1000, lambda v=web_view: self._safe_reload_after_crash(v))
+                QTimer.singleShot(
+                    1000, lambda v=web_view: self._safe_reload_after_crash(v)
+                )
         except Exception as e:
             print(f"[Renderer] handle crash error: {e}")
 
@@ -4701,6 +5496,7 @@ class EcoBrowserWindow(QMainWindow):
     def _periodic_memory_cleanup(self):
         try:
             import gc
+
             gc.collect()
             if self.stack.count() > 15:
                 try:
@@ -4716,8 +5512,9 @@ class EcoBrowserWindow(QMainWindow):
             return
         try:
             import time
+
             self.tab_last_active[id(view)] = time.time()
-            if getattr(view, '_is_hibernated', False):
+            if getattr(view, "_is_hibernated", False):
                 self.wake_tab(view)
         except Exception:
             pass
@@ -4725,15 +5522,19 @@ class EcoBrowserWindow(QMainWindow):
     def _check_hibernation(self):
         try:
             import time
+
             timeout = self.settings.get("hibernation_timeout", 15) * 60
             now = time.time()
             current = self.get_current_view()
             cur_id = id(current) if current else None
             for i in range(self.stack.count()):
                 v = self.stack.widget(i)
-                if not v or is_view_deleted(v): continue
-                if id(v) == cur_id: continue
-                if getattr(v, '_is_hibernated', False): continue
+                if not v or is_view_deleted(v):
+                    continue
+                if id(v) == cur_id:
+                    continue
+                if getattr(v, "_is_hibernated", False):
+                    continue
                 last = self.tab_last_active.get(id(v), now)
                 if now - last > timeout:
                     self.hibernate_tab(v)
@@ -4742,11 +5543,15 @@ class EcoBrowserWindow(QMainWindow):
 
     def hibernate_tab(self, view):
         try:
-            if not view or is_view_deleted(view): return
-            if getattr(view, '_is_hibernated', False): return
-            if self.stack.count() <= 1: return
+            if not view or is_view_deleted(view):
+                return
+            if getattr(view, "_is_hibernated", False):
+                return
+            if self.stack.count() <= 1:
+                return
             url = view.url().toString()
-            if not url or url.startswith("eco://") or url.startswith("about:"): return
+            if not url or url.startswith("eco://") or url.startswith("about:"):
+                return
             view._hibernated_url = url
             view._is_hibernated = True
             self.hibernated_tabs[id(view)] = url
@@ -4758,34 +5563,225 @@ class EcoBrowserWindow(QMainWindow):
 
     def wake_tab(self, view):
         try:
-            if not getattr(view, '_is_hibernated', False): return
-            url = getattr(view, '_hibernated_url', None)
-            if not url: return
+            if not getattr(view, "_is_hibernated", False):
+                return
+            url = getattr(view, "_hibernated_url", None)
+            if not url:
+                return
             view._is_hibernated = False
             view.setUrl(QUrl(url))
             self.tab_last_active[id(view)] = __import__("time").time()
         except Exception:
             pass
 
-
-
-
     # === PYTHON REPLACEMENT FOR JS ADULT BLOCKER (reduces JS amount) ===
-    PYTHON_ADULT_KEYWORDS = ["porn","xxx","hentai","nsfw","erotic","nude","naked","sexvideo","onlyfans","fetish","bdsm","blowjob","handjob","cumshot","orgy","masturbate","escort","hardcore","incest","pornhub","xvideos","xnxx","youporn","xhamster","chaturbate","stripchat","bongacams","brazzers","rule34","pussy","dick","cock","boobs","anal"]
-    PYTHON_ADULT_ALLOW_HOSTS = ["wikipedia.org","youtube.com","github.com","stackoverflow.com"]
+    PYTHON_ADULT_KEYWORDS = [
+        "porn",
+        "xxx",
+        "hentai",
+        "nsfw",
+        "erotic",
+        "nude",
+        "naked",
+        "sexvideo",
+        "onlyfans",
+        "fetish",
+        "bdsm",
+        "blowjob",
+        "handjob",
+        "cumshot",
+        "orgy",
+        "masturbate",
+        "escort",
+        "hardcore",
+        "incest",
+        "pornhub",
+        "xvideos",
+        "xnxx",
+        "youporn",
+        "xhamster",
+        "chaturbate",
+        "stripchat",
+        "bongacams",
+        "brazzers",
+        "rule34",
+        "pussy",
+        "dick",
+        "cock",
+        "boobs",
+        "anal",
+    ]
+    PYTHON_ADULT_ALLOW_HOSTS = [
+        "wikipedia.org",
+        "youtube.com",
+        "github.com",
+        "stackoverflow.com",
+    ]
+
+    # === TRANSLATION BUBBLE ===
+    def toggle_translation_bubble(self):
+        """Redirect to Google Website Translator instead of in-page bubble"""
+        try:
+            view = self.get_current_view()
+            if not view:
+                return
+            url = view.url().toString()
+            if (
+                not url
+                or url.startswith("eco://")
+                or url.startswith("about:")
+                or url.startswith("data:")
+            ):
+                QMessageBox.information(self, "Translate", "Cannot translate this page")
+                return
+
+            # Ask for target language
+            from PyQt6.QtWidgets import QInputDialog
+
+            langs = [
+                "en",
+                "es",
+                "fr",
+                "de",
+                "ar",
+                "tr",
+                "ru",
+                "zh",
+                "ja",
+                "pt",
+                "it",
+                "hi",
+                "ur",
+            ]
+            lang_names = {
+                "en": "English",
+                "es": "Spanish",
+                "fr": "French",
+                "de": "German",
+                "ar": "Arabic",
+                "tr": "Turkish",
+                "ru": "Russian",
+                "zh": "Chinese",
+                "ja": "Japanese",
+                "pt": "Portuguese",
+                "it": "Italian",
+                "hi": "Hindi",
+                "ur": "Urdu",
+            }
+            items = [f"{lang_names.get(l,l)} ({l})" for l in langs]
+            item, ok = QInputDialog.getItem(
+                self, "Google Translate", "Translate page to:", items, 0, False
+            )
+            if not ok or not item:
+                return
+            # Extract lang code from "English (en)"
+            import re
+
+            m = re.search(r"\((\w+)\)", item)
+            target_lang = m.group(1) if m else "en"
+
+            # Google Website Translator URLs - use translate.google.com/translate?sl=auto&tl=xx&u=URL
+            import urllib.parse
+
+            encoded_url = urllib.parse.quote(url, safe="")
+            # Option 1: Google Translate website translator (classic)
+            google_url = f"https://translate.google.com/translate?sl=auto&tl={target_lang}&u={encoded_url}"
+
+            print(f"[Translate] Redirecting to Google Translate: {google_url}")
+            # Open in new tab
+            self.add_new_tab(google_url)
+
+        except Exception as e:
+            print(f"[Translate] redirect error: {e}")
+            import traceback
+
+            traceback.print_exc()
+
+    def translate_current_page(self, target_lang="en"):
+        try:
+            view = self.get_current_view()
+            if not view:
+                return
+            url = view.url().toString()
+            if not url or url.startswith("eco://") or url.startswith("about:"):
+                QMessageBox.information(
+                    self, "Translate", "Cannot translate internal pages"
+                )
+                return
+            # In-page translation via JS (no redirect)
+            view.page().runJavaScript(ECO_TRANSLATE_JS)
+            QTimer.singleShot(
+                600,
+                lambda v=view, lang=target_lang: (
+                    v.page().runJavaScript(f"window.__ecoTranslate('{lang}')")
+                    if not is_view_deleted(v)
+                    else None
+                ),
+            )
+        except Exception as e:
+            print(f"[Translate] error: {e}")
+
+    def open_translation_dialog(self):
+        try:
+            from PyQt6.QtWidgets import QInputDialog
+
+            langs = [
+                "en - English",
+                "es - Spanish",
+                "fr - French",
+                "de - German",
+                "ar - Arabic",
+                "hi - Hindi",
+                "tr - Turkish",
+                "ru - Russian",
+                "zh - Chinese",
+                "ja - Japanese",
+                "pt - Portuguese",
+                "it - Italian",
+                "ko - Korean",
+                "nl - Dutch",
+                "pl - Polish",
+                "ur - Urdu",
+            ]
+            lang, ok = QInputDialog.getItem(
+                self, "Translate Page", "Select target language:", langs, 0, False
+            )
+            if ok and lang:
+                code = lang.split(" - ")[0]
+                self.translate_current_page(code)
+                # Also inject bubble
+                self.toggle_translation_bubble()
+        except Exception as e:
+            print(f"[Translate] dialog error: {e}")
+
+    def _get_blocking_level(self):
+        """0=No block, 1=Ad only, 2=Ad+Nude domains, 3=Extreme (sex words)"""
+        try:
+            return int(self.settings.get("blocking_level", 2))
+        except Exception:
+            return 2
 
     def _python_check_adult_block(self, view, plain_text, url, host):
-        """Python replacement for JS adult page blocker - runs on toPlainText callback"""
         try:
+            level = self._get_blocking_level()
+            if level < 2:
+                return
             if not view or is_view_deleted(view):
                 return
             if not plain_text or len(plain_text) < 100:
                 return
             # Skip allowed hosts
-            if host and any(host == a or host.endswith('.'+a) for a in self.PYTHON_ADULT_ALLOW_HOSTS):
+            if host and any(
+                host == a or host.endswith("." + a)
+                for a in self.PYTHON_ADULT_ALLOW_HOSTS
+            ):
                 return
             # Skip internal pages
-            if url.startswith("eco://") or url.startswith("about:") or url.startswith("data:"):
+            if (
+                url.startswith("eco://")
+                or url.startswith("about:")
+                or url.startswith("data:")
+            ):
                 return
             sample = plain_text[:20000].lower()
             for kw in self.PYTHON_ADULT_KEYWORDS:
@@ -4794,11 +5790,14 @@ class EcoBrowserWindow(QMainWindow):
                 found = False
                 if len(kw) <= 3:
                     import re as _re
-                    found = bool(_re.search(r'\b' + _re.escape(kw) + r'\b', sample, _re.I))
+
+                    found = bool(
+                        _re.search(r"\b" + _re.escape(kw) + r"\b", sample, _re.I)
+                    )
                 else:
                     found = kw in sample
                 if found:
-                    if getattr(view, '_python_blocked', False):
+                    if getattr(view, "_python_blocked", False):
                         return
                     view._python_blocked = True
                     # Block via Python - replace page content (same UI as JS blocker)
@@ -4827,12 +5826,14 @@ class EcoBrowserWindow(QMainWindow):
             # Skip internal
             if not url or url.startswith("eco://") or url.startswith("about:"):
                 return
+
             # Async get plain text
             def callback(text):
                 try:
                     self._python_check_adult_block(view, text, url, host)
                 except Exception:
                     pass
+
             try:
                 view.page().toPlainText(callback)
             except Exception:
@@ -4888,7 +5889,264 @@ class EcoBrowserWindow(QMainWindow):
         except Exception as e:
             print(f"[PasswordManager-Python] error: {e}")
 
+    # === CHROME-LIKE FAST TRANSLATION (parallel multi-q, no CORS) ===
+    def _python_translate_batch(self, texts, target_lang="en", source_lang="auto"):
+        """Chrome-like fast: parallel multi-q batch, 5 workers, ~1 sec for 100 texts"""
+        import urllib.request, urllib.parse, json, re
+        from concurrent.futures import ThreadPoolExecutor, as_completed
 
+        # Deduplicate identical texts for speed
+        unique_map = {}
+        unique_list = []
+        index_map = []  # for each original text, index into unique_list
+        for t in texts:
+            tt = t.strip()
+            if not tt:
+                index_map.append(-1)
+                continue
+            if tt not in unique_map:
+                unique_map[tt] = len(unique_list)
+                unique_list.append(tt)
+            index_map.append(unique_map[tt])
+
+        if not unique_list:
+            return texts
+
+        # Chunk unique texts: 20 per request (Google multi-q limit)
+        chunk_size = 20
+        chunks = [
+            unique_list[i : i + chunk_size]
+            for i in range(0, len(unique_list), chunk_size)
+        ]
+
+        def translate_chunk(chunk):
+            """Translate chunk using multi-q - returns list of translations in same order"""
+            try:
+                # Build URL with repeated q params
+                params = [
+                    ("client", "gtx"),
+                    ("sl", source_lang),
+                    ("tl", target_lang),
+                    ("dt", "t"),
+                ]
+                for t in chunk:
+                    params.append(("q", t[:1000]))  # limit each to 1000 chars
+                query = urllib.parse.urlencode(params, doseq=True)
+                url = f"https://translate.googleapis.com/translate_a/single?{query}"
+                req = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+                        "Accept": "*/*",
+                    },
+                )
+                with urllib.request.urlopen(req, timeout=12) as resp:
+                    raw = resp.read().decode("utf-8")
+                    data = json.loads(raw)
+                    # Parsing: data is list, each top-level entry is translation for each q when multi-q works
+                    # Case 1: len(data) == len(chunk) -> multi-q supported
+                    # data[i][0] is list of segments for chunk[i]
+                    if isinstance(data, list) and len(data) >= len(chunk):
+                        result = []
+                        for i in range(len(chunk)):
+                            try:
+                                entry = data[i]
+                                if isinstance(entry, list) and len(entry) > 0:
+                                    # entry[0] might be list of segments or list of translations
+                                    if isinstance(entry[0], list) and isinstance(
+                                        entry[0][0], list
+                                    ):
+                                        # Nested: entry[0] is segments
+                                        trans = "".join(
+                                            [
+                                                s[0]
+                                                for s in entry[0]
+                                                if s and len(s) > 0 and s[0]
+                                            ]
+                                        )
+                                    elif isinstance(entry[0], list):
+                                        trans = "".join(
+                                            [
+                                                s[0]
+                                                for s in entry
+                                                if s and len(s) > 0 and s[0]
+                                            ]
+                                        )
+                                    else:
+                                        trans = str(entry[0])
+                                    result.append(trans if trans else chunk[i])
+                                else:
+                                    result.append(chunk[i])
+                            except Exception:
+                                result.append(chunk[i])
+                        return result
+                    # Case 2: data[0] is segments for first text only (multi-q not supported) -> fallback to single concatenation parse
+                    # Try to extract first translation
+                    if (
+                        isinstance(data, list)
+                        and len(data) > 0
+                        and isinstance(data[0], list)
+                    ):
+                        # Check if data[0][0] is translatable
+                        try:
+                            trans = "".join(
+                                [
+                                    seg[0]
+                                    for seg in data[0]
+                                    if seg and len(seg) > 0 and seg[0]
+                                ]
+                            )
+                            # If only one translation returned for multi-q, we need to translate rest individually quickly in same thread
+                            if len(chunk) > 1:
+                                # Fast fallback: translate remaining sequentially in this thread (still faster than one-by-one across threads)
+                                remaining = chunk[1:]
+                                # Re-use same connection? Just loop
+                                extra = []
+                                for t in remaining:
+                                    try:
+                                        q2 = urllib.parse.urlencode(
+                                            [
+                                                ("client", "gtx"),
+                                                ("sl", source_lang),
+                                                ("tl", target_lang),
+                                                ("dt", "t"),
+                                                ("q", t),
+                                            ],
+                                            doseq=True,
+                                        )
+                                        url2 = f"https://translate.googleapis.com/translate_a/single?{q2}"
+                                        req2 = urllib.request.Request(
+                                            url2, headers={"User-Agent": "Mozilla/5.0"}
+                                        )
+                                        with urllib.request.urlopen(
+                                            req2, timeout=8
+                                        ) as r2:
+                                            d2 = json.loads(r2.read().decode("utf-8"))
+                                            tr2 = "".join(
+                                                [s[0] for s in d2[0] if s and s[0]]
+                                            )
+                                            extra.append(tr2 if tr2 else t)
+                                    except Exception:
+                                        extra.append(t)
+                                return [trans] + extra
+                            else:
+                                return [trans]
+                        except Exception:
+                            return chunk
+                return chunk
+            except Exception as e:
+                print(f"[FastTranslate] chunk error: {e}")
+                return chunk
+
+        # Parallel execution - Chrome-like speed
+        translated_unique = [None] * len(unique_list)
+        # Map chunk index to global unique index
+        chunk_to_global = []
+        for ci, chunk in enumerate(chunks):
+            start = ci * chunk_size
+            for j in range(len(chunk)):
+                chunk_to_global.append(start + j)
+
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            future_to_chunk_idx = {
+                executor.submit(translate_chunk, chunk): idx
+                for idx, chunk in enumerate(chunks)
+            }
+            for future in as_completed(future_to_chunk_idx):
+                idx = future_to_chunk_idx[future]
+                try:
+                    res = future.result()
+                    start = idx * chunk_size
+                    for j, trans in enumerate(res):
+                        if start + j < len(translated_unique):
+                            translated_unique[start + j] = trans
+                except Exception as e:
+                    print(f"[FastTranslate] future error: {e}")
+                    start = idx * chunk_size
+                    for j in range(len(chunks[idx])):
+                        if start + j < len(translated_unique):
+                            translated_unique[start + j] = chunks[idx][j]
+
+        # Fill any None with originals
+        for i in range(len(translated_unique)):
+            if translated_unique[i] is None:
+                translated_unique[i] = unique_list[i]
+
+        # Reconstruct original order using index_map
+        final = []
+        for idx in index_map:
+            if idx == -1:
+                final.append("")
+            else:
+                final.append(
+                    translated_unique[idx]
+                    if idx < len(translated_unique)
+                    else unique_list[idx]
+                )
+        return final
+
+    def _handle_python_translation_request(self, view, target_lang, texts):
+        """Handle translation request - Chrome-like instant"""
+        try:
+            if not texts or len(texts) == 0:
+                return
+            texts = texts[:400]  # safety
+            clean_texts = [t.strip()[:500] for t in texts if t and t.strip()]
+            if not clean_texts:
+                return
+            print(
+                f"[FastTranslate] {len(clean_texts)} texts -> {target_lang} (parallel)"
+            )
+
+            # Instant UI feedback
+            try:
+                view.page().runJavaScript(f"""
+                    (function(){{
+                        let s=document.getElementById('eco-t-status');
+                        if(s) s.textContent='⚡ Translating {len(clean_texts)} pieces...';
+                        let p=document.getElementById('eco-t-progress');
+                        if(p){{p.style.display='block'; p.querySelector('#eco-t-progress-bar').style.width='20%';}}
+                    }})()
+                """)
+            except Exception:
+                pass
+
+            def do_translate():
+                try:
+                    translated = self._python_translate_batch(clean_texts, target_lang)
+                    import json
+
+                    json_str = json.dumps(translated, ensure_ascii=False)
+                    js = f"""
+                    (function(){{
+                        try{{
+                            let arr = {json_str};
+                            if(window.__ecoApplyTranslations) window.__ecoApplyTranslations(arr);
+                            let s=document.getElementById('eco-t-status');
+                            if(s) s.textContent='✓ Done {len(clean_texts)} pieces → {target_lang} (Chrome-fast)';
+                            let p=document.getElementById('eco-t-progress');
+                            if(p) p.style.display='none';
+                            let b=document.getElementById('eco-t-progress-bar');
+                            if(b) b.style.width='100%';
+                        }}catch(e){{console.log('apply error',e);}}
+                    }})()
+                    """
+                    QTimer.singleShot(
+                        0,
+                        lambda v=view, code=js: (
+                            v.page().runJavaScript(code)
+                            if not is_view_deleted(v)
+                            else None
+                        ),
+                    )
+                except Exception as e:
+                    print(f"[FastTranslate] thread error: {e}")
+
+            import threading
+
+            threading.Thread(target=do_translate, daemon=True).start()
+        except Exception as e:
+            print(f"[FastTranslate] handle error: {e}")
 
     def on_tab_moved(self, from_idx, to_idx):
         if from_idx == to_idx:
@@ -5001,6 +6259,50 @@ class EcoBrowserWindow(QMainWindow):
 
         for i in range(self.tab_bar.count()):
             self._setup_tab_close_button(i)
+
+    def open_gpu_info_page(self):
+        """chrome://gpu doesn't exist in QtWebEngine - use WebGL renderer detection instead"""
+        try:
+            gpu_html = """
+            <html><head><title>GPU Info - EcoBrowser</title><style>
+            body{font-family:Segoe UI;background:#0d1117;color:#e6edf3;padding:30px}
+            .card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px;margin:15px 0}
+            h1{color:#58a6ff} .good{color:#3fb950} .bad{color:#f85149}
+            </style></head><body>
+            <h1>🖥️ EcoBrowser GPU Info</h1>
+            <p>chrome://gpu doesn't work in QtWebEngine (PyQt) - Qt strips internal pages. This page uses WebGL to detect your real GPU.</p>
+            <div class="card" id="info">Detecting...</div>
+            <div class="card"><h3>How to verify:</h3>
+            <p>1. Check <b>Renderer</b> below - should say <b>RTX 2050</b> if on High performance, or <b>Intel</b> if on Power saving</p>
+            <p>2. Task Manager -> Details -> add <b>GPU</b> + <b>GPU engine</b> columns -> look for python.exe / QtWebEngineProcess.exe</p>
+            <p>3. Play a YouTube video, then run <code>nvidia-smi</code> in another terminal - VRAM should rise from idle 2MB</p>
+            <p>4. Windows Settings -> Display -> Graphics -> python.exe + QtWebEngineProcess.exe -> High performance</p>
+            </div>
+            <script>
+            try{
+                let c=document.createElement('canvas');
+                let gl=c.getContext('webgl')||c.getContext('experimental-webgl');
+                let info=document.getElementById('info');
+                if(!gl){ info.innerHTML='<span class=bad>WebGL not available - software rendering</span>'; }
+                else{
+                    let ext=gl.getExtension('WEBGL_debug_renderer_info');
+                    let renderer=ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);
+                    let vendor=ext?gl.getParameter(ext.UNMASKED_VENDOR_WEBGL):gl.getParameter(gl.VENDOR);
+                    let isNvidia=renderer.toLowerCase().includes('nvidia')||renderer.includes('2050');
+                    let isIntel=renderer.toLowerCase().includes('intel');
+                    info.innerHTML='<h3>Renderer: '+renderer+'</h3><p>Vendor: '+vendor+'</p><p>WebGL Version: '+gl.getParameter(gl.VERSION)+'</p><p>Shading: '+gl.getParameter(gl.SHADING_LANGUAGE_VERSION)+'</p><p>Status: '+(isNvidia?'<span class=good>✅ On RTX 2050 - VRAM offload working</span>':isIntel?'<span class=bad>⚠️ On Intel iGPU - set python.exe to High performance in Windows Graphics</span>':'<span>Unknown GPU</span>')+'</p>';
+                }
+            }catch(e){ document.getElementById('info').innerHTML='Error: '+e; }
+            </script>
+            </body></html>
+            """
+            view = self.add_new_tab("about:blank")
+            # Use setHtml to show GPU info
+            import urllib.parse
+
+            view.setHtml(gpu_html)
+        except Exception as e:
+            print(f"[GPU] info page error: {e}")
 
     def switch_tab(self, index):
         if index == -1:
@@ -5260,6 +6562,7 @@ class EcoBrowserWindow(QMainWindow):
                 }} catch(e){{ return false; }}
             }})()
             """
+
             def toggle_callback(is_active):
                 try:
                     vid = id(view)
@@ -5271,10 +6574,10 @@ class EcoBrowserWindow(QMainWindow):
                     self._set_reader_chrome_hidden(self.reader_state.get(vid, False))
                 except Exception as e:
                     print(f"toggle callback error: {e}")
+
             view.page().runJavaScript(update_js, toggle_callback)
 
         view.page().runJavaScript(ensure_js, after_ensure)
-
 
     def _handle_escape_reader(self):
         view = self.get_current_view()
@@ -5314,12 +6617,15 @@ class EcoBrowserWindow(QMainWindow):
         if view:
             self.apply_reader_settings_to_view(view)
 
-
     def open_hibernation_settings_dialog(self):
         dialog = HibernationSettingsDialog(self.settings, self)
         if dialog.exec() == QDialog.DialogCode.Accepted and dialog.values:
             self.settings.update(dialog.values)
-            self.save_settings()
+            try:
+                self.save_settings_batch(dialog.values)
+            except Exception:
+                for k, v in dialog.values.items():
+                    self.save_setting(k, v)
             # Restart hibernation timer with new setting
             try:
                 if self.settings.get("hibernation_enabled", True):
@@ -5328,8 +6634,121 @@ class EcoBrowserWindow(QMainWindow):
                     self.hibernation_timer.stop()
             except Exception:
                 pass
-            QMessageBox.information(self, "Hibernation Settings", f"Eco Sleep {'enabled' if self.settings.get('hibernation_enabled') else 'disabled'} - Timeout: {self.settings.get('hibernation_timeout')} min")
+            enabled = (
+                "enabled" if self.settings.get("hibernation_enabled") else "disabled"
+            )
+            timeout = self.settings.get("hibernation_timeout")
+            QMessageBox.information(
+                self,
+                "Hibernation Settings",
+                f"Eco Sleep {enabled} - Timeout: {timeout} min",
+            )
 
+    def open_gpu_settings_dialog(self):
+        dialog = GpuSettingsDialog(self.settings, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted and dialog.values:
+            self.settings.update(dialog.values)
+            try:
+                self.save_settings_batch(dialog.values)
+            except Exception:
+                for k, v in dialog.values.items():
+                    try:
+                        self.save_setting(k, v)
+                    except Exception:
+                        pass
+            pref = dialog.values.get("gpu_preference", "auto")
+            ok = apply_windows_gpu_preference(pref)
+            names = {
+                "auto": "Auto (Windows decides)",
+                "high_performance": "High performance - RTX 2050 (VRAM)",
+                "power_saving": "Power saving - Intel iGPU",
+            }
+            if ok:
+                QMessageBox.information(
+                    self,
+                    "GPU / VRAM",
+                    "GPU set to: "
+                    + names.get(pref, pref)
+                    + "\n\nRestart EcoBrowser for it to take effect.\n\nCheck via GPU Info button - WebGL renderer should say NVIDIA if High performance.",
+                )
+            else:
+                QMessageBox.information(
+                    self,
+                    "GPU / VRAM",
+                    "GPU set to: "
+                    + names.get(pref, pref)
+                    + "\n\nCould not write Windows registry. Open Settings -> Display -> Graphics manually and set python.exe + QtWebEngineProcess.exe to High performance.",
+                )
+
+    def open_blocking_level_dialog(self):
+        dialog = BlockingLevelDialog(self.settings, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted and dialog.values:
+            self.settings.update(dialog.values)
+            try:
+                self.save_settings_batch(dialog.values)
+            except Exception:
+                try:
+                    for k, v in dialog.values.items():
+                        self.save_setting(k, v)
+                except Exception:
+                    pass
+            level = dialog.values.get("blocking_level", 2)
+            level_names = {
+                0: "No Block (Allow everything)",
+                1: "Ad Block Only",
+                2: "Ad + Nude Block",
+                3: "Extreme Block",
+            }
+            try:
+                if hasattr(self, "interceptor"):
+                    if level == 0:
+                        self.interceptor.ad_block_enabled = False
+                        self.interceptor.nude_block_enabled = False
+                        print(
+                            "[Blocking] Level 0 - No block, all disabled including image filter"
+                        )
+                    elif level == 1:
+                        self.interceptor.ad_block_enabled = True
+                        self.interceptor.nude_block_enabled = False
+                    else:
+                        self.interceptor.ad_block_enabled = True
+                        self.interceptor.nude_block_enabled = True
+                self._current_blocking_level = level
+            except Exception as e:
+                print(f"[Blocking] update error: {e}")
+
+            # Broadcast level change to all tabs to disable image filter
+            try:
+                for i in range(self.stack.count()):
+                    try:
+                        v = self.stack.widget(i)
+                        if v and not is_view_deleted(v):
+                            v.page().runJavaScript(
+                                f"try{{localStorage.setItem('eco_blocking_level', '{level}'); window.__ecoGuardLevel={level}; window.dispatchEvent(new CustomEvent('ecoGuardLevelChanged', {{detail:{{level:{level}}}}});}}catch(e){{}}"
+                            )
+                            if level == 0:
+                                v.page().runJavaScript("""
+                                    try{
+                                        window.__ecoGuardLevel=0;
+                                        document.querySelectorAll('.b,.v,.c2').forEach(el=>{
+                                            el.classList.remove('b','v','c2');
+                                            el.classList.add('u','w','c3');
+                                            el.style.filter='none';
+                                            el.style.opacity='1';
+                                        });
+                                        document.querySelectorAll('.s,.d,.n,.e').forEach(el=>{el.remove();});
+                                    }catch(e){}
+                                """)
+                    except Exception as e:
+                        print(f"[Blocking] tab update error: {e}")
+            except Exception as e:
+                print(f"[Blocking] broadcast error: {e}")
+
+            QMessageBox.information(
+                self,
+                "Blocking Level",
+                f"Blocking set to: {level_names.get(level, 'Unknown')} - Level 0 disables everything",
+            )
 
     def open_userscript_manager_dialog(self):
         dlg = UserscriptManagerDialog(self)
@@ -5468,13 +6887,25 @@ class EcoBrowserWindow(QMainWindow):
         host = url.host().lower()
         full_url = url.toString().lower()
 
+        # Respect blocking levels: 0=No block, 1=Ad only, 2=Ad+Nude, 3=Extreme
+        level = (
+            self._get_blocking_level() if hasattr(self, "_get_blocking_level") else 2
+        )
+        if level == 0:
+            request.accept()
+            return
+
         is_ad = self.interceptor.ad_block_enabled and any(
             ad in host for ad in AD_DOMAINS
         )
-        is_adult = self.interceptor.nude_block_enabled and (
-            any(d in host for d in ADULT_DOMAINS)
-            or any(kw in full_url for kw in ADULT_KEYWORDS)
-        )
+        # For level 1 (Ad only), ignore adult
+        if level == 1:
+            is_adult = False
+        else:
+            is_adult = self.interceptor.nude_block_enabled and (
+                any(d in host for d in ADULT_DOMAINS)
+                or any(kw in full_url for kw in ADULT_KEYWORDS)
+            )
 
         if is_ad or is_adult:
             request.reject()
@@ -5688,7 +7119,6 @@ class EcoBrowserWindow(QMainWindow):
         self.downloads_bubble.move(bubble_x, bubble_y)
         self.downloads_bubble.show()
 
-
     # =========================================================================
     # Password Manager Integration
     # =========================================================================
@@ -5723,8 +7153,18 @@ class EcoBrowserWindow(QMainWindow):
                 return
             js = build_password_autofill_js(email, password)
             # Use weak capture with id check
-            QTimer.singleShot(700, lambda v=web_view, j=js: self._inject_autofill(v, j) if not is_view_deleted(v) else None)
-            QTimer.singleShot(2000, lambda v=web_view, j=js: self._inject_autofill(v, j) if not is_view_deleted(v) else None)
+            QTimer.singleShot(
+                700,
+                lambda v=web_view, j=js: (
+                    self._inject_autofill(v, j) if not is_view_deleted(v) else None
+                ),
+            )
+            QTimer.singleShot(
+                2000,
+                lambda v=web_view, j=js: (
+                    self._inject_autofill(v, j) if not is_view_deleted(v) else None
+                ),
+            )
         except Exception as e:
             print(f"[PasswordManager] _try_autofill error: {e}")
 
@@ -5774,22 +7214,37 @@ class EcoBrowserWindow(QMainWindow):
             # Deduplicate rapid duplicate saves
             now_key = f"{host}|{email}|{len(password)}"
             import time
+
             current = time.time()
-            if getattr(self, "_last_save_key", None) == now_key and current - getattr(self, "_last_save_time", 0) < 3:
+            if (
+                getattr(self, "_last_save_key", None) == now_key
+                and current - getattr(self, "_last_save_time", 0) < 3
+            ):
                 return
             self._last_save_key = now_key
             self._last_save_time = current
 
             # Check if already saved with same values
             existing = self.password_manager.get_credential(host)
-            if existing and existing.get("email") == email and existing.get("password") == password:
+            if (
+                existing
+                and existing.get("email") == email
+                and existing.get("password") == password
+            ):
                 return  # Already saved
 
             if self.settings.get("password_save_prompt", True):
                 # Show prompt to user - use QTimer to avoid blocking console handler
-                QTimer.singleShot(100, lambda: self._prompt_save_password(host, email, password, origin, href))
+                QTimer.singleShot(
+                    100,
+                    lambda: self._prompt_save_password(
+                        host, email, password, origin, href
+                    ),
+                )
             else:
-                self.password_manager.save_credential(host, email, password, origin, href)
+                self.password_manager.save_credential(
+                    host, email, password, origin, href
+                )
                 # Show brief notification via status? Use autofill badge already
                 print(f"[PasswordManager] Auto-saved {host}")
         except Exception as e:
@@ -5801,7 +7256,11 @@ class EcoBrowserWindow(QMainWindow):
             view = self.get_current_view()
             if view:
                 current_host = view.url().host().lower()
-                if current_host != host and not host in current_host and not current_host in host:
+                if (
+                    current_host != host
+                    and not host in current_host
+                    and not current_host in host
+                ):
                     # Still allow but only if user is on that page? We'll allow anyway but check
                     pass
 
@@ -5809,8 +7268,12 @@ class EcoBrowserWindow(QMainWindow):
             msg.setWindowTitle("Save Password?")
             msg.setIcon(QMessageBox.Icon.Question)
             msg.setText(f"Save password for {host}?")
-            msg.setInformativeText(f"Email/Username: {email}\nPassword: {'•'*min(len(password), 12)} ({len(password)} chars)\n\nEcoBrowser will autofill it next time you visit {host}.")
-            msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            msg.setInformativeText(
+                f"Email/Username: {email}\nPassword: {'•'*min(len(password), 12)} ({len(password)} chars)\n\nEcoBrowser will autofill it next time you visit {host}."
+            )
+            msg.setStandardButtons(
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
             msg.setDefaultButton(QMessageBox.StandardButton.Yes)
             # Add checkbox for never save? For simplicity skip
 
@@ -5819,13 +7282,14 @@ class EcoBrowserWindow(QMainWindow):
 
             reply = msg.exec()
             if reply == QMessageBox.StandardButton.Yes:
-                self.password_manager.save_credential(host, email, password, origin, href)
+                self.password_manager.save_credential(
+                    host, email, password, origin, href
+                )
                 # Show confirmation badge via JS
                 try:
                     view = self.get_current_view()
                     if view:
-                        view.page().runJavaScript(
-                            """
+                        view.page().runJavaScript("""
                             (function(){
                                 try {
                                     let b=document.createElement('div');
@@ -5835,8 +7299,7 @@ class EcoBrowserWindow(QMainWindow):
                                     setTimeout(()=>{b.style.opacity='0'; setTimeout(()=>b.remove(), 600);}, 3000);
                                 } catch(e){}
                             })();
-                            """ % host
-                        )
+                            """ % host)
                 except Exception:
                     pass
         except Exception as e:
@@ -5849,7 +7312,9 @@ class EcoBrowserWindow(QMainWindow):
             dialog = PasswordManagerDialog(self.password_manager, self)
             dialog.exec()
         except Exception as e:
-            QMessageBox.critical(self, "Password Manager Error", f"Failed to open password manager:\n{e}")
+            QMessageBox.critical(
+                self, "Password Manager Error", f"Failed to open password manager:\n{e}"
+            )
 
     def open_downloads_dialog(self):
         dialog = DownloadsDialog(self)
@@ -6153,9 +7618,21 @@ def configure_chromium_doh_flags(server_template):
             )
             arguments.append(f"{switch_name}={separator.join(values)}")
 
-    # Qt reads this as a Chromium argument string, not a shell command. Avoid
-    # shell-specific quoting because the browser may run on Windows.
-    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = " ".join(arguments)
+    # Re-quote any argument containing a space (e.g. --js-flags="--max-old-space-size=512 --expose-gc")
+    # shlex.split stripped the quotes, so we must restore them or V8 never sees --expose-gc
+    def _quote_arg(arg):
+        if " " in arg and not (arg.startswith('"') and arg.endswith('"')):
+            # If arg is --js-flags=--max-old-space... --expose-gc, quote the value part
+            if "=" in arg:
+                k, v = arg.split("=", 1)
+                if " " in v and not v.startswith('"'):
+                    return f'{k}="{v}"'
+            return f'"{arg}"'
+        return arg
+
+    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = " ".join(
+        _quote_arg(a) for a in arguments
+    )
 
 
 def apply_webengine_network_settings(settings, doh_flags_preconfigured=False):

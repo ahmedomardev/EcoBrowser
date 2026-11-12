@@ -1,7 +1,10 @@
 EcoBrowser - Changelog
 =======================
 
-v2.1
+v2.3
 ------------------------------------------
 1. Optimizations and bugfixes
-2. Added Hibernation to tabs
+2. Added VRAM Offloading
+
+What is VRAM offloading?:
+VRAM offloading in EcoBrowser means moving rasterization, compositing, and video decoding from the CPU to the GPU's VRAM, using hardware acceleration. You can choose Auto, High Performance (dGPU like RTX 2050 / 3050, uses its own VRAM), or Power Saving (iGPU like Intel UHD, uses shared system RAM). It makes scrolling and video smoother, and combined with tab discarding, it helps lower RAM usage.
