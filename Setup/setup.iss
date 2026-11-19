@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Ecobrowser"
-#define MyAppVersion "2.3"
+#define MyAppVersion "2.4"
 #define MyAppPublisher "ahmedomardev"
 #define MyAppExeName "main.exe"
 

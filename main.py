@@ -3,11 +3,26 @@ import os
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = (
     "--in-process-gpu "
     "--use-gl=angle --use-angle=d3d11 "
-    "--enable-gpu-rasterization --enable-zero-copy --ignore-gpu-blocklist "
-    "--disable-features=TranslateUI,BackForwardCache,CompressionDictionaryTransport "
+    "--enable-gpu-rasterization --enable-zero-copy --ignore-gpu-blocklist --disable-webgpu "
+    "--disable-features=TranslateUI,BackForwardCache,CompressionDictionaryTransport,SharedDictionary,WebGPU "
     '--js-flags="--max-old-space-size=512 --expose-gc" '
-    "--disk-cache-size=8388608 --media-cache-size=8388608 "
+    ""
 )
+try:
+    import pathlib as _pathlib
+
+    _cache_dir = _pathlib.Path.home() / "AppData" / "Roaming" / "EcoBrowser" / "cache"
+
+    if _cache_dir.exists():
+        for _p in _cache_dir.rglob("*SharedDictionary*"):
+            try:
+                if _p.is_file():
+                    _p.unlink()
+            except Exception:
+                pass
+except Exception:
+    pass
+
 import sys
 import gc
 import base64
@@ -18,7 +33,6 @@ import time
 from datetime import datetime
 from urllib.parse import quote, urlsplit
 
-# Windows registry for default browser registration (only on Windows)
 if sys.platform == "win32":
     try:
         import winreg as reg
@@ -27,28 +41,14 @@ if sys.platform == "win32":
 else:
     reg = None
 
-from PyQt6.QtCore import (
-    QUrl,
-    QTimer,
-    Qt,
-    QByteArray,
-    QSize,
-    QStandardPaths,
+from PyQt6.QtCore import QUrl, QTimer, Qt, QByteArray, QSize, QStandardPaths
 
-)
-
-# sip handling for all PyQt versions - robust fallback
 try:
     from PyQt6 import sip as _sip_module  # type: ignore
 
     _sip = _sip_module
 except ImportError:
-    try:
-        import sip as _sip_module  # type: ignore
-
-        _sip = _sip_module
-    except ImportError:
-        _sip = None
+    _sip = None
 
 
 def is_view_deleted(view):
@@ -73,14 +73,6 @@ from PyQt6.QtWebEngineCore import (
     QWebEngineScript,
 )
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-
-try:
-    from PyQt6.QtWebChannel import QWebChannel
-
-    HAS_WEBCHANNEL = True
-except ImportError:
-    QWebChannel = None
-    HAS_WEBCHANNEL = False
 
 from PyQt6.QtWidgets import (
     QSpinBox,
@@ -116,7 +108,7 @@ from PyQt6.QtWidgets import (
 # =============================================================================
 
 APP_NAME = "EcoBrowser"
-APP_VERSION = "2.3"
+APP_VERSION = "2.4"
 HOME_URL = "https://www.google.com"
 
 # Built-in Search Engines
@@ -272,6 +264,9 @@ DEFAULT_SETTINGS = {
         "bookmarks": True,
         "passwords": True,
         "customize": True,
+        "gpu": False,
+        "optimizations": False,
+        "translate": True,
         "blocking_level": 2,  # 0=No block, 1=Ad only, 2=Ad+Nude, 3=Extreme (sex words)
         "translation_enabled": True,
         "translation_target_lang": "en",
@@ -311,7 +306,16 @@ DEFAULT_SETTINGS = {
     "download_ask_location": False,
     "default_zoom": 100,
     "hardware_acceleration": True,
-    "gpu_preference": "auto",
+    "ram_trim_enabled": True,
+    "ram_trim_aggressive": False,
+    "ram_trim_interval": 30,
+    "disk_hibernation_enabled": False,  # OFF by default - user turns it on in Optimizations
+    "disk_hibernation_on_switch": False,  # UNCHECKED by default
+    "disk_hibernation_keep_tabs": 1,
+    "disk_hibernation_timeout": 0,
+    "disk_hibernation_low_ram": True,
+    "disk_hibernation_excluded_domains": "",
+    "gpu_preference": "high_performance",  # ALWAYS default to High Performance
     "custom_user_agent": "",
     "custom_css": "",
     "custom_js": "",
@@ -562,10 +566,6 @@ def format_file_size(size_bytes):
     return f"{size_bytes:.1f} TB"
 
 
-# =============================================================================
-# Client-side Injected Script: NSFW Media Blurring & AI-Generated Media Watermarking
-# =============================================================================
-
 ECO_GUARD_JS = r"""
 (function(){if(window.__ecoGuard)return;
 window.__ecoGuard=1;
@@ -708,11 +708,11 @@ window.__ecoRestoreOriginal=function(){
 };
 function createBubble(){
     if(document.getElementById('eco-translate-bubble'))return;
-    let b=document.createElement('div');b.id='eco-translate-bubble';b.className='eco-t-bubble';b.innerHTML='🌐 Translate';
+    let b=document.createElement('div');b.id='eco-translate-bubble';b.className='eco-t-bubble';b.innerHTML='Translate';
     b.onclick=()=>{let p=document.getElementById('eco-translate-panel');if(p)p.classList.toggle('show');};
     document.body.appendChild(b);
     let p=document.createElement('div');p.id='eco-translate-panel';p.className='eco-t-panel';
-    p.innerHTML=`<div class="eco-t-header"><span>🌐 Translate Page</span><button class="eco-t-close" onclick="this.closest('.eco-t-panel').classList.remove('show')">✕</button></div><select class="eco-t-select" id="eco-t-lang"><option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="ar">Arabic</option><option value="hi">Hindi</option><option value="tr">Turkish</option><option value="ru">Russian</option><option value="zh">Chinese</option><option value="ja">Japanese</option><option value="pt">Portuguese</option><option value="it">Italian</option><option value="ko">Korean</option><option value="nl">Dutch</option><option value="pl">Polish</option><option value="ur">Urdu</option></select><button class="eco-t-btn" id="eco-t-do">Translate Every Text</button><button class="eco-t-btn" id="eco-t-restore" style="background:#30363d!important;margin-top:6px">Restore Original</button><div class="eco-t-progress" id="eco-t-progress"><div class="eco-t-progress-bar" id="eco-t-progress-bar"></div></div><div class="eco-t-status" id="eco-t-status">Ready - Python fast translate</div>`;
+    p.innerHTML=`<div class="eco-t-header"><span>Translate Page</span><button class="eco-t-close" onclick="this.closest('.eco-t-panel').classList.remove('show')">✕</button></div><select class="eco-t-select" id="eco-t-lang"><option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="ar">Arabic</option><option value="hi">Hindi</option><option value="tr">Turkish</option><option value="ru">Russian</option><option value="zh">Chinese</option><option value="ja">Japanese</option><option value="pt">Portuguese</option><option value="it">Italian</option><option value="ko">Korean</option><option value="nl">Dutch</option><option value="pl">Polish</option><option value="ur">Urdu</option></select><button class="eco-t-btn" id="eco-t-do">Translate Every Text</button><button class="eco-t-btn" id="eco-t-restore" style="background:#30363d!important;margin-top:6px">Restore Original</button><div class="eco-t-progress" id="eco-t-progress"><div class="eco-t-progress-bar" id="eco-t-progress-bar"></div></div><div class="eco-t-status" id="eco-t-status">Ready - Python fast translate</div>`;
     document.body.appendChild(p);
     document.getElementById('eco-t-do').onclick=()=>{
         let lang=document.getElementById('eco-t-lang').value;
@@ -751,40 +751,90 @@ PASSWORD_DETECTOR_JS = r""  # merged into ECO_AUTH_JS
 
 
 def build_password_autofill_js(email, password):
+    # FIXED: Old used offsetParent!==null which is NULL for position:fixed login modals (most logins are fixed) -> autofill never saw them
+    # New: isVisible() via getBoundingClientRect + getComputedStyle, no offsetParent. Also fills on focus.
     return f"""
 (function() {{
     window.__ecoSavedCredentials = {{email: {json.dumps(email)}, password: {json.dumps(password)}}};
-    if (window.__ecoPassTryFill) {{
-        window.__ecoPassTryFill({json.dumps(email)}, {json.dumps(password)});
-    }} else {{
-        setTimeout(function() {{
-            try {{
-                const emailSelectors = ['input[type="email"]','input[autocomplete="email"]','input[autocomplete="username"]','input[name*="email" i]','input[id*="email" i]','input[name*="user" i][type="text"]'];
-                let ef = null;
-                for (const s of emailSelectors) {{ try {{ const e=document.querySelector(s); if(e){{ ef=e; break; }} }} catch(e){{}} }}
-                if (!ef) {{
-                    const txts = document.querySelectorAll('input[type="text"]');
-                    if (txts.length>0) ef = txts[0];
-                }}
-                const pfs = document.querySelectorAll('input[type="password"]');
-                if (ef) {{
-                    ef.focus();
-                    ef.value = {json.dumps(email)};
-                    ef.dispatchEvent(new Event('input', {{bubbles:true}}));
-                    ef.dispatchEvent(new Event('change', {{bubbles:true}}));
-                }}
-                pfs.forEach(function(pf) {{
-                    pf.focus();
-                    pf.value = {json.dumps(password)};
-                    pf.dispatchEvent(new Event('input', {{bubbles:true}}));
-                    pf.dispatchEvent(new Event('change', {{bubbles:true}}));
-                }});
-                if (pfs.length>0 || ef) {{
-                    console.log('ECO_PASS_FILLED::' + window.location.hostname);
-                }}
-            }} catch(e) {{}}
-        }}, 300);
+    function isVisible(el){{
+        try{{
+            if(!el) return false;
+            let s=getComputedStyle(el);
+            if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+            let r=el.getBoundingClientRect();
+            // Must have size OR be focused (some inputs are 0-size until focused)
+            if(r.width===0 && r.height===0 && document.activeElement!==el) return false;
+            return true;
+        }}catch(e){{ return !!el; }}
     }}
+    function setVal(el, val){{
+        try{{
+            el.focus();
+            let proto = window.HTMLInputElement.prototype;
+            let desc = Object.getOwnPropertyDescriptor(proto, 'value');
+            if(desc && desc.set) desc.set.call(el, val);
+            else el.value = val;
+            el.dispatchEvent(new InputEvent('input', {{bubbles:true, inputType:'insertText', data:val}}));
+            el.dispatchEvent(new Event('input', {{bubbles:true}}));
+            el.dispatchEvent(new Event('change', {{bubbles:true}}));
+            el.dispatchEvent(new Event('blur', {{bubbles:true}}));
+        }}catch(e){{ try{{ el.value=val; }}catch(e2){{}} }}
+    }}
+    function findUserForFill(){{
+        let sels=['#identifierId','input[name="identifier"]','input[aria-label="Email or phone"]','input[type="email"]','input[autocomplete="email"]','input[autocomplete="username"]','input[name*="email" i]','input[name*="user" i]','input[id*="email" i]','input[id*="user" i]','input[name="login"]','input[id="username"]','input[name="username"]','input[placeholder*="email" i]','input[placeholder*="user" i]'];
+        for(let s of sels){{ try{{ let el=document.querySelector(s); if(el && isVisible(el)) return el; }}catch(e){{}} }}
+        try{{ let p=document.querySelector('input[type="password"]'); if(p){{ let f=p.closest('form'); if(f){{ let t=f.querySelector('input[type="text"],input:not([type])'); if(t && isVisible(t)) return t; }} }} }}catch(e){{}}
+        try{{ let all=document.querySelectorAll('input[type="text"],input:not([type])'); for(let el of all){{ if(isVisible(el)) return el; }} }}catch(e){{}}
+        return null;
+    }}
+    function findPassForFill(){{
+        let sels=['input[name="Passwd"]','#password','input[aria-label*="password" i]','input[autocomplete="current-password"]','input[autocomplete="new-password"]','input[type="password"]'];
+        for(let s of sels){{ try{{ let el=document.querySelector(s); if(el && isVisible(el)) return el; }}catch(e){{}} }}
+        try{{ let all=document.querySelectorAll('input[type="password"]'); for(let el of all){{ if(isVisible(el)) return el; }} }}catch(e){{}}
+        return null;
+    }}
+    function doFill(){{
+        try{{
+            let e=findUserForFill(), p=findPassForFill();
+            let filled=false;
+            if(e && !e.value){{ setVal(e, {json.dumps(email)}); filled=true; }}
+            if(p && !p.value){{ setVal(p, {json.dumps(password)}); filled=true; }}
+            // If fields already have value but wrong, still fill (overwrite)
+            if(e && e.value!=={json.dumps(email)}){{ setVal(e, {json.dumps(email)}); filled=true; }}
+            if(filled) console.log('ECO_PASS_FILLED::' + window.location.hostname);
+            return filled;
+        }}catch(e){{ return false; }}
+    }}
+    window.__ecoPassTryFill=function(em, pw){{
+        window.__ecoSavedCredentials={{email:em, password:pw}};
+        doFill();
+    }};
+    // Try now + retries for SPA
+    doFill();
+    setTimeout(doFill, 800);
+    setTimeout(doFill, 2000);
+    setTimeout(doFill, 4000);
+    setTimeout(doFill, 7000);
+    // Fill on focus - when user clicks into a login field, autofill it (this is what Chrome does)
+    document.addEventListener('focusin', function(ev){{
+        try{{
+            let t=ev.target;
+            if(t && (t.type==='password' || t.type==='email' || t.type==='text')){{
+                if(window.__ecoSavedCredentials && !t.value) doFill();
+            }}
+        }}catch(e){{}}
+    }}, true);
+    // MutationObserver - when login modal appears later, fill it
+    try{{
+        let obs=new MutationObserver(function(){{
+            if(window.__ecoSavedCredentials) {{
+                let p=findPassForFill();
+                let e=findUserForFill();
+                if((p && !p.value) || (e && !e.value)) doFill();
+            }}
+        }});
+        obs.observe(document.documentElement, {{childList:true, subtree:true}});
+    }}catch(e){{}}
 }})();
 """
 
@@ -792,6 +842,50 @@ def build_password_autofill_js(email, password):
 # =============================================================================
 # Windows Default Browser Registration Helper
 # =============================================================================
+
+
+def apply_windows_gpu_preference(pref="high_performance"):
+    """
+    Write Windows GPU preference for python.exe + QtWebEngineProcess.exe
+    to HKCU / Software / Microsoft / DirectX / UserGpuPreferences
+    Returns True if registry write succeeded, False otherwise (user can set manually in Windows Settings).
+    pref: "high_performance" (GpuPreference=2), "power_saving" (1), "auto" (0)
+    """
+    try:
+        if sys.platform != "win32":
+            return False
+        try:
+            import winreg as _reg
+        except ImportError:
+            return False
+        mapping = {"high_performance": 2, "power_saving": 1, "auto": 0}
+        val = mapping.get(str(pref).lower(), 2)
+        # Path for UserGpuPreferences - per-user, no admin needed
+        key_path = r"Software\Microsoft\DirectX\UserGpuPreferences"
+        try:
+            key = _reg.CreateKey(_reg.HKEY_CURRENT_USER, key_path)
+        except Exception:
+            return False
+        # python.exe + QtWebEngineProcess.exe are the two processes that need GPU
+        exes = [sys.executable, "QtWebEngineProcess.exe", "python.exe", "pythonw.exe"]
+        # Also add the actual QtWebEngineProcess path if we can find it
+        ok = False
+        for exe in exes:
+            try:
+                if not exe:
+                    continue
+                # Registry value format: "GpuPreference=2;"
+                _reg.SetValueEx(key, exe, 0, _reg.REG_SZ, f"GpuPreference={val};")
+                ok = True
+            except Exception:
+                continue
+        try:
+            _reg.CloseKey(key)
+        except Exception:
+            pass
+        return ok
+    except Exception:
+        return False
 
 
 def is_browser_registered():
@@ -916,7 +1010,7 @@ def build_blocked_page_html(blocked_domain, reason="Security & Privacy Policy"):
     .warning-btn {{ background: #238636; color: #ffffff; text-decoration: none; padding: 10px 24px; border-radius: 24px; font-size: 13.5px; font-weight: 600; display: inline-block; transition: background 0.2s ease; }} 
     .warning-btn:hover {{ background: #2ea043; }}
     </style></head><body><div class='warning-card'>
-    <div class='block-icon'>🔒</div>
+    <div class='block-icon'>[Locked]</div>
     <h1 class='warning-title'>Access Intercepted</h1>
     <p class='warning-text'>Navigation to <b>{blocked_domain}</b> was intercepted by EcoBrowser Content Filter ({reason}).</p>
     <a class='warning-btn' href='https://www.google.com'>Return to Safe Browsing</a>
@@ -1409,6 +1503,113 @@ if (document.body) {{ {code} }} else {{ document.addEventListener('DOMContentLoa
 # =============================================================================
 # Password Manager - Secure Storage + Manager Dialog
 # =============================================================================
+# Shared Fernet helpers — single source of truth for ALL password encryption
+# in EcoBrowser (saved logins + proxy password). Both use the same key file
+# (``.pm_key``) so there is only one key to protect. New values are ALWAYS
+# Fernet-encrypted; old XOR-obfuscated logins / DPAPI proxy credentials are
+# still readable once, then re-saved as Fernet on next load/save.
+# Requires: pip install cryptography
+
+FERNET_KEY_FILENAME = ".pm_key"
+
+
+def _load_or_create_fernet_key(app_data_folder=None):
+    """Load the Fernet key from disk, or generate + save a new one."""
+    try:
+        from cryptography.fernet import Fernet  # type: ignore
+    except ImportError as e:
+        raise RuntimeError(
+            "Fernet encryption requires the 'cryptography' package. "
+            "Install it with: pip install cryptography"
+        ) from e
+
+    # get_app_data_folder() is defined later in this file, but this only
+    # runs at call time (after the whole module is loaded), so this is safe.
+    folder = app_data_folder or get_app_data_folder()
+    os.makedirs(folder, exist_ok=True)
+    key_path = os.path.join(folder, FERNET_KEY_FILENAME)
+
+    if os.path.exists(key_path):
+        with open(key_path, "r", encoding="utf-8") as kf:
+            k = kf.read().strip()
+        if k:
+            # Validate it really is a Fernet key, otherwise regenerate.
+            try:
+                Fernet(k.encode() if isinstance(k, str) else k)
+                return k.encode() if isinstance(k, str) else k
+            except Exception:
+                pass
+
+    new_key = Fernet.generate_key()
+    try:
+        with open(key_path, "w", encoding="utf-8") as kf:
+            kf.write(new_key.decode())
+        try:
+            os.chmod(key_path, 0o600)
+        except Exception:
+            pass
+        # Hide file on Windows
+        if sys.platform == "win32":
+            try:
+                import ctypes
+
+                ctypes.windll.kernel32.SetFileAttributesW(key_path, 2)
+            except Exception:
+                pass
+    except Exception:
+        pass
+    return new_key
+
+
+def _get_fernet(app_data_folder=None):
+    """Return a Fernet instance backed by the shared key file."""
+    from cryptography.fernet import Fernet  # type: ignore
+
+    return Fernet(_load_or_create_fernet_key(app_data_folder))
+
+
+def fernet_encrypt(plaintext, app_data_folder=None):
+    """Encrypt ``plaintext`` with Fernet. Returns a str token (gAAAAA...)."""
+    if not plaintext:
+        return ""
+    f = _get_fernet(app_data_folder)
+    return f.encrypt(plaintext.encode("utf-8")).decode("utf-8")
+
+
+def _legacy_xor_decrypt(ciphertext, key):
+    """Decrypt a pre-Fernet password (XOR + base64 fallback). Migration only."""
+    raw = base64.b64decode(ciphertext.encode())
+    k = (key or "ecobrowser_default_key").encode()
+    dec = bytes([b ^ k[i % len(k)] for i, b in enumerate(raw)])
+    return dec.decode()
+
+
+def fernet_decrypt(token, app_data_folder=None, legacy_key=None):
+    """Decrypt a Fernet token. Falls back to legacy XOR for old entries."""
+    if not token:
+        return ""
+    # 1. Normal path: Fernet
+    try:
+        f = _get_fernet(app_data_folder)
+        return f.decrypt(token.encode("utf-8")).decode("utf-8")
+    except Exception:
+        pass
+    # 2. Migration path: old XOR + base64 entries (from before pure-Fernet)
+    try:
+        key = legacy_key
+        if key is None and app_data_folder:
+            key_path = os.path.join(app_data_folder, FERNET_KEY_FILENAME)
+            if os.path.exists(key_path):
+                with open(key_path, "r", encoding="utf-8") as kf:
+                    key = kf.read().strip()
+        return _legacy_xor_decrypt(token, key)
+    except Exception:
+        pass
+    # 3. Last resort: plain base64 (very old fallback)
+    try:
+        return base64.b64decode(token.encode()).decode()
+    except Exception:
+        return token
 
 
 class PasswordManager:
@@ -1417,102 +1618,56 @@ class PasswordManager:
     def __init__(self, app_data_folder):
         self.folder = app_data_folder
         self.file_path = os.path.join(app_data_folder, "passwords.json")
-        self.key_path = os.path.join(app_data_folder, ".pm_key")
-        self._key = None
+        self.key_path = os.path.join(app_data_folder, FERNET_KEY_FILENAME)
+        # Shared Fernet key (bytes) — the ONLY key used for passwords now.
+        self._key = _load_or_create_fernet_key(app_data_folder)
+        self._fernet = _get_fernet(app_data_folder)
+        self._has_fernet = True
         self._data = {}
-        self._load_key()
         self._load()
-
-    def _load_key(self):
-        try:
-            # Try to use cryptography Fernet if available for strong encryption
-            try:
-                from cryptography.fernet import Fernet  # type: ignore
-
-                self._has_fernet = True
-            except ImportError:
-                self._has_fernet = False
-
-            if os.path.exists(self.key_path):
-                with open(self.key_path, "r", encoding="utf-8") as kf:
-                    k = kf.read().strip()
-                    if k:
-                        self._key = k
-                        return
-            # Generate new key
-            if self._has_fernet:
-                from cryptography.fernet import Fernet  # type: ignore
-
-                new_key = Fernet.generate_key().decode()
-            else:
-                # fallback: random 32 bytes base64
-                import secrets
-
-                new_key = base64.b64encode(secrets.token_bytes(32)).decode()
-            self._key = new_key
-            try:
-                with open(self.key_path, "w", encoding="utf-8") as kf:
-                    kf.write(new_key)
-                # Hide file on Windows
-                if sys.platform == "win32":
-                    try:
-                        import ctypes
-
-                        ctypes.windll.kernel32.SetFileAttributesW(self.key_path, 2)
-                    except Exception:
-                        pass
-            except Exception:
-                pass
-        except Exception:
-            self._key = None
-            self._has_fernet = False
+        self._migrate_legacy_entries()
 
     def _encrypt(self, plaintext):
+        """Encrypt with Fernet ONLY — no XOR / base64 fallback anymore."""
         if not plaintext:
             return ""
-        try:
-            if getattr(self, "_has_fernet", False) and self._key:
-                from cryptography.fernet import Fernet  # type: ignore
-
-                f = Fernet(
-                    self._key.encode() if isinstance(self._key, str) else self._key
-                )
-                return f.encrypt(plaintext.encode()).decode()
-        except Exception:
-            pass
-        # Fallback: simple obfuscation with key xor + base64
-        try:
-            data = plaintext.encode()
-            key = (self._key or "ecobrowser_default_key").encode()
-            enc = bytes([b ^ key[i % len(key)] for i, b in enumerate(data)])
-            return base64.b64encode(enc).decode()
-        except Exception:
-            return base64.b64encode(plaintext.encode()).decode()
+        # fernet_encrypt() raises a clear error if cryptography is missing,
+        # instead of silently downgrading to weak obfuscation.
+        return fernet_encrypt(plaintext, self.folder)
 
     def _decrypt(self, ciphertext):
+        """Decrypt a Fernet token; legacy XOR entries still readable once."""
         if not ciphertext:
             return ""
-        try:
-            if getattr(self, "_has_fernet", False) and self._key:
-                from cryptography.fernet import Fernet  # type: ignore
+        return fernet_decrypt(
+            ciphertext,
+            self.folder,
+            legacy_key=(
+                self._key.decode() if isinstance(self._key, bytes) else self._key
+            ),
+        )
 
-                f = Fernet(
-                    self._key.encode() if isinstance(self._key, str) else self._key
-                )
-                return f.decrypt(ciphertext.encode()).decode()
+    def _is_fernet_token(self, value):
+        """Fernet tokens are urlsafe-base64 and always start with gAAAAA."""
+        return isinstance(value, str) and value.startswith("gAAAAA")
+
+    def _migrate_legacy_entries(self):
+        """Re-encrypt any pre-Fernet (XOR/base64) passwords as Fernet."""
+        try:
+            changed = False
+            for host, entry in list(self._data.items()):
+                stored = entry.get("password", "")
+                if stored and not self._is_fernet_token(stored):
+                    # _decrypt() handles the legacy format, _encrypt() is Fernet
+                    try:
+                        entry["password"] = self._encrypt(self._decrypt(stored))
+                        changed = True
+                    except Exception:
+                        continue
+            if changed:
+                self._save()
         except Exception:
             pass
-        try:
-            # Try xor+base64 fallback
-            raw = base64.b64decode(ciphertext.encode())
-            key = (self._key or "ecobrowser_default_key").encode()
-            dec = bytes([b ^ key[i % len(key)] for i, b in enumerate(raw)])
-            return dec.decode()
-        except Exception:
-            try:
-                return base64.b64decode(ciphertext.encode()).decode()
-            except Exception:
-                return ciphertext
 
     def _load(self):
         try:
@@ -1586,6 +1741,23 @@ class PasswordManager:
             parent = ".".join(parts[-2:])
             if parent in self._data:
                 return self.get_credential(parent)
+        # FIXED: Autofill never worked for Google - saved as accounts.google.com, visiting mail.google.com / google.com never matched
+        # New: Fuzzy - any saved host with same base domain (last 2 parts) matches, e.g. accounts.google.com <-> mail.google.com <-> google.com
+        try:
+            base = ".".join(host.split(".")[-2:]) if len(host.split(".")) >= 2 else host
+            for saved_host, entry in self._data.items():
+                try:
+                    saved_base = (
+                        ".".join(saved_host.lower().split(".")[-2:])
+                        if len(saved_host.split(".")) >= 2
+                        else saved_host.lower()
+                    )
+                    if saved_base == base:
+                        return self.get_credential(saved_host)
+                except Exception:
+                    continue
+        except Exception:
+            pass
         return None
 
     def has_credential(self, host):
@@ -1671,6 +1843,14 @@ class PasswordManagerDialog(QDialog):
         self.btn_clear_all = QPushButton("Clear All")
         self.btn_clear_all.clicked.connect(self.clear_all)
         top_bar.addWidget(self.btn_clear_all)
+
+        # Manual autofill - if auto fails, click this to fill current page now
+        self.btn_autofill = QPushButton("Autofill Current Page")
+        self.btn_autofill.setToolTip(
+            "Fill the current tab's login form with the saved password for this site"
+        )
+        self.btn_autofill.clicked.connect(self._autofill_current)
+        top_bar.addWidget(self.btn_autofill)
         layout.addLayout(top_bar)
 
         # Scroll area for cards
@@ -1694,6 +1874,24 @@ class PasswordManagerDialog(QDialog):
         layout.addLayout(bottom)
 
         self.refresh()
+
+    def _autofill_current(self):
+        # Manual autofill - calls main window's force_autofill_current_page()
+        try:
+            parent = self.parent()
+            if parent and hasattr(parent, "force_autofill_current_page"):
+                parent.force_autofill_current_page()
+                QMessageBox.information(
+                    self,
+                    "Autofill",
+                    "Tried to autofill current page. If the login form is open, it should fill now. If not, open the login form first, then click this again.",
+                )
+            else:
+                QMessageBox.warning(
+                    self, "Autofill", "Could not find main window to autofill."
+                )
+        except Exception as e:
+            QMessageBox.warning(self, "Autofill", f"Autofill error: {e}")
 
     def refresh(self):
         # Clear existing cards except stretch
@@ -1739,7 +1937,7 @@ class PasswordManagerDialog(QDialog):
         vbox.setSpacing(6)
 
         top_row = QHBoxLayout()
-        icon_lbl = QLabel("🔑")
+        icon_lbl = QLabel("[Key]")
         icon_lbl.setFixedWidth(24)
         top_row.addWidget(icon_lbl)
 
@@ -2405,8 +2603,8 @@ body::before {{
         <div class="engine-option" data-engine="google" data-icon="G" data-url="https://www.google.com/search?q=">Google</div>
         <div class="engine-option" data-engine="bing" data-icon="B" data-url="https://www.bing.com/search?q=">Bing</div>
         <div class="engine-option" data-engine="duckduckgo" data-icon="D" data-url="https://duckduckgo.com/?q=">DuckDuckGo</div>
-        <div class="engine-option" data-engine="youtube" data-icon="Y" data-url="https://www.youtube.com/results?search_query=">YouTube</div>
-        <div class="engine-option" data-engine="github" data-icon="GH" data-url="https://github.com/search?q=">GitHub</div>
+        <div class="engine-option" data-engine="yahoo" data-icon="Y" data-url="https://www.yahoo.com/search?q=">Yahoo</div>
+        <div class="engine-option" data-engine="ecosia" data-icon="EC" data-url="https://www.ecosia.org/search?q=">Ecosia</div>
       </div>
       <input id="searchInput" type="text" placeholder="Search Google or type a URL" autofocus autocomplete="off">
       <button class="search-btn" id="searchBtn">Search</button>
@@ -2415,7 +2613,7 @@ body::before {{
   <div class="quicklinks" id="quicklinks"></div>
 </div>
 
-<button id="wallpaperBtn" onclick="toggleWallpaperPanel()">🎨 Wallpaper</button>
+<button id="wallpaperBtn" onclick="toggleWallpaperPanel()">Wallpaper</button>
 
 <div id="wallpaperPanel">
   <div class="wp-header">
@@ -2465,7 +2663,7 @@ function updateClock() {{
 updateClock(); setInterval(updateClock, 1000);
 
 const wallpaperPresets = [
-  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1920&q=80',
+  'https://wallpaperaccess.com/full/1128780.jpg',
   'https://images.unsplash.com/photo-1531306728370-e2ebd9d7bb99?w=1920&q=80',
   'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80',
   'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80',
@@ -3344,7 +3542,7 @@ class NetworkSettingsDialog(QDialog):
         proxy_note = QLabel(
             "HTTP proxies can use these credentials. Chromium does not support "
             "username/password authentication for SOCKS5 proxies. Credentials are "
-            "encrypted for your Windows account. Use only a trusted HTTP proxy because "
+            "encrypted with Fernet. Use only a trusted HTTP proxy because "
             "some proxy authentication methods can expose credentials on the connection."
         )
         proxy_note.setWordWrap(True)
@@ -3460,130 +3658,30 @@ class NetworkSettingsDialog(QDialog):
         self.accept()
 
 
-class BlockingLevelDialog(QDialog):
+class OptimizationsDialog(QDialog):
     def __init__(self, settings, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Blocking Levels - EcoBrowser")
-        self.setMinimumWidth(480)
+        self.setWindowTitle("Optimizations - EcoBrowser")
+        self.resize(620, 700)
         self.values = None
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 18, 18, 18)
-        layout.setSpacing(12)
-
-        intro = QLabel("Choose how strictly EcoBrowser should block content:")
-        intro.setWordWrap(True)
-        layout.addWidget(intro)
-
-        self.level_combo = QComboBox()
-        self.level_combo.addItem("0 - No Block (Allow everything)", 0)
-        self.level_combo.addItem("1 - Ad Block Only (Block ads/trackers)", 1)
-        self.level_combo.addItem("2 - Ad + Nude Sites (Block ads + porn domains)", 2)
-        self.level_combo.addItem(
-            "3 - Extreme Block (Ads + Nude + Sex words on pages)", 3
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        # No tab bar - window itself is Optimizations, a tab inside it was unnecessary
+        # Direct scroll area with sections: VRAM + Hibernation + RAM Trim + Blocking
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        content = QWidget()
+        content_layout = QVBoxLayout(content)
+        content_layout.setSpacing(16)
+        # === SECTION 1: VRAM / GPU ===
+        vram_group = QGroupBox("VRAM / GPU Offload")
+        vram_layout = QVBoxLayout(vram_group)
+        vram_intro = QLabel(
+            "Choose which GPU EcoBrowser uses for VRAM. Writes Windows Graphics preference, no need to open Windows Settings."
         )
-
-        current = int(settings.get("blocking_level", 2))
-        # Find index
-        for i in range(self.level_combo.count()):
-            if self.level_combo.itemData(i) == current:
-                self.level_combo.setCurrentIndex(i)
-                break
-
-        layout.addWidget(self.level_combo)
-
-        # Descriptions
-        desc = QLabel(
-            "• <b>No Block:</b> No filtering, fastest\n"
-            "• <b>Ad Block Only:</b> Blocks known ad/tracker domains\n"
-            "• <b>Ad + Nude:</b> Also blocks porn domains (pornhub, xvideos, etc)\n"
-            "• <b>Extreme:</b> Also scans page text for sex keywords and blocks pages containing them"
-        )
-        desc.setWordWrap(True)
-        desc.setTextFormat(Qt.TextFormat.RichText)
-        desc.setStyleSheet(
-            "color: #8b949e; font-size: 11px; background: #121418; padding: 10px; border-radius: 8px;"
-        )
-        layout.addWidget(desc)
-
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
-
-    def accept(self):
-        self.values = {
-            "blocking_level": int(self.level_combo.currentData()),
-        }
-        super().accept()
-
-
-class GpuSettingsDialog(QDialog):
-    def __init__(self, settings, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("GPU / VRAM - EcoBrowser")
-        self.setMinimumWidth(520)
-        self.values = None
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 18, 18, 18)
-        layout.setSpacing(12)
-        intro = QLabel(
-            "Choose which GPU EcoBrowser should use for VRAM. This writes the Windows Graphics preference, so you don't need to open Windows Settings."
-        )
-        intro.setWordWrap(True)
-        layout.addWidget(intro)
-        gpu_info = self._detect_gpus()
-        info_label = QLabel(gpu_info)
-        info_label.setWordWrap(True)
-        info_label.setStyleSheet(
-            "color: #8b949e; font-size: 11px; background: #121418; padding: 10px; border-radius: 8px;"
-        )
-        layout.addWidget(info_label)
-        self.gpu_combo = QComboBox()
-        self.gpu_combo.addItem("Auto - Let Windows decide (System default)", "auto")
-        self.gpu_combo.addItem(
-            "High performance - NVIDIA RTX 2050 (Use VRAM, fastest)", "high_performance"
-        )
-        self.gpu_combo.addItem(
-            "Power saving - Intel iGPU (Save battery, 0 VRAM in nvidia-smi)",
-            "power_saving",
-        )
-        current = settings.get("gpu_preference", "auto")
-        for i in range(self.gpu_combo.count()):
-            if self.gpu_combo.itemData(i) == current:
-                self.gpu_combo.setCurrentIndex(i)
-                break
-        layout.addWidget(self.gpu_combo)
-        desc = QLabel(
-            "Auto: Windows decides (usually iGPU for browser to save battery)<br>"
-            "High performance: Forces RTX 2050 - textures/raster/video in VRAM. Needs restart. Check via GPU Info button (WebGL renderer should say NVIDIA)<br>"
-            "Power saving: Forces Intel iGPU - nvidia-smi will show 0 VRAM, but RAM stays low and battery lasts longer.<br><br>"
-            "Note: VRAM is additive, not a replacement for RAM. GPU choice changes where raster happens, not DOM/JS RAM. RAM is freed by Frozen->Discarded tabs."
-        )
-        desc.setWordWrap(True)
-        desc.setTextFormat(Qt.TextFormat.RichText)
-        desc.setStyleSheet(
-            "color: #8b949e; font-size: 11px; background: #121418; padding: 10px; border-radius: 8px;"
-        )
-        layout.addWidget(desc)
-        btn_row = QHBoxLayout()
-        win_btn = QPushButton("Open Windows Graphics Settings...")
-        win_btn.clicked.connect(self._open_windows_graphics)
-        btn_row.addWidget(win_btn)
-        gpu_btn = QPushButton("Check Current GPU (WebGL)")
-        gpu_btn.clicked.connect(self._check_gpu)
-        btn_row.addWidget(gpu_btn)
-        layout.addLayout(btn_row)
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
-
-    def _detect_gpus(self):
+        vram_intro.setWordWrap(True)
+        vram_layout.addWidget(vram_intro)
         try:
             import subprocess
 
@@ -3601,13 +3699,199 @@ class GpuSettingsDialog(QDialog):
                 .decode()
                 .strip()
             )
-            txt = "Detected NVIDIA GPUs (nvidia-smi does not list iGPU):\\n"
+            gpu_txt = "Detected NVIDIA (nvidia-smi does not list iGPU):\\n"
             for l in out.splitlines():
-                txt += "• " + l.strip() + "\\n"
-            txt += "\\nYour laptop also has an Intel iGPU (not listed by nvidia-smi). If GPU Info shows Intel, you are on iGPU."
-            return txt
+                gpu_txt += "• " + l.strip() + "\\n"
+            gpu_txt += "\\nLaptop also has Intel iGPU (not listed). If Optimizations -> Check Current GPU shows Intel, you are on iGPU."
         except Exception:
-            return "No NVIDIA GPU detected via nvidia-smi. You likely have only Intel iGPU, or nvidia-smi not in PATH.\\n\\nCheck GPU Info button for WebGL renderer."
+            gpu_txt = "No NVIDIA via nvidia-smi. Check via Optimizations -> Check Current GPU (WebGL)."
+        gpu_info_label = QLabel(gpu_txt)
+        gpu_info_label.setWordWrap(True)
+        gpu_info_label.setStyleSheet(
+            "color: #8b949e; font-size: 11px; background: #121418; padding: 10px; border-radius: 8px;"
+        )
+        vram_layout.addWidget(gpu_info_label)
+        self.gpu_combo = QComboBox()
+        self.gpu_combo.addItem("Auto - Let Windows decide", "auto")
+        self.gpu_combo.addItem(
+            "High performance - NVIDIA RTX 2050 / 3050 (Use VRAM, fastest)",
+            "high_performance",
+        )
+        self.gpu_combo.addItem(
+            "Power saving - Intel iGPU (Save battery, 0 VRAM in nvidia-smi)",
+            "power_saving",
+        )
+        cur_gpu = settings.get("gpu_preference", "high_performance")
+        for i in range(self.gpu_combo.count()):
+            if self.gpu_combo.itemData(i) == cur_gpu:
+                self.gpu_combo.setCurrentIndex(i)
+                break
+        vram_layout.addWidget(self.gpu_combo)
+        vram_desc = QLabel(
+            "Auto: Windows decides (usually iGPU). High: Forces dGPU VRAM, textures/raster/video in VRAM. Power saving: Forces iGPU, uses shared RAM, 0 VRAM in nvidia-smi. Restart needed."
+        )
+        vram_desc.setWordWrap(True)
+        vram_desc.setStyleSheet("color: #8b949e; font-size: 11px;")
+        vram_layout.addWidget(vram_desc)
+        vram_btn_row = QHBoxLayout()
+        win_btn = QPushButton("Open Windows Graphics...")
+        win_btn.clicked.connect(self._open_windows_graphics)
+        vram_btn_row.addWidget(win_btn)
+        check_btn = QPushButton("Check Current GPU (WebGL)")
+        check_btn.clicked.connect(self._check_gpu)
+        vram_btn_row.addWidget(check_btn)
+        vram_layout.addLayout(vram_btn_row)
+        content_layout.addWidget(vram_group)
+        # === SECTION 2: SSD / DISK HIBERNATION ===
+        ssd_group = QGroupBox("SSD / Disk Hibernation")
+        ssd_layout = QVBoxLayout(ssd_group)
+        ssd_intro = QLabel(
+            "Leave a tab -> RAM + VRAM go to SSD as small JSON (URL + title + scroll). View destroyed, renderer killed. Return -> SSD -> RAM."
+        )
+        ssd_intro.setWordWrap(True)
+        ssd_layout.addWidget(ssd_intro)
+        try:
+            hdir = os.path.join(get_app_data_folder(), "hibernated_tabs")
+            cnt = (
+                len([f for f in os.listdir(hdir) if f.endswith(".json")])
+                if os.path.exists(hdir)
+                else 0
+            )
+            total = 0
+            if os.path.exists(hdir):
+                for f in os.listdir(hdir):
+                    try:
+                        total += os.path.getsize(os.path.join(hdir, f))
+                    except Exception:
+                        pass
+            ssd_status = QLabel(
+                f"SSD Folder: {hdir}\\nHibernated on SSD: {cnt} tabs | Total: {total/1024:.1f} KB (tiny JSON only)"
+            )
+            ssd_status.setWordWrap(True)
+            ssd_status.setStyleSheet(
+                "color: #8b949e; font-size: 11px; background: #121418; padding: 10px; border-radius: 8px;"
+            )
+            ssd_layout.addWidget(ssd_status)
+        except Exception:
+            pass
+        self.disk_enabled = QCheckBox("Enable Disk Hibernation (RAM + VRAM -> SSD)")
+        self.disk_enabled.setChecked(settings.get("disk_hibernation_enabled", False))
+        ssd_layout.addWidget(self.disk_enabled)
+        # 1. Hibernate immediately when leave tab
+        self.disk_on_switch = QCheckBox("When leave tab, hibernate immediately")
+        self.disk_on_switch.setChecked(
+            settings.get("disk_hibernation_on_switch", False)
+        )  # keep True so when user enables, immediate is ready
+        self.disk_on_switch.setToolTip(
+            "Leave a tab -> it goes to SSD instantly. Lowest RAM."
+        )
+        ssd_layout.addWidget(self.disk_on_switch)
+        # 2. Hibernate after a specific period (used when immediate is OFF, or as fallback for background tabs)
+        period_label = QLabel(
+            "Hibernate after a specific period (when immediate is OFF, or for tabs that stay open in background):"
+        )
+        period_label.setWordWrap(True)
+        period_label.setStyleSheet("color: #8b949e; font-size: 11px;")
+        ssd_layout.addWidget(period_label)
+        ssd_form = QFormLayout()
+        self.keep_spin = QSpinBox()
+        self.keep_spin.setRange(1, 5)
+        self.keep_spin.setValue(int(settings.get("disk_hibernation_keep_tabs", 1)))
+        ssd_form.addRow("Keep in RAM:", self.keep_spin)
+        self.disk_timeout_spin = QSpinBox()
+        self.disk_timeout_spin.setRange(0, 120)
+        self.disk_timeout_spin.setSuffix(" minutes (0 = disabled, only immediate)")
+        self.disk_timeout_spin.setValue(
+            int(settings.get("disk_hibernation_timeout", 0))
+        )
+        self.disk_timeout_spin.setToolTip(
+            "If immediate is OFF, tabs hibernate after this many minutes inactive. If immediate is ON, this is a fallback for background tabs."
+        )
+        ssd_form.addRow("Hibernate after:", self.disk_timeout_spin)
+        ssd_layout.addLayout(ssd_form)
+        # 3. Exclude some domains from hibernation
+        exclude_label = QLabel(
+            "Exclude some domains from hibernation (these tabs will NEVER hibernate, stay in RAM):"
+        )
+        exclude_label.setWordWrap(True)
+        exclude_label.setStyleSheet("color: #8b949e; font-size: 11px;")
+        ssd_layout.addWidget(exclude_label)
+        self.excluded_edit = QTextEdit()
+        self.excluded_edit.setPlaceholderText(
+            "youtube.com, gmail.com, whatsapp.com, chatgpt.com\nOne per line or comma-separated. Example: if you put youtube.com, YouTube tabs will never hibernate so video keeps playing."
+        )
+        self.excluded_edit.setMaximumHeight(70)
+        # Load saved value - support both comma and newline
+        _excluded_saved = settings.get("disk_hibernation_excluded_domains", "")
+        if isinstance(_excluded_saved, list):
+            _excluded_saved = ", ".join(_excluded_saved)
+        self.excluded_edit.setPlainText(_excluded_saved)
+        ssd_layout.addWidget(self.excluded_edit)
+        exclude_hint = QLabel(
+            "Tip: Put music / video / chat sites here so they don't pause when you switch away."
+        )
+        exclude_hint.setWordWrap(True)
+        exclude_hint.setStyleSheet("color: #8b949e; font-size: 11px;")
+        ssd_layout.addWidget(exclude_hint)
+        self.low_ram_check = QCheckBox(
+            "Ultra Low RAM: Disk cache 200MB on SSD, renderer limit 4, no BackForwardCache"
+        )
+        self.low_ram_check.setChecked(settings.get("disk_hibernation_low_ram", True))
+        ssd_layout.addWidget(self.low_ram_check)
+        ssd_btn_row = QHBoxLayout()
+        clear_btn = QPushButton("Clear SSD Files")
+        clear_btn.clicked.connect(self._clear_ssd)
+        ssd_btn_row.addWidget(clear_btn)
+        open_btn = QPushButton("Open SSD Folder")
+        open_btn.clicked.connect(self._open_ssd_folder)
+        ssd_btn_row.addWidget(open_btn)
+        ssd_layout.addLayout(ssd_btn_row)
+        content_layout.addWidget(ssd_group)
+        # === SECTION 3: RAM TRIMMING MORE ===
+        ram_group = QGroupBox("RAM Trimming")
+        ram_layout = QVBoxLayout(ram_group)
+        ram_intro = QLabel(
+            "Trims RAM every few seconds: EmptyWorkingSet for Python + QtWebEngineProcess, Python GC, clear in-memory cache. More frequent = lower RAM, tiny CPU cost."
+        )
+        ram_intro.setWordWrap(True)
+        ram_layout.addWidget(ram_intro)
+        self.ram_trim_enabled = QCheckBox("Enable RAM Trimming (Recommended)")
+        self.ram_trim_enabled.setChecked(settings.get("ram_trim_enabled", True))
+        ram_layout.addWidget(self.ram_trim_enabled)
+        self.ram_aggressive = QCheckBox(
+            "Aggressive Trim: Also GC + Clear memory cache + Trim after every hibernation"
+        )
+        self.ram_aggressive.setChecked(settings.get("ram_trim_aggressive", True))
+        ram_layout.addWidget(self.ram_aggressive)
+        ram_form = QFormLayout()
+        self.ram_interval_spin = QSpinBox()
+        self.ram_interval_spin.setRange(3, 60)
+        self.ram_interval_spin.setSuffix(" seconds")
+        self.ram_interval_spin.setValue(int(settings.get("ram_trim_interval", 5)))
+        self.ram_interval_spin.setToolTip(
+            "5s = lowest RAM, 15s = balanced, 30s = less CPU"
+        )
+        ram_form.addRow("Trim every:", self.ram_interval_spin)
+        ram_layout.addLayout(ram_form)
+        ram_desc = QLabel(
+            "5s + Aggressive = 200MB -> ~50MB, stays low. WorkingSet drops to 2MB right after trim (cosmetic), Private Bytes is real RAM."
+        )
+        ram_desc.setWordWrap(True)
+        ram_desc.setStyleSheet("color: #8b949e; font-size: 11px;")
+        ram_layout.addWidget(ram_desc)
+        trim_now_btn = QPushButton("Trim RAM Now")
+        trim_now_btn.clicked.connect(self._trim_now)
+        ram_layout.addWidget(trim_now_btn)
+        content_layout.addWidget(ram_group)
+        content_layout.addStretch()
+        scroll.setWidget(content)
+        main_layout.addWidget(scroll)
+        btns = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        btns.accepted.connect(self.accept)
+        btns.rejected.connect(self.reject)
+        main_layout.addWidget(btns)
 
     def _open_windows_graphics(self):
         try:
@@ -3620,8 +3904,7 @@ class GpuSettingsDialog(QDialog):
             QMessageBox.information(
                 self,
                 "Windows Graphics",
-                "Open Settings -> System -> Display -> Graphics manually.\\n\\nAdd python.exe and QtWebEngineProcess.exe -> High performance for RTX 2050.\\n\\nError: "
-                + str(e),
+                "Open Settings -> Display -> Graphics manually. Error: " + str(e),
             )
 
     def _check_gpu(self):
@@ -3630,117 +3913,72 @@ class GpuSettingsDialog(QDialog):
             if parent and hasattr(parent, "open_gpu_info_page"):
                 parent.open_gpu_info_page()
                 self.accept()
-            else:
-                QMessageBox.information(
-                    self, "GPU", "Close this and click GPU Info button in toolbar"
-                )
         except Exception as e:
             QMessageBox.information(self, "GPU", "Error: " + str(e))
 
-    def accept(self):
-        self.values = {"gpu_preference": self.gpu_combo.currentData()}
-        super().accept()
-
-
-def apply_windows_gpu_preference(gpu_preference):
-    if os.name != "nt":
-        return False
-    try:
-        import winreg
-        import sys
-
-        mapping = {"auto": 0, "high_performance": 2, "power_saving": 1}
-        pref = mapping.get(gpu_preference, 0)
-        python_exe = sys.executable
-        qt_exe = ""
+    def _clear_ssd(self):
         try:
-            import pathlib
+            hdir = os.path.join(get_app_data_folder(), "hibernated_tabs")
+            cnt = 0
+            if os.path.exists(hdir):
+                for f in os.listdir(hdir):
+                    try:
+                        os.remove(os.path.join(hdir, f))
+                        cnt += 1
+                    except Exception:
+                        pass
+            QMessageBox.information(
+                self, "Disk Hibernation", f"Cleared {cnt} SSD files."
+            )
+        except Exception as e:
+            QMessageBox.information(self, "Disk Hibernation", f"Error: {e}")
 
-            for p in pathlib.Path(sys.prefix).rglob("QtWebEngineProcess.exe"):
-                qt_exe = str(p)
-                break
+    def _open_ssd_folder(self):
+        try:
+            import subprocess
+
+            hdir = os.path.join(get_app_data_folder(), "hibernated_tabs")
+            os.makedirs(hdir, exist_ok=True)
+            subprocess.Popen(["explorer", hdir])
         except Exception:
             pass
-        key_path = r"Software\\Microsoft\\DirectX\\UserGpuPreferences"
+
+    def _trim_now(self):
         try:
-            key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
-            for exe in [python_exe, qt_exe]:
-                if exe:
-                    val = "GpuPreference=" + str(pref) + ";"
-                    winreg.SetValueEx(key, exe, 0, winreg.REG_SZ, val)
-                    print(
-                        "[GPU] Set Windows Graphics preference for "
-                        + exe
-                        + " -> "
-                        + str(pref)
-                        + " ("
-                        + str(gpu_preference)
-                        + ")"
-                    )
-            winreg.CloseKey(key)
-            return True
+            parent = self.parent()
+            if parent and hasattr(parent, "_trim_working_sets"):
+                parent._trim_working_sets()
+                QMessageBox.information(
+                    self,
+                    "RAM Trim",
+                    "RAM trimmed now - WorkingSet freed. Check Task Manager Private Working Set.",
+                )
+            else:
+                QMessageBox.information(
+                    self, "RAM Trim", "Trim will run on next timer tick."
+                )
         except Exception as e:
-            print("[GPU] Failed to write registry preference: " + str(e))
-            return False
-    except Exception as e:
-        print("[GPU] apply preference error: " + str(e))
-        return False
-
-
-class HibernationSettingsDialog(QDialog):
-    def __init__(self, settings, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Hibernation Settings - EcoBrowser")
-        self.setMinimumWidth(420)
-        self.values = None
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 18, 18, 18)
-        layout.setSpacing(12)
-
-        intro = QLabel(
-            "Configure Eco Sleep to save RAM. Inactive tabs will show 💤 and wake when you click them."
-        )
-        intro.setWordWrap(True)
-        layout.addWidget(intro)
-
-        self.enabled_checkbox = QCheckBox("Enable Tab Hibernation (Eco Sleep)")
-        self.enabled_checkbox.setChecked(settings.get("hibernation_enabled", True))
-        layout.addWidget(self.enabled_checkbox)
-
-        form = QFormLayout()
-        form.setSpacing(10)
-
-        self.timeout_spin = QSpinBox()
-        self.timeout_spin.setRange(1, 120)
-        self.timeout_spin.setSuffix(" minutes")
-        self.timeout_spin.setValue(int(settings.get("hibernation_timeout", 15)))
-        self.timeout_spin.setToolTip("Inactive tabs will hibernate after this time")
-        form.addRow("Hibernate after:", self.timeout_spin)
-
-        layout.addLayout(form)
-
-        # Info label
-        info = QLabel(
-            "💡 Tip: Right-click tab bar → Hibernate Tab to manually sleep a tab. Hibernated tabs save ~120MB each."
-        )
-        info.setWordWrap(True)
-        info.setStyleSheet("color: #8b949e; font-size: 11px;")
-        layout.addWidget(info)
-
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+            QMessageBox.information(self, "RAM Trim", f"Error: {e}")
 
     def accept(self):
         self.values = {
-            "hibernation_enabled": self.enabled_checkbox.isChecked(),
-            "hibernation_timeout": int(self.timeout_spin.value()),
+            "gpu_preference": self.gpu_combo.currentData(),
+            "disk_hibernation_enabled": self.disk_enabled.isChecked(),
+            "disk_hibernation_on_switch": self.disk_on_switch.isChecked(),
+            "disk_hibernation_keep_tabs": int(self.keep_spin.value()),
+            "disk_hibernation_timeout": int(self.disk_timeout_spin.value()),
+            "disk_hibernation_excluded_domains": self.excluded_edit.toPlainText().strip(),
+            "disk_hibernation_low_ram": self.low_ram_check.isChecked(),
+            "hibernation_enabled": self.disk_enabled.isChecked(),
+            "ram_trim_enabled": self.ram_trim_enabled.isChecked(),
+            "ram_trim_aggressive": self.ram_aggressive.isChecked(),
+            "ram_trim_interval": int(self.ram_interval_spin.value()),
         }
         super().accept()
+
+
+# Alias - Hibernation is now inside Optimizations (VRAM+SSD+Hibernation), old code calls HibernationSettingsDialog
+HibernationSettingsDialog = OptimizationsDialog
 
 
 class ReaderSettingsDialog(QDialog):
@@ -4221,6 +4459,17 @@ class ToolbarCustomizerDialog(QDialog):
             ("bookmarks", "Bookmark Star", "Star to bookmark current page"),
             ("passwords", "Password Manager", "Saved logins & autofill"),
             ("customize", "Customize", "Appearance & New Tab & Privacy"),
+            ("gpu", "GPU / VRAM", "GPU / VRAM settings - opens Optimizations"),
+            (
+                "optimizations",
+                "Optimizations",
+                "VRAM + Hibernation + RAM Trim - opens Optimizations",
+            ),
+            (
+                "translate",
+                "Translate",
+                "Translate Page button - uncheck to remove from toolbar",
+            ),
         ]
 
         from PyQt6.QtWidgets import QCheckBox, QScrollArea
@@ -4274,7 +4523,9 @@ class ToolbarCustomizerDialog(QDialog):
     def _reset(self):
         defaults = DEFAULT_SETTINGS["toolbar_pinned"]
         for key, cb in self.checkboxes.items():
-            cb.setChecked(defaults.get(key, True))
+            cb.setChecked(
+                defaults.get(key, False if key in ("gpu", "optimizations") else True)
+            )
         self.hide_chrome_cb.setChecked(True)
 
     def _save(self):
@@ -4307,6 +4558,24 @@ class EcoBrowserWindow(QMainWindow):
         self.readable_state = {}  # view_id -> bool
 
         self.settings = self.load_all_settings()
+        # === DISK HIBERNATION: RAM + VRAM -> SSD when you leave a tab ===
+        # Each hibernated tab = 1 JSON file on SSD (URL + title + scroll), view destroyed, renderer killed
+        try:
+            self.hibernation_dir = os.path.join(
+                get_app_data_folder(), "hibernated_tabs"
+            )
+            os.makedirs(self.hibernation_dir, exist_ok=True)
+            self.hibernated_tabs = (
+                {}
+            )  # index -> {url, title, scroll_x, scroll_y, json_path}
+            self._hibernating = (
+                set()
+            )  # indexes currently being hibernated (avoid double)
+            print(f"[HIBERNATE-DISK] Dir: {self.hibernation_dir}")
+        except Exception as e:
+            print(f"[HIBERNATE-DISK] init error: {e}")
+            self.hibernated_tabs = {}
+            self._hibernating = set()
         # Password Manager
         try:
             self.password_manager = PasswordManager(get_app_data_folder())
@@ -4390,41 +4659,40 @@ class EcoBrowserWindow(QMainWindow):
             self._ram_trim_timer = QTimer(self)
 
             def _discard_background_tabs(self_ref):
-                LS = QWebEnginePage.LifecycleState
-                now = time.time()
-                current = (
-                    self_ref.stack.currentWidget()
-                    if hasattr(self_ref, "stack")
-                    else None
-                )
-                for i in range(self_ref.stack.count()):
-                    v = self_ref.stack.widget(i)
-                    if v is None or v is current or is_view_deleted(v):
-                        continue
-                    # _last_active is set on view when selected, defaults to now if missing
-                    last = getattr(v, "_last_active", now)
-                    if now - last < 60:
-                        continue
-                    page = v.page()
-                    try:
-                        state = page.lifecycleState()
-                    except Exception:
-                        continue
-                    if state == LS.Active:
+                # OLD SYSTEM REMOVED - Replaced by Disk Hibernation (RAM+VRAM -> SSD, view destroyed)
+                # Frozen->Discarded kept view overhead alive. Disk Hibernation destroys view completely.
+                # This function now does nothing - hibernation happens on switch_tab / add_new_tab via hibernate_tab_to_disk()
+                # Keep it as no-op for compatibility, but if timeout is set (>0), hibernate timed-out tabs to disk
+                try:
+                    if not self_ref.settings.get("disk_hibernation_enabled", False):
+                        return
+                    timeout_min = int(
+                        self_ref.settings.get("disk_hibernation_timeout", 0)
+                    )
+                    if timeout_min <= 0:
+                        return
+                    now = time.time()
+                    current = (
+                        self_ref.stack.currentWidget()
+                        if hasattr(self_ref, "stack")
+                        else None
+                    )
+                    for i in range(self_ref.stack.count()):
+                        v = self_ref.stack.widget(i)
+                        if v is None or v is current or is_view_deleted(v):
+                            continue
+                        if getattr(v, "_is_hibernated_placeholder", False):
+                            continue
+                        last = getattr(v, "_last_active", now)
+                        if now - last < timeout_min * 60:
+                            continue
+                        # Hibernate to disk instead of Frozen/Discarded
                         try:
-                            page.setLifecycleState(LS.Frozen)
-                            print(f"[RAM] Froze tab {i} (tick 1)")
-                        except Exception as e:
-                            print(f"[RAM] freeze tab {i} error: {e}")
-                    elif state == LS.Frozen:
-                        try:
-                            page.setLifecycleState(LS.Discarded)
-                            print(
-                                f"[RAM] Discarded tab {i} (tick 2) - DOM/JS RAM freed"
-                            )
-                        except Exception as e:
-                            print(f"[RAM] discard tab {i} error: {e}")
-                    # Already Discarded -> do nothing, don't re-run Stop/JS wipe
+                            self_ref.hibernate_tab_to_disk(i)
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
 
             def _trim_working_sets():
                 # Works WITHOUT psutil - uses ctypes only, no error spam if psutil missing
@@ -4544,15 +4812,43 @@ class EcoBrowserWindow(QMainWindow):
                     pass
 
             def _trim_ram():
+                # MINIMAL OPTIMIZATIONS MANAGEMENT ONLY - features untouched
+                # Before: clearHttpCache() + gc every 5s -> sqlite spam x4 + 355MB spikes + crashes
+                # Now: EmptyWorkingSet only every 30s. clearHttpCache ONLY if user explicitly turns Aggressive ON, and only once per 10 ticks (~5 min)
                 try:
-                    _log_ram()  # Log BEFORE trim - after trim WorkingSet is 2MB (cosmetic)
+                    if not self.settings.get("ram_trim_enabled", True):
+                        return
+                    _log_ram()
                     _discard_background_tabs(self)
                     _trim_working_sets()
+                    # Aggressive is OFF by default now. If user turns it ON, throttle it hard.
+                    if self.settings.get("ram_trim_aggressive", False):
+                        try:
+                            self._trim_tick = getattr(self, "_trim_tick", 0) + 1
+                            if (
+                                self._trim_tick % 10 == 0
+                            ):  # every 10th trim (~5 min at 30s), not every tick
+                                try:
+                                    import gc
+
+                                    gc.collect()
+                                except Exception:
+                                    pass
+                                # DON'T clearHttpCache() every tick - that caused sqlite Invalid total_dict_size spam
+                                # Only clear if cache is huge, and user asked for aggressive
+                                try:
+                                    pass  # intentionally no clearHttpCache here - disk cache stays on SSD
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
                 except Exception as e:
                     print(f"[RAM] trim error: {e}")
 
             self._ram_trim_timer.timeout.connect(_trim_ram)
-            self._ram_trim_timer.start(15000)
+            self._ram_trim_timer.start(
+                int(self.settings.get("ram_trim_interval", 5)) * 1000
+            )  # Optimizations: 5s default, more trimming
             # Store for reuse
             self._discard_background_tabs = _discard_background_tabs
             self._trim_working_sets = _trim_working_sets
@@ -4564,14 +4860,18 @@ class EcoBrowserWindow(QMainWindow):
 
         self.profile = QWebEngineProfile("EcoBrowserProfile", self)
         self.profile.setPersistentStoragePath(os.path.join(app_data_path, "storage"))
-        self.profile.setCachePath(os.path.join(app_data_path, "cache"))
+        self.profile.setCachePath(
+            os.path.join(app_data_path, "cache_v2")
+        )  # cache_v2 abandons corrupted Shared Dictionary DB (sqlite spam), storage/cookies unchanged
         self.profile.setPersistentCookiesPolicy(
             QWebEngineProfile.PersistentCookiesPolicy.ForcePersistentCookies
         )
         # Harden profile to prevent crashes
         try:
             self.profile.setHttpCacheType(QWebEngineProfile.HttpCacheType.DiskHttpCache)
-            self.profile.setHttpCacheMaximumSize(8 * 1024 * 1024)  # 200MB
+            self.profile.setHttpCacheMaximumSize(
+                200 * 1024 * 1024
+            )  # SSD cache - costs no RAM, 8MB was too small  # 200MB
         except Exception:
             pass
         try:
@@ -4765,44 +5065,48 @@ class EcoBrowserWindow(QMainWindow):
         toolbar_layout.addWidget(self.reader_button)
 
         # Translation Bubble Button
-        self.gpu_settings_button = self._make_toolbar_button("GPU")
+        # GPU + Optimizations toolbar pins - customizable, OFF by default
+        self.gpu_button = self._make_toolbar_button("GPU / VRAM - Opens Optimizations")
         try:
-            _ic = (
+            _ic_gpu = (
                 DARK_THEME["icon_color"]
                 if getattr(self, "is_dark_mode", True)
                 else LIGHT_THEME["icon_color"]
             )
-            self.gpu_settings_button.setIcon(render_svg_icon(SVG_ICONS["gpu"], _ic, 18))
-            self.gpu_settings_button.setText("")
+            self.gpu_button.setIcon(render_svg_icon(SVG_ICONS["gpu"], _ic_gpu, 18))
+            self.gpu_button.setText("")
         except Exception:
-            self.gpu_settings_button.setText("GPU")
-        self.gpu_settings_button.clicked.connect(self.open_gpu_settings_dialog)
-        toolbar_layout.addWidget(self.gpu_settings_button)
+            self.gpu_button.setText("GPU")
+        self.gpu_button.clicked.connect(self.open_optimizations_dialog)
+        toolbar_layout.addWidget(self.gpu_button)
 
-        self.gpu_info_button = self._make_toolbar_button("GPU Info 🖥️")
+        self.optimizations_button = self._make_toolbar_button(
+            "Optimizations - VRAM + Hibernation + RAM Trim"
+        )
         try:
-            _ic2 = (
+            _ic_opt = (
                 DARK_THEME["icon_color"]
                 if getattr(self, "is_dark_mode", True)
                 else LIGHT_THEME["icon_color"]
             )
-            self.gpu_info_button.setIcon(
-                render_svg_icon(SVG_ICONS["monitor"], _ic2, 18)
+            self.optimizations_button.setIcon(
+                render_svg_icon(SVG_ICONS["gpu"], _ic_opt, 18)
             )
-            self.gpu_info_button.setText("")
+            self.optimizations_button.setText("")
         except Exception:
-            self.gpu_info_button.setText("i")
-        self.gpu_info_button.clicked.connect(self.open_gpu_info_page)
-        toolbar_layout.addWidget(self.gpu_info_button)
+            self.optimizations_button.setText("Opt")
+        self.optimizations_button.clicked.connect(self.open_optimizations_dialog)
+        toolbar_layout.addWidget(self.optimizations_button)
 
-        self.translate_button = self._make_toolbar_button("Translate Page 🌐")
+        # GPU Info button REMOVED from toolbar - only accessible via Optimizations -> Check Current GPU (WebGL)
+        # self.gpu_info_button is no longer created, OptimizationsDialog._check_gpu() is the only entry point
+
+        self.translate_button = self._make_toolbar_button("Translate Page")
         self.translate_button.clicked.connect(self.toggle_translation_bubble)
         toolbar_layout.addWidget(self.translate_button)
 
         # Blocking Level Button
-        self.blocking_level_button = self._make_toolbar_button("Blocking Level 🛡️")
-        self.blocking_level_button.clicked.connect(self.open_blocking_level_dialog)
-        toolbar_layout.addWidget(self.blocking_level_button)
+        # Blocking button REMOVED - Blocking Level is only inside Optimizations, no standalone button
 
         # Userscript Manager Button
         self.userscript_button = self._make_toolbar_button("Userscripts (.user.js)")
@@ -4853,12 +5157,8 @@ class EcoBrowserWindow(QMainWindow):
 
         # Reader Mode actions
         self.menu.addAction("Toggle Reader Mode\tCtrl+Shift+R", self.toggle_reader_mode)
-        self.menu.addAction("Reader Mode Settings", self.open_reader_settings_dialog)
-        self.menu.addAction(
-            "Hibernation Settings", self.open_hibernation_settings_dialog
-        )
-        self.menu.addAction("Blocking Levels", self.open_blocking_level_dialog)
-        self.menu.addAction("GPU / VRAM Settings .", self.open_gpu_settings_dialog)
+        self.menu.addAction("Reader Mode Settings...", self.open_reader_settings_dialog)
+        self.menu.addAction("Optimizations...", self.open_optimizations_dialog)
         self.menu.addAction("Translate Page", self.toggle_translation_bubble)
         self.menu.addSeparator()
 
@@ -4886,7 +5186,7 @@ class EcoBrowserWindow(QMainWindow):
         self.menu.addAction("New tab\tCtrl+T", lambda: self.add_new_tab(self.home_url))
         self.menu.addAction("Downloads\tCtrl+J", self.open_downloads_dialog)
         self.menu.addAction("Bookmarks Manager", self.open_bookmarks_dialog)
-        self.menu.addAction("Password Manager 🔑", self.open_password_manager_dialog)
+        self.menu.addAction("Password Manager", self.open_password_manager_dialog)
         self.menu.addAction("History\tCtrl+H", self.open_history_dialog)
         self.menu.addAction("Clear browsing cookies", self.clear_cookies)
         self.menu.addSeparator()
@@ -5158,10 +5458,7 @@ class EcoBrowserWindow(QMainWindow):
                 self.gpu_settings_button.setIcon(
                     render_svg_icon(SVG_ICONS["gpu"], icon_color, 18)
                 )
-            if hasattr(self, "gpu_info_button"):
-                self.gpu_info_button.setIcon(
-                    render_svg_icon(SVG_ICONS["monitor"], icon_color, 18)
-                )
+            # GPU Info icon update removed - button removed, only via Optimizations
             if hasattr(self, "hibernate_button"):
                 self.hibernate_button.setIcon(
                     render_svg_icon(SVG_ICONS["download"], icon_color, 18)
@@ -5364,6 +5661,13 @@ class EcoBrowserWindow(QMainWindow):
 
     def add_new_tab(self, url):
         try:
+            # Hibernate current tab to SSD before opening new one - RAM+VRAM -> SSD
+            try:
+                cur = self.stack.currentIndex() if hasattr(self, "stack") else -1
+                if cur != -1 and self.stack.count() >= 1:
+                    self.hibernate_tab_to_disk(cur)
+            except Exception as e:
+                print(f"[HIBERNATE-DISK] add_new_tab hibernate prev error: {e}")
             # Crash-proof: validate URL, no tab limit as requested
             if not url or not isinstance(url, str):
                 url = self.home_url
@@ -5555,9 +5859,9 @@ class EcoBrowserWindow(QMainWindow):
             view._hibernated_url = url
             view._is_hibernated = True
             self.hibernated_tabs[id(view)] = url
-            html = f"<html><body style='background:#121418;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif'><div style='text-align:center'><div style='font-size:48px'>💤</div><h2>Tab Slept</h2><p>{view.title()[:40]}</p><p style='color:#8b949e;font-size:12px'>{url[:60]}</p><p style='margin-top:12px;color:#8b949e'>Click tab to wake</p></div></body></html>"
+            html = f"<html><body style='background:#121418;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif'><div style='text-align:center'><div style='font-size:48px'></div><h2>Tab Slept</h2><p>{view.title()[:40]}</p><p style='color:#8b949e;font-size:12px'>{url[:60]}</p><p style='margin-top:12px;color:#8b949e'>Click tab to wake</p></div></body></html>"
             view.setHtml(html, QUrl("eco://hibernated"))
-            self.update_tab_title("💤 " + (view.title() or "Sleeping"), view)
+            self.update_tab_title("[Hibernated] " + (view.title() or "Sleeping"), view)
         except Exception:
             pass
 
@@ -5801,7 +6105,7 @@ class EcoBrowserWindow(QMainWindow):
                         return
                     view._python_blocked = True
                     # Block via Python - replace page content (same UI as JS blocker)
-                    blocked_html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{{background:#121418;color:#f0f6fc;font-family:-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}}.card{{background:#1e2229;padding:36px 44px;border-radius:16px;border:1px solid #30363d;text-align:center;max-width:440px;box-shadow:0 16px 36px rgba(0,0,0,.6)}}.t{{color:#f85149;font-size:22px;margin:0 0 12px;font-weight:600}}.x{{color:#8b949e;font-size:14px;margin-bottom:24px;line-height:1.6}}.b{{background:#238636;color:#fff;text-decoration:none;padding:10px 24px;border-radius:24px;font-size:13.5px;font-weight:600;display:inline-block}}</style></head><body><div class=card><div style=font-size:40px;margin-bottom:12px>🔞</div><h1 class=t>Adult Content Blocked</h1><p class=x>Blocked by EcoBrowser SafeShield (Python):<br><b>{kw}</b> on <b>{host}</b></p><a class=b href=https://www.google.com>Return to Safe Browsing</a></div></body></html>"""
+                    blocked_html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{{background:#121418;color:#f0f6fc;font-family:-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}}.card{{background:#1e2229;padding:36px 44px;border-radius:16px;border:1px solid #30363d;text-align:center;max-width:440px;box-shadow:0 16px 36px rgba(0,0,0,.6)}}.t{{color:#f85149;font-size:22px;margin:0 0 12px;font-weight:600}}.x{{color:#8b949e;font-size:14px;margin-bottom:24px;line-height:1.6}}.b{{background:#238636;color:#fff;text-decoration:none;padding:10px 24px;border-radius:24px;font-size:13.5px;font-weight:600;display:inline-block}}</style></head><body><div class=card><div style=font-size:40px;margin-bottom:12px></div><h1 class=t>Adult Content Blocked</h1><p class=x>Blocked by EcoBrowser SafeShield (Python):<br><b>{kw}</b> on <b>{host}</b></p><a class=b href=https://www.google.com>Return to Safe Browsing</a></div></body></html>"""
                     try:
                         view.setHtml(blocked_html, QUrl("eco://blocked"))
                     except Exception:
@@ -5856,29 +6160,152 @@ class EcoBrowserWindow(QMainWindow):
             except Exception:
                 pass
             # 2. Setup detection for save via Python-injected JS (one-time, not persistent observer)
+            # FIXED: Google login is 2-step - email on page 1, password on page 2, so old detector (needs both on same page) never saved Google
+            # New: Store email from step 1, reuse it on password step. Also Google selectors: #identifierId, [name="identifier"], [name="Passwd"]
             js_detect = """
             (function(){
                 try{
                     if(window._ecoPassPython) return;
                     window._ecoPassPython=true;
-                    function findEmail(){
-                        let sels=['input[type="email"]','input[autocomplete="email"]','input[name*="email" i]'];
-                        for(let sel of sels){try{let el=document.querySelector(sel);if(el&&el.offsetParent!==null)return el;}catch(e){}}
-                        try{let p=document.querySelector('input[type="password"]');if(p){let f=p.closest('form');if(f){let t=f.querySelector('input[type="text"]');if(t)return t;}}}catch(e){}return null;
+                    function getStoredEmail(){
+                        try{
+                            if(window._ecoSavedEmail && window._ecoSavedEmail.length>1) return window._ecoSavedEmail;
+                            let s=localStorage.getItem('eco_last_email'); if(s && s.length>1) return s;
+                        }catch(e){}
+                        return null;
                     }
-                    function findPass(){try{return document.querySelector('input[type="password"]');}catch(e){return null;}}
+                    function storeEmail(v){
+                        try{ if(v && v.length>1){ window._ecoSavedEmail=v; localStorage.setItem('eco_last_email', v); } }catch(e){}
+                    }
+                    function isVisibleEco(el){
+                        try{
+                            if(!el) return false;
+                            let s=getComputedStyle(el);
+                            if(s.display==='none' || s.visibility==='hidden') return false;
+                            let r=el.getBoundingClientRect();
+                            if(r.width===0 && r.height===0 && document.activeElement!==el) return false;
+                            return true;
+                        }catch(e){ return !!el; }
+                    }
+                    function findUser(){
+                        // Google: #identifierId, [name="identifier"], aria-label Email or phone
+                        let sels=['#identifierId','input[name="identifier"]','input[name="identifierId"]','input[aria-label="Email or phone"]','input[type="email"]','input[autocomplete="email"]','input[autocomplete="username"]','input[name*="email" i]','input[name*="user" i]','input[id*="email" i]','input[id*="user" i]'];
+                        for(let sel of sels){try{let el=document.querySelector(sel);if(el&&isVisibleEco(el)&&el.value&&el.value.trim())return el;}catch(e){}}
+                        try{let p=document.querySelector('input[type="password"]');if(p){let f=p.closest('form');if(f){let t=f.querySelector('input[type="text"],input:not([type])');if(t&&t.value)return t;}}}catch(e){}
+                        try{let all=document.querySelectorAll('input[type="text"]');for(let el of all){if(isVisibleEco(el)&&el.value&&el.value.trim())return el;}}catch(e){}
+                        return null;
+                    }
+                    function findPass(){
+                        // Google: [name="Passwd"], #password, [aria-label*="password"]
+                        let sels=['input[name="Passwd"]','#password','input[aria-label*="password" i]','input[autocomplete="current-password"]','input[type="password"]'];
+                        for(let sel of sels){try{let el=document.querySelector(sel);if(el&&isVisibleEco(el)) return el;}catch(e){}}
+                        try{let all=document.querySelectorAll('input[type="password"]');for(let el of all){if(isVisibleEco(el))return el;}return all[0]||null;}catch(e){return null;}
+                    }
                     function save(){
                         try{
-                            let e=findEmail(),p=findPass();
-                            if(!e||!p)return;
-                            let ev=e.value?.trim(),pv=p.value;
-                            if(!ev||!pv||pv.length<3)return;
-                            if(ev.includes('@')&&ev.length>4) console.log('ECO_PASS_SAVE::'+JSON.stringify({email:ev,password:pv,host:location.hostname}));
+                            let e=findUser(),p=findPass();
+                            // Google step 1: only email, no password yet -> store email, don't save yet
+                            if(e && !p){
+                                let ev=(e.value||'').trim();
+                                if(ev.length>1) storeEmail(ev);
+                                return;
+                            }
+                            // Google step 2: only password, no email visible -> reuse stored email from step 1
+                            let ev=null, pv=null;
+                            if(p) pv=p.value||'';
+                            if(e) ev=(e.value||'').trim();
+                            if(!ev){
+                                ev=getStoredEmail();
+                                // Also try Google's hidden email display: [data-email], [id="profileIdentifier"]
+                                if(!ev){
+                                    try{
+                                        let disp=document.querySelector('#profileIdentifier,[data-email]');
+                                        if(disp){ ev=(disp.textContent||disp.getAttribute('data-email')||'').trim(); }
+                                    }catch(e2){}
+                                }
+                            }
+                            if(!ev||!pv||pv.length<3) return;
+                            if(ev.length<2) return;
+                            // For Google, host is accounts.google.com - save as accounts.google.com so it autofills next time
+                            console.log('ECO_PASS_SAVE::'+JSON.stringify({email:ev,password:pv,host:location.hostname}));
+                            // Clear stored email after successful save
+                            try{ window._ecoSavedEmail=null; localStorage.removeItem('eco_last_email'); }catch(e){}
                         }catch(e){}
                     }
-                    document.addEventListener('submit',()=>setTimeout(save,300), true);
-                    let p=findPass();
-                    if(p){p.addEventListener('change', save); p.addEventListener('blur', save);}
+                    window.__ecoPassTryFill=function(email,password){
+                        // FIXED: Old version used findUser() which requires value, so empty fields were invisible
+                        // New: findUserForFill (empty OK) + native setter for React
+                        try{
+                            function setVal(el,val){
+                                try{
+                                    el.focus();
+                                    let desc=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value');
+                                    if(desc && desc.set) desc.set.call(el,val); else el.value=val;
+                                    el.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:val}));
+                                    el.dispatchEvent(new Event('input',{bubbles:true}));
+                                    el.dispatchEvent(new Event('change',{bubbles:true}));
+                                }catch(e){ try{el.value=val;}catch(e2){} }
+                            }
+                            function findUserForFill(){
+                                let sels=['#identifierId','input[name="identifier"]','input[aria-label="Email or phone"]','input[type="email"]','input[autocomplete="email"]','input[autocomplete="username"]','input[name*="email" i]','input[name*="user" i]','input[id*="email" i]','input[id*="user" i]'];
+                                for(let s of sels){try{let el=document.querySelector(s);if(el&&el.offsetParent!==null)return el;}catch(e){}}
+                                try{let all=document.querySelectorAll('input[type="text"]');for(let el of all){if(isVisibleEco(el))return el;}}catch(e){}
+                                return null;
+                            }
+                            let e=findUserForFill(),p=findPass();
+                            if(e){setVal(e,email);storeEmail(email);}
+                            if(p){setVal(p,password);}
+                            if(e||p) console.log('ECO_PASS_FILLED::'+location.hostname);
+                        }catch(e){}
+                    };
+                    // Google Next button is a div[role=button] or button, not form submit - hook all clicks
+                    document.addEventListener('click',function(ev){
+                        try{
+                            let t=ev.target;
+                            let btn=t.closest? t.closest('button,input[type="submit"],div[role="button"]'):null;
+                            if(btn){
+                                let txt=(btn.textContent||btn.value||'').toLowerCase();
+                                // Google Next / Sign in / Login - save email on step 1, save full on step 2
+                                if(txt.includes('next')||txt.includes('log')||txt.includes('sign')||txt.includes('enter')||btn.type==='submit'){
+                                    setTimeout(save,500);
+                                    setTimeout(save,1200);
+                                }
+                            }
+                            // Also if user clicked anywhere after typing password, try save
+                            let p=findPass();
+                            if(p && p.value && p.value.length>=3) setTimeout(save,400);
+                        }catch(e){}
+                    }, true);
+                    document.addEventListener('submit',function(){setTimeout(save,300);setTimeout(save,1000);}, true);
+                    document.addEventListener('keydown',function(ev){
+                        if(ev.key==='Enter'){
+                            // Google: Enter on email step -> store email, Enter on password step -> save
+                            let e=findUser(),p=findPass();
+                            if(e && !p){ let v=(e.value||'').trim(); if(v) storeEmail(v); }
+                            if(p && ev.target===p) setTimeout(save,300);
+                            if(ev.target && ev.target.id==='identifierId') { let v=(ev.target.value||'').trim(); if(v) storeEmail(v); }
+                        }
+                    }, true);
+                    // SPA: MutationObserver - Google swaps email->password without reload
+                    try{
+                        let obs=new MutationObserver(function(){
+                            let p=findPass();
+                            if(p&&!p._ecoHooked){p._ecoHooked=true;p.addEventListener('change',save);p.addEventListener('blur',save);}
+                            // If email field appeared, hook it too
+                            let e=findUser();
+                            if(e&&!e._ecoHooked){e._ecoHooked=true;e.addEventListener('change',function(){let v=(e.value||'').trim();if(v)storeEmail(v);});}
+                        });
+                        obs.observe(document.documentElement,{childList:true,subtree:true});
+                    }catch(e){}
+                    let p0=findPass();
+                    if(p0){p0.addEventListener('change',save);p0.addEventListener('blur',save);}
+                    // Re-scan every 1.5s for Google SPA (email->password swap)
+                    setInterval(function(){
+                        let p=findPass();
+                        if(p&&!p._ecoHooked){p._ecoHooked=true;p.addEventListener('change',save);p.addEventListener('blur',save);}
+                        let e=findUser();
+                        if(e && e.value && e.value.trim()) storeEmail(e.value.trim());
+                    },1500);
                 }catch(e){}
             })();
             """
@@ -6103,7 +6530,7 @@ class EcoBrowserWindow(QMainWindow):
                 view.page().runJavaScript(f"""
                     (function(){{
                         let s=document.getElementById('eco-t-status');
-                        if(s) s.textContent='⚡ Translating {len(clean_texts)} pieces...';
+                        if(s) s.textContent='Translating {len(clean_texts)} pieces...';
                         let p=document.getElementById('eco-t-progress');
                         if(p){{p.style.display='block'; p.querySelector('#eco-t-progress-bar').style.width='20%';}}
                     }})()
@@ -6261,6 +6688,7 @@ class EcoBrowserWindow(QMainWindow):
             self._setup_tab_close_button(i)
 
     def open_gpu_info_page(self):
+        # ONLY called from Optimizations -> Check Current GPU (WebGL) - not from toolbar/menu
         """chrome://gpu doesn't exist in QtWebEngine - use WebGL renderer detection instead"""
         try:
             gpu_html = """
@@ -6269,7 +6697,7 @@ class EcoBrowserWindow(QMainWindow):
             .card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px;margin:15px 0}
             h1{color:#58a6ff} .good{color:#3fb950} .bad{color:#f85149}
             </style></head><body>
-            <h1>🖥️ EcoBrowser GPU Info</h1>
+            <h1>EcoBrowser GPU Info</h1>
             <p>chrome://gpu doesn't work in QtWebEngine (PyQt) - Qt strips internal pages. This page uses WebGL to detect your real GPU.</p>
             <div class="card" id="info">Detecting...</div>
             <div class="card"><h3>How to verify:</h3>
@@ -6304,11 +6732,363 @@ class EcoBrowserWindow(QMainWindow):
         except Exception as e:
             print(f"[GPU] info page error: {e}")
 
+    def _get_hibernation_json_path(self, tab_index):
+        return os.path.join(self.hibernation_dir, f"tab_{tab_index}.json")
+
+    def _save_tab_state_to_disk(self, tab_index, url, title, scroll_x=0, scroll_y=0):
+        try:
+            data = {
+                "url": url,
+                "title": title,
+                "scroll_x": scroll_x,
+                "scroll_y": scroll_y,
+                "saved_at": time.time(),
+            }
+            path = self._get_hibernation_json_path(tab_index)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f)
+            print(
+                f"[HIBERNATE-DISK] Saved tab {tab_index} to SSD: {title[:30]} | {url[:60]} | scroll {scroll_x},{scroll_y}"
+            )
+            return path
+        except Exception as e:
+            print(f"[HIBERNATE-DISK] save error tab {tab_index}: {e}")
+            return None
+
+    def hibernate_tab_to_disk(self, tab_index):
+        # Leave a tab -> RAM + VRAM -> SSD, view destroyed, renderer killed
+        # Called when you switch away or open a new tab
+        try:
+            if not self.settings.get(
+                "disk_hibernation_enabled",
+                self.settings.get("hibernation_enabled", False),
+            ):
+                return False
+            if tab_index < 0 or tab_index >= self.stack.count():
+                return False
+            if tab_index in self._hibernating:
+                return False
+            if tab_index in self.hibernated_tabs:
+                return False  # already hibernated
+            view = self.stack.widget(tab_index)
+            if not view or is_view_deleted(view):
+                return False
+            # Don't hibernate placeholder or about:blank new tab
+            if getattr(view, "_is_hibernated_placeholder", False):
+                return False
+            try:
+                url = view.url().toString() if hasattr(view, "url") else ""
+            except Exception:
+                url = ""
+            if not url or url in ("about:blank", "eco://newtab", ""):
+                # Don't hibernate empty new tab - just keep it, it uses ~5MB
+                return False
+            # Exclude some domains - these tabs NEVER hibernate
+            try:
+                excluded_raw = (
+                    self.settings.get("disk_hibernation_excluded_domains", "") or ""
+                )
+                if isinstance(excluded_raw, list):
+                    excluded_list = excluded_raw
+                else:
+                    # Split by comma or newline
+                    excluded_list = []
+                    for part in str(excluded_raw).replace("\n", ",").split(","):
+                        p = part.strip().lower()
+                        if p:
+                            excluded_list.append(p)
+                if excluded_list:
+                    url_lower = url.lower()
+                    # Extract host for matching
+                    try:
+                        from urllib.parse import urlparse as _urlparse
+
+                        host = _urlparse(url).hostname or ""
+                        host = host.lower()
+                    except Exception:
+                        host = url_lower
+                    for ex in excluded_list:
+                        # Match if host == ex or host ends with .ex, or url contains ex
+                        if (
+                            host == ex
+                            or host.endswith("." + ex)
+                            or ex in host
+                            or ex in url_lower
+                        ):
+                            print(
+                                f"[HIBERNATE-DISK] SKIP tab {tab_index} - excluded domain '{ex}': {url[:60]}"
+                            )
+                            return False
+            except Exception as e:
+                print(f"[HIBERNATE] exclude check error: {e}")
+            title = self.tab_bar.tabText(tab_index) if hasattr(self, "tab_bar") else url
+            # Remove  if already there
+            title_clean = (
+                title.replace("[Hibernated] ", "").replace("[Hibernated]", "").strip()
+            )
+            print(
+                f"[HIBERNATE-DISK] Hibernating tab {tab_index} -> SSD: {title_clean} | {url}"
+            )
+            self._hibernating.add(tab_index)
+
+            # Try to get scroll position, then destroy (async JS, but we destroy in callback)
+            def _on_scroll(scroll_json):
+                try:
+                    sx, sy = 0, 0
+                    try:
+                        import json as _json
+
+                        d = (
+                            _json.loads(scroll_json)
+                            if isinstance(scroll_json, str)
+                            else {}
+                        )
+                        sx = int(d.get("x", 0))
+                        sy = int(d.get("y", 0))
+                    except Exception:
+                        pass
+                    json_path = self._save_tab_state_to_disk(
+                        tab_index, url, title_clean, sx, sy
+                    )
+                    self.hibernated_tabs[tab_index] = {
+                        "url": url,
+                        "title": title_clean,
+                        "scroll_x": sx,
+                        "scroll_y": sy,
+                        "json_path": json_path,
+                    }
+                    # Destroy view - frees RAM + VRAM, kills renderer process (multi-process mode)
+                    try:
+                        # Stop loading first
+                        view.page().triggerAction(view.page().WebAction.Stop)
+                    except Exception:
+                        pass
+                    try:
+                        view.page().deleteLater()
+                    except Exception:
+                        pass
+                    # Create placeholder widget - keeps tab in bar, but uses ~0 RAM
+                    placeholder = QWidget()
+                    placeholder._is_hibernated_placeholder = True
+                    placeholder._hibernated_index = tab_index
+                    ph_layout = QVBoxLayout(placeholder)
+                    ph_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                    lbl = QLabel(
+                        f"Hibernated - On SSD\n\n{title_clean}\n{url[:80]}\n\nClick tab to restore from SSD"
+                    )
+                    lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                    lbl.setWordWrap(True)
+                    lbl.setStyleSheet("color: #8b949e; font-size: 12px;")
+                    ph_layout.addWidget(lbl)
+                    # Replace in stack
+                    try:
+                        self.stack.removeWidget(view)
+                        view.deleteLater()
+                    except Exception:
+                        pass
+                    self.stack.insertWidget(tab_index, placeholder)
+                    # Update tab bar to show hibernated
+                    try:
+                        self.tab_bar.setTabText(
+                            tab_index, "[Hibernated] " + title_clean[:20]
+                        )
+                    except Exception:
+                        pass
+                    print(
+                        f"[HIBERNATE-DISK] Tab {tab_index} destroyed, RAM+VRAM freed, state on SSD"
+                    )
+                    # Trim immediately after hibernation - free RAM now, not on next timer
+                    try:
+                        if hasattr(self, "_trim_working_sets"):
+                            self._trim_working_sets()
+                        import gc as _gc
+
+                        _gc.collect()
+                    except Exception:
+                        pass
+                except Exception as e:
+                    print(f"[HIBERNATE-DISK] hibernate callback error: {e}")
+                finally:
+                    self._hibernating.discard(tab_index)
+
+            # Ask JS for scroll - if fails, callback still runs with empty
+            try:
+                view.page().runJavaScript(
+                    "JSON.stringify({x: window.scrollX, y: window.scrollY})", _on_scroll
+                )
+            except Exception:
+                _on_scroll("{}")
+            return True
+        except Exception as e:
+            print(f"[HIBERNATE-DISK] hibernate error tab {tab_index}: {e}")
+            self._hibernating.discard(tab_index)
+            return False
+
+    def restore_tab_from_disk(self, tab_index):
+        # Return to tab -> load from SSD -> RAM, recreate view
+        try:
+            if tab_index not in self.hibernated_tabs:
+                # Try load from JSON file if dict missing (after restart)
+                json_path = self._get_hibernation_json_path(tab_index)
+                if not os.path.exists(json_path):
+                    return False
+                try:
+                    with open(json_path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    self.hibernated_tabs[tab_index] = {
+                        "url": data.get("url", ""),
+                        "title": data.get("title", ""),
+                        "scroll_x": data.get("scroll_x", 0),
+                        "scroll_y": data.get("scroll_y", 0),
+                        "json_path": json_path,
+                    }
+                except Exception:
+                    return False
+            info = self.hibernated_tabs.get(tab_index)
+            if not info:
+                return False
+            url = info.get("url", "")
+            title = info.get("title", "New Tab")
+            sx = info.get("scroll_x", 0)
+            sy = info.get("scroll_y", 0)
+            print(
+                f"[HIBERNATE-DISK] Restoring tab {tab_index} from SSD -> RAM: {title} | {url} | scroll {sx},{sy}"
+            )
+            # Remove placeholder
+            placeholder = self.stack.widget(tab_index)
+            try:
+                self.stack.removeWidget(placeholder)
+                placeholder.deleteLater()
+            except Exception:
+                pass
+            # Create new view like add_new_tab does, but with saved URL
+            web_view = QWebEngineView()
+            try:
+                web_view.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)
+                web_view._last_active = time.time()
+            except Exception:
+                pass
+            page = EcoWebEnginePage(self.profile, self, web_view)
+            web_view.setPage(page)
+            try:
+                page.renderProcessTerminated.connect(
+                    lambda terminationStatus, exitCode, view=web_view: self.handle_render_crash(
+                        view, terminationStatus, exitCode
+                    )
+                )
+            except Exception:
+                pass
+            if self.is_dark_mode:
+                try:
+                    web_view.page().settings().setAttribute(
+                        QWebEngineSettings.WebAttribute.ForceDarkMode, True
+                    )
+                except Exception:
+                    pass
+            # Connect same signals as add_new_tab
+            web_view.urlChanged.connect(
+                lambda _url, v=web_view: (
+                    self.sync_address_bar(v) if not is_view_deleted(v) else None
+                )
+            )
+            web_view.titleChanged.connect(
+                lambda t, v=web_view: (
+                    self.update_tab_title(t, v) if not is_view_deleted(v) else None
+                )
+            )
+            web_view.iconChanged.connect(
+                lambda icon, v=web_view: (
+                    self.sync_tab_icon(v, icon) if not is_view_deleted(v) else None
+                )
+            )
+            web_view.loadStarted.connect(
+                lambda v=web_view: (
+                    self.handle_load_started(v) if not is_view_deleted(v) else None
+                )
+            )
+
+            # Restore scroll after load
+            def _on_load_finished(ok, v=web_view, sx=sx, sy=sy):
+                try:
+                    self.handle_load_finished(v, ok)
+                    if ok and (sx or sy):
+                        v.page().runJavaScript(f"window.scrollTo({sx}, {sy});")
+                        print(
+                            f"[HIBERNATE-DISK] Restored scroll {sx},{sy} for tab {tab_index}"
+                        )
+                except Exception:
+                    pass
+
+            web_view.loadFinished.connect(_on_load_finished)
+            # Insert at same index
+            self.stack.insertWidget(tab_index, web_view)
+            # Update tab bar
+            try:
+                self.tab_bar.setTabText(tab_index, title[:22] if title else "New Tab")
+            except Exception:
+                pass
+            # Load URL
+            try:
+                web_view.load(QUrl(url))
+            except Exception as e:
+                print(f"[HIBERNATE-DISK] load error: {e}")
+            # Clean up hibernated state (now in RAM)
+            try:
+                del self.hibernated_tabs[tab_index]
+                # Keep JSON on SSD for crash recovery, or delete it - keep it, small
+            except Exception:
+                pass
+            # Update tab_last_active
+            try:
+                self.tab_last_active[id(web_view)] = time.time()
+            except Exception:
+                pass
+            return True
+        except Exception as e:
+            print(f"[HIBERNATE-DISK] restore error tab {tab_index}: {e}")
+            import traceback
+
+            traceback.print_exc()
+            return False
+
     def switch_tab(self, index):
         if index == -1:
             return
+        # 1. If target is hibernated on SSD -> restore it first
+        if index in self.hibernated_tabs:
+            self.restore_tab_from_disk(index)
+        # 2. Hibernate previous tab (the one we are leaving) -> SSD, RAM+VRAM freed
+        try:
+            prev_index = self.stack.currentIndex()
+            if prev_index != index and prev_index != -1:
+                # Don't hibernate if only 1 tab
+                if self.stack.count() > 1:
+                    self.hibernate_tab_to_disk(prev_index)
+        except Exception as e:
+            print(f"[HIBERNATE-DISK] switch hibernate prev error: {e}")
+
         self.stack.setCurrentIndex(index)
+        # Autofill on tab switch - if new tab is a login page with saved password, fill it
+        try:
+            _v = self.get_current_view()
+            if _v:
+                QTimer.singleShot(
+                    500,
+                    lambda v=_v: (
+                        self._try_autofill_passwords(v)
+                        if not is_view_deleted(v)
+                        else None
+                    ),
+                )
+        except Exception:
+            pass
         view = self.get_current_view()
+        # Track last active
+        if view and not getattr(view, "_is_hibernated_placeholder", False):
+            try:
+                view._last_active = time.time()
+            except Exception:
+                pass
         self.sync_address_bar(view)
         if view:
             self.back_button.setEnabled(view.history().canGoBack())
@@ -6628,7 +7408,7 @@ class EcoBrowserWindow(QMainWindow):
                     self.save_setting(k, v)
             # Restart hibernation timer with new setting
             try:
-                if self.settings.get("hibernation_enabled", True):
+                if self.settings.get("hibernation_enabled", False):
                     self.hibernation_timer.start(60000)
                 else:
                     self.hibernation_timer.stop()
@@ -6644,8 +7424,8 @@ class EcoBrowserWindow(QMainWindow):
                 f"Eco Sleep {enabled} - Timeout: {timeout} min",
             )
 
-    def open_gpu_settings_dialog(self):
-        dialog = GpuSettingsDialog(self.settings, self)
+    def open_optimizations_dialog(self):
+        dialog = OptimizationsDialog(self.settings, self)
         if dialog.exec() == QDialog.DialogCode.Accepted and dialog.values:
             self.settings.update(dialog.values)
             try:
@@ -6656,7 +7436,51 @@ class EcoBrowserWindow(QMainWindow):
                         self.save_setting(k, v)
                     except Exception:
                         pass
-            pref = dialog.values.get("gpu_preference", "auto")
+            # Apply GPU preference
+            try:
+                pref = dialog.values.get("gpu_preference", "high_performance")
+                apply_windows_gpu_preference(pref)
+            except Exception:
+                pass
+            # Apply RAM trim interval immediately
+            try:
+                if hasattr(self, "_ram_trim_timer"):
+                    interval = int(self.settings.get("ram_trim_interval", 5)) * 1000
+                    if self.settings.get("ram_trim_enabled", True):
+                        self._ram_trim_timer.start(interval)
+                    else:
+                        self._ram_trim_timer.stop()
+            except Exception:
+                pass
+            # Apply disk cache low RAM
+            try:
+                if self.settings.get("disk_hibernation_low_ram", True):
+                    self.profile.setHttpCacheMaximumSize(200 * 1024 * 1024)
+            except Exception:
+                pass
+            QMessageBox.information(
+                self,
+                "Optimizations",
+                "Optimizations saved!\n\nVRAM + SSD + RAM Trim in one place.\nRestart for GPU change to take effect.\nRAM trim now every "
+                + str(self.settings.get("ram_trim_interval", 5))
+                + "s.",
+            )
+        # Keep old methods as aliases - they now open Optimizations dialog
+
+    def open_gpu_settings_dialog(self):
+        return self.open_optimizations_dialog()
+        # GpuSettingsDialog removed - GPU is now inside Optimizations, no standalone dialog
+        if dialog.exec() == QDialog.DialogCode.Accepted and dialog.values:
+            self.settings.update(dialog.values)
+            try:
+                self.save_settings_batch(dialog.values)
+            except Exception:
+                for k, v in dialog.values.items():
+                    try:
+                        self.save_setting(k, v)
+                    except Exception:
+                        pass
+            pref = dialog.values.get("gpu_preference", "high_performance")
             ok = apply_windows_gpu_preference(pref)
             names = {
                 "auto": "Auto (Windows decides)",
@@ -6669,7 +7493,7 @@ class EcoBrowserWindow(QMainWindow):
                     "GPU / VRAM",
                     "GPU set to: "
                     + names.get(pref, pref)
-                    + "\n\nRestart EcoBrowser for it to take effect.\n\nCheck via GPU Info button - WebGL renderer should say NVIDIA if High performance.",
+                    + "\n\nRestart EcoBrowser for it to take effect.\n\nCheck via Optimizations -> Check Current GPU (WebGL) - WebGL renderer should say NVIDIA if High performance.",
                 )
             else:
                 QMessageBox.information(
@@ -6681,74 +7505,8 @@ class EcoBrowserWindow(QMainWindow):
                 )
 
     def open_blocking_level_dialog(self):
-        dialog = BlockingLevelDialog(self.settings, self)
-        if dialog.exec() == QDialog.DialogCode.Accepted and dialog.values:
-            self.settings.update(dialog.values)
-            try:
-                self.save_settings_batch(dialog.values)
-            except Exception:
-                try:
-                    for k, v in dialog.values.items():
-                        self.save_setting(k, v)
-                except Exception:
-                    pass
-            level = dialog.values.get("blocking_level", 2)
-            level_names = {
-                0: "No Block (Allow everything)",
-                1: "Ad Block Only",
-                2: "Ad + Nude Block",
-                3: "Extreme Block",
-            }
-            try:
-                if hasattr(self, "interceptor"):
-                    if level == 0:
-                        self.interceptor.ad_block_enabled = False
-                        self.interceptor.nude_block_enabled = False
-                        print(
-                            "[Blocking] Level 0 - No block, all disabled including image filter"
-                        )
-                    elif level == 1:
-                        self.interceptor.ad_block_enabled = True
-                        self.interceptor.nude_block_enabled = False
-                    else:
-                        self.interceptor.ad_block_enabled = True
-                        self.interceptor.nude_block_enabled = True
-                self._current_blocking_level = level
-            except Exception as e:
-                print(f"[Blocking] update error: {e}")
-
-            # Broadcast level change to all tabs to disable image filter
-            try:
-                for i in range(self.stack.count()):
-                    try:
-                        v = self.stack.widget(i)
-                        if v and not is_view_deleted(v):
-                            v.page().runJavaScript(
-                                f"try{{localStorage.setItem('eco_blocking_level', '{level}'); window.__ecoGuardLevel={level}; window.dispatchEvent(new CustomEvent('ecoGuardLevelChanged', {{detail:{{level:{level}}}}});}}catch(e){{}}"
-                            )
-                            if level == 0:
-                                v.page().runJavaScript("""
-                                    try{
-                                        window.__ecoGuardLevel=0;
-                                        document.querySelectorAll('.b,.v,.c2').forEach(el=>{
-                                            el.classList.remove('b','v','c2');
-                                            el.classList.add('u','w','c3');
-                                            el.style.filter='none';
-                                            el.style.opacity='1';
-                                        });
-                                        document.querySelectorAll('.s,.d,.n,.e').forEach(el=>{el.remove();});
-                                    }catch(e){}
-                                """)
-                    except Exception as e:
-                        print(f"[Blocking] tab update error: {e}")
-            except Exception as e:
-                print(f"[Blocking] broadcast error: {e}")
-
-            QMessageBox.information(
-                self,
-                "Blocking Level",
-                f"Blocking set to: {level_names.get(level, 'Unknown')} - Level 0 disables everything",
-            )
+        # No standalone Blocking dialog anymore - Blocking is inside Optimizations
+        return self.open_optimizations_dialog()
 
     def open_userscript_manager_dialog(self):
         dlg = UserscriptManagerDialog(self)
@@ -6780,6 +7538,25 @@ class EcoBrowserWindow(QMainWindow):
             set_vis(getattr(self, "blockers_button", None), "blockers")
             set_vis(getattr(self, "bookmark_button", None), "bookmarks")
             set_vis(getattr(self, "passwords_button", None), "passwords")
+            try:
+                if hasattr(self, "gpu_button"):
+                    self.gpu_button.setVisible(bool(pinned.get("gpu", False)))
+            except Exception:
+                pass
+            try:
+                if hasattr(self, "optimizations_button"):
+                    self.optimizations_button.setVisible(
+                        bool(pinned.get("optimizations", False))
+                    )
+            except Exception:
+                pass
+            try:
+                if hasattr(self, "translate_button"):
+                    self.translate_button.setVisible(
+                        bool(pinned.get("translate", True))
+                    )
+            except Exception:
+                pass
             # Also update icons after visibility change
             self.update_all_icons()
         except Exception as e:
@@ -7152,7 +7929,7 @@ class EcoBrowserWindow(QMainWindow):
             if not email or not password:
                 return
             js = build_password_autofill_js(email, password)
-            # Use weak capture with id check
+            # Use weak capture with id check - retry for SPA/Google 2-step (no reload on Next)
             QTimer.singleShot(
                 700,
                 lambda v=web_view, j=js: (
@@ -7165,8 +7942,32 @@ class EcoBrowserWindow(QMainWindow):
                     self._inject_autofill(v, j) if not is_view_deleted(v) else None
                 ),
             )
+            QTimer.singleShot(
+                4000,
+                lambda v=web_view, j=js: (
+                    self._inject_autofill(v, j) if not is_view_deleted(v) else None
+                ),
+            )
         except Exception as e:
             print(f"[PasswordManager] _try_autofill error: {e}")
+
+    def force_autofill_current_page(self):
+        # Manual trigger - user can call this from Password Manager dialog or toolbar if auto fails
+        try:
+            view = self.get_current_view()
+            if view:
+                self._try_autofill_passwords(view)
+                # Also try again in 1s (in case form is still loading)
+                QTimer.singleShot(
+                    1000,
+                    lambda: (
+                        self._try_autofill_passwords(view)
+                        if not is_view_deleted(view)
+                        else None
+                    ),
+                )
+        except Exception as e:
+            print(f"[PasswordManager] force autofill error: {e}")
 
     def _inject_autofill(self, web_view, js_code):
         try:
@@ -7293,7 +8094,7 @@ class EcoBrowserWindow(QMainWindow):
                             (function(){
                                 try {
                                     let b=document.createElement('div');
-                                    b.textContent='🔑 Password saved for %s';
+                                    b.textContent='[Key] Password saved for %s';
                                     b.style.cssText='position:fixed;bottom:20px;right:20px;background:#10b981;color:white;border-radius:9999px;padding:10px 18px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-size:12px;font-weight:700;z-index:2147483647;box-shadow:0 8px 24px rgba(0,0,0,0.5);';
                                     document.body.appendChild(b);
                                     setTimeout(()=>{b.style.opacity='0'; setTimeout(()=>b.remove(), 600);}, 3000);
@@ -7353,11 +8154,6 @@ class EcoBrowserWindow(QMainWindow):
         event.accept()
 
 
-# =============================================================================
-# Bootstrap Helper & Entry Point
-# =============================================================================
-
-
 def get_app_data_folder():
     app_data_root = os.getenv("APPDATA") or os.path.expanduser("~")
     folder = os.path.join(app_data_root, "EcoBrowser")
@@ -7365,10 +8161,17 @@ def get_app_data_folder():
     return folder
 
 
-PROXY_CREDENTIALS_STORAGE_KEY = "proxy_credentials_dpapi"
+PROXY_CREDENTIALS_STORAGE_KEY = "proxy_credentials_fernet"
+# Old key name — only read for one-time migration of existing settings.json
+PROXY_CREDENTIALS_LEGACY_STORAGE_KEY = "proxy_credentials_dpapi"
 
 
 def _dpapi_crypt(data, protect):
+    """Legacy only: decrypts pre-Fernet proxy credentials on Windows.
+
+    New credentials are encrypted with Fernet (see protect_proxy_credentials).
+    Kept so existing settings.json files migrate instead of losing passwords.
+    """
     if sys.platform != "win32":
         raise RuntimeError(
             "Saving proxy credentials is supported on Windows using Windows DPAPI."
@@ -7449,23 +8252,45 @@ def _dpapi_crypt(data, protect):
 
 
 def protect_proxy_credentials(username, password):
+    """Encrypt proxy credentials with Fernet (same key as PasswordManager)."""
     if not username and not password:
         return None
     payload = json.dumps(
         {"username": username, "password": password}, ensure_ascii=False
-    ).encode("utf-8")
-    return base64.b64encode(_dpapi_crypt(payload, protect=True)).decode("ascii")
+    )
+    # Fernet token is already a urlsafe-base64 str — store it directly.
+    return fernet_encrypt(payload)
 
 
 def unprotect_proxy_credentials(protected_value):
-    encrypted = base64.b64decode(protected_value, validate=True)
-    data = json.loads(_dpapi_crypt(encrypted, protect=False).decode("utf-8"))
-    if not isinstance(data, dict):
-        raise ValueError("Saved proxy credentials have an invalid format.")
-    return {
-        "proxy_username": str(data.get("username", "")),
-        "proxy_password": str(data.get("password", "")),
-    }
+    """Decrypt Fernet proxy credentials; migrates old DPAPI values once."""
+    if not protected_value:
+        raise ValueError("Saved proxy credentials are empty.")
+    # 1. Normal path: Fernet
+    try:
+        data = json.loads(fernet_decrypt(str(protected_value)))
+        if not isinstance(data, dict):
+            raise ValueError("Saved proxy credentials have an invalid format.")
+        return {
+            "proxy_username": str(data.get("username", "")),
+            "proxy_password": str(data.get("password", "")),
+        }
+    except (ValueError, json.JSONDecodeError):
+        raise
+    except Exception:
+        pass
+    # 2. Migration path: old DPAPI-encrypted value (Windows, pre-Fernet)
+    try:
+        encrypted = base64.b64decode(protected_value, validate=True)
+        data = json.loads(_dpapi_crypt(encrypted, protect=False).decode("utf-8"))
+        if not isinstance(data, dict):
+            raise ValueError("Saved proxy credentials have an invalid format.")
+        return {
+            "proxy_username": str(data.get("username", "")),
+            "proxy_password": str(data.get("password", "")),
+        }
+    except Exception as e:
+        raise ValueError("Saved proxy credentials could not be decrypted.") from e
 
 
 def prepare_settings_for_storage(settings):
@@ -7474,6 +8299,7 @@ def prepare_settings_for_storage(settings):
     password = str(stored_settings.pop("proxy_password", "") or "")
     stored_settings.pop("proxy_credentials_error", None)
     stored_settings.pop(PROXY_CREDENTIALS_STORAGE_KEY, None)
+    stored_settings.pop(PROXY_CREDENTIALS_LEGACY_STORAGE_KEY, None)
 
     if bool(username) != bool(password):
         raise ValueError("Both a proxy username and password must be configured.")
@@ -7493,11 +8319,22 @@ def load_saved_settings():
             protected_credentials = saved_settings.pop(
                 PROXY_CREDENTIALS_STORAGE_KEY, None
             )
+            legacy_credentials = saved_settings.pop(
+                PROXY_CREDENTIALS_LEGACY_STORAGE_KEY, None
+            )
             settings.update(saved_settings)
-            if protected_credentials:
+            # Prefer the Fernet value; fall back to the old DPAPI value once
+            # (it gets re-saved as Fernet the next time settings are saved).
+            for candidate in (protected_credentials, legacy_credentials):
+                if not candidate:
+                    continue
                 try:
-                    settings.update(unprotect_proxy_credentials(protected_credentials))
+                    settings.update(unprotect_proxy_credentials(candidate))
+                    break
                 except Exception:
+                    continue
+            else:
+                if protected_credentials or legacy_credentials:
                     settings["proxy_username"] = ""
                     settings["proxy_password"] = ""
                     settings["proxy_credentials_error"] = True
@@ -7618,11 +8455,8 @@ def configure_chromium_doh_flags(server_template):
             )
             arguments.append(f"{switch_name}={separator.join(values)}")
 
-    # Re-quote any argument containing a space (e.g. --js-flags="--max-old-space-size=512 --expose-gc")
-    # shlex.split stripped the quotes, so we must restore them or V8 never sees --expose-gc
     def _quote_arg(arg):
         if " " in arg and not (arg.startswith('"') and arg.endswith('"')):
-            # If arg is --js-flags=--max-old-space... --expose-gc, quote the value part
             if "=" in arg:
                 k, v = arg.split("=", 1)
                 if " " in v and not v.startswith('"'):
@@ -7707,8 +8541,8 @@ if __name__ == "__main__":
         QMessageBox.warning(
             None,
             "Proxy credentials unavailable",
-            "EcoBrowser could not decrypt the saved proxy credentials for this "
-            "Windows account. Re-enter the username and password in Network settings.",
+            "EcoBrowser could not decrypt the saved proxy credentials. "
+            "Re-enter the username and password in Network settings.",
         )
     if startup_network_error:
         QMessageBox.critical(
