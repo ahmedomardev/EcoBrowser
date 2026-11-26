@@ -1,6 +1,13 @@
 EcoBrowser - Changelog
 =======================
 
-v2.4
+v2.5
 ------------------------------------------
-1. Optimizations and bugfixes
+1. Privacy & Security: 
+Private/Incognito windows (Ctrl+Shift+N), automatic tracking-parameter URL stripping + Copy Clean URL, HTTPS-Only Mode, and Download Virus & Safety Scanning.
+
+2. Navigation & Tab Management: 
+Vertical Tabs sidebar (Ctrl+Shift+V), Side-by-Side Split View (Ctrl+\), Command Palette (Ctrl+K), Reopen Closed Tab (Ctrl+Shift+T), Pin/Mute/Duplicate tabs, and Session Restore (Continue Where I Left Off).
+
+3.Page & Media Tools: Find in Page (Ctrl+F), Zoom badge & shortcuts (Ctrl+ / Ctrl+- / Ctrl+0), Fullscreen (F11), and Viewport Screenshot (Ctrl+Shift+S).
+UI & Home Screen: Decluttered toolbar with a Home button, grouped dropdown submenus, inline quick-link creator, and the Pyramids of Giza default New Tab wallpaper.
